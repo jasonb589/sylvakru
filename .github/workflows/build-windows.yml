@@ -1,0 +1,60 @@
+name: Build Windows
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  windows:
+    name: Windows x64
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # keep this in sync with .fvmrc and the `flutter:` constraint in pubspec.yaml
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.2
+          channel: stable
+          cache: true
+
+      - name: Show Flutter version
+        run: flutter --version
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # report analysis issues without blocking the artifact
+      - name: Analyze
+        continue-on-error: true
+        run: flutter analyze --no-pub
+
+      - name: Build Windows release
+        run: flutter build windows --release
+
+      # Flutter moved the runner output into an arch subdirectory at some point,
+      # so accept both layouts instead of hardcoding one.
+      - name: Package
+        shell: pwsh
+        run: |
+          $release = if (Test-Path 'build/windows/x64/runner/Release') {
+            'build/windows/x64/runner/Release'
+          } else {
+            'build/windows/runner/Release'
+          }
+          Write-Host "Packaging $release"
+          Get-ChildItem $release | Select-Object Name
+          Compress-Archive -Path "$release/*" -DestinationPath sylvakru-windows-x64.zip -Force
+          $size = (Get-Item sylvakru-windows-x64.zip).Length / 1MB
+          Write-Host ("Archive size: {0:N1} MB" -f $size)
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sylvakru-windows-x64
+          path: sylvakru-windows-x64.zip
+          retention-days: 30
