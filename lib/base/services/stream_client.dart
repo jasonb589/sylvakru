@@ -47,7 +47,11 @@ abstract class StreamClient {
 
   Future<List<MyAudioMetadata>?> getArtistSongs(String id);
 
-  Future<List<Album>?> getAlbumList(int offset, {String type});
+  Future<List<Album>?> getAlbumList(
+    int offset, {
+    String type,
+    bool descending = false,
+  });
 
   Future<Album?> getAlbum(String id);
 

@@ -218,6 +218,7 @@ class EmbyClient extends StreamClient {
   Future<List<Album>?> getAlbumList(
     int offset, {
     String type = 'SortName',
+    bool descending = false,
   }) async {
     final response = await safeRequest<Map<String, dynamic>>(
       () => dio.get(
@@ -229,6 +230,7 @@ class EmbyClient extends StreamClient {
           'StartIndex': offset,
           'Limit': 500,
           'SortBy': type,
+          'SortOrder': descending ? 'Descending' : 'Ascending',
         },
       ),
       parser: (res) => res.data as Map<String, dynamic>?,
@@ -250,6 +252,7 @@ class EmbyClient extends StreamClient {
             name,
             id: id,
             coverArtId: map['ImageTags']?['Primary'] ?? id,
+            created: DateTime.tryParse(map['DateCreated']?.toString() ?? ''),
           ),
         ),
       );

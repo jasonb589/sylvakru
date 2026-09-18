@@ -22,6 +22,13 @@ class ArtistAlbumManager {
   Map<String, Album> albumMap = {};
   final updateNotifier = ValueNotifier(0);
 
+  /// The albums shown in the "recently added" module on the home page.
+  List<Album> recentlyAddedAlbumList = [];
+  final recentlyAddedNotifier = ValueNotifier(0);
+
+  /// How many albums the "recently added" module shows at most.
+  static const int recentlyAddedLimit = 20;
+
   ArtistAlbumManager() {
     artistsIsAscendingNotifier.addListener(() {
       sortArtists();
@@ -67,7 +74,86 @@ class ArtistAlbumManager {
       artist.combineAlbums();
     }
 
+    updateRecentlyAddedFromAlbums();
+
     updateNotifier.value++;
+  }
+
+  /// Rebuilds [recentlyAddedAlbumList] from the local album list.
+  ///
+  /// Only meaningful for non-stream sources, where every album already knows
+  /// when its files were last modified.
+  void updateRecentlyAddedFromAlbums() {
+    final sorted = albumList.where((album) => album.addedTime != null).toList()
+      ..sort((a, b) => b.addedTime!.compareTo(a.addedTime!));
+
+    recentlyAddedAlbumList = sorted.take(recentlyAddedLimit).toList();
+    recentlyAddedNotifier.value++;
+  }
+
+  /// The server side sort used to ask for the newest albums.
+  String get _recentlyAddedSortType {
+    switch (sourceType) {
+      case .navidrome:
+        // getAlbumList2 'newest' is already ordered by creation time, newest
+        // first.
+        return 'newest';
+      case .emby:
+        return 'DateCreated';
+      default:
+        return 'alphabeticalByName';
+    }
+  }
+
+  Completer<void>? _recentlyAddedCompleter;
+  bool _recentlyAddedLoaded = false;
+
+  /// Whether the "recently added" albums have been fetched already.
+  bool get recentlyAddedLoaded => _recentlyAddedLoaded;
+
+  /// Loads the albums for the "recently added" module.
+  ///
+  /// Local and WebDAV libraries are sorted locally, stream sources are asked
+  /// for their newest albums instead.
+  Future<void> loadRecentlyAdded({bool force = false}) async {
+    if (_recentlyAddedLoaded && !force) {
+      return;
+    }
+
+    final pending = _recentlyAddedCompleter;
+    if (pending != null) {
+      return pending.future;
+    }
+
+    if (isNotStreamSource) {
+      // notifies through updateRecentlyAddedFromAlbums
+      updateRecentlyAddedFromAlbums();
+      _recentlyAddedLoaded = true;
+      return;
+    }
+
+    final completer = Completer<void>();
+    _recentlyAddedCompleter = completer;
+    try {
+      final albumList = await streamClient?.getAlbumList(
+        0,
+        type: _recentlyAddedSortType,
+        descending: true,
+      );
+      if (albumList != null) {
+        final sorted = albumList.toList();
+        // trust the server order unless every album knows its creation time
+        if (sorted.every((album) => album.created != null)) {
+          sorted.sort((a, b) => b.created!.compareTo(a.created!));
+        }
+        recentlyAddedAlbumList = sorted.take(recentlyAddedLimit).toList();
+      }
+      _recentlyAddedLoaded = true;
+      recentlyAddedNotifier.value++;
+    } finally {
+      _recentlyAddedCompleter = null;
+      completer.complete();
+    }
   }
 
   void _processSong(MyAudioMetadata song) {
@@ -123,6 +209,10 @@ class ArtistAlbumManager {
     albumList.clear();
     artistMap.clear();
     albumMap.clear();
+
+    // stream sources have to ask the server again for their newest albums
+    _recentlyAddedLoaded = false;
+    recentlyAddedAlbumList = [];
 
     classify();
   }
@@ -275,11 +365,42 @@ class Artist extends ArtistAlbumBase {
 }
 
 class Album extends ArtistAlbumBase {
-  Album(String name, {super.id, super.coverArtId, this.year})
+  Album(String name, {super.id, super.coverArtId, this.year, this.created})
     : super(name, false);
 
   Map<String, List<MyAudioMetadata>> artist2SongList = {};
   int? year;
+
+  /// Creation time reported by the server, only available for stream sources.
+  DateTime? created;
+
+  DateTime? _addedTime;
+  bool _addedTimeReady = false;
+
+  /// When this album entered the library.
+  ///
+  /// Local and WebDAV libraries have no creation time, so the newest file
+  /// modification time among the album's songs is used instead. The result is
+  /// cached because it is read while sorting the whole album list.
+  DateTime? get addedTime {
+    if (_addedTimeReady) {
+      return _addedTime;
+    }
+    _addedTimeReady = true;
+
+    if (created != null) {
+      return _addedTime = created;
+    }
+
+    DateTime? latest;
+    for (final song in songList) {
+      final modified = song.modified;
+      if (modified != null && (latest == null || modified.isAfter(latest))) {
+        latest = modified;
+      }
+    }
+    return _addedTime = latest;
+  }
 
   int _sort(MyAudioMetadata a, MyAudioMetadata b) {
     final discA = a.disc ?? 9999;

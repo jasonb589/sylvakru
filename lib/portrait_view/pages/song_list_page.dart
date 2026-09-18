@@ -350,6 +350,20 @@ extension _SongListPage on _SongListState {
       controller: scrollController,
       slivers: [
         SliverToBoxAdapter(child: pageHeader()),
+        SliverToBoxAdapter(
+          child: ValueListenableBuilder(
+            valueListenable: currentSongListNotifier,
+            builder: (context, _, _) {
+              if (!isLibrary || searchValue.isNotEmpty) {
+                return const SizedBox.shrink();
+              }
+              return RecentlyAdded(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                itemSize: 110,
+              );
+            },
+          ),
+        ),
         ValueListenableBuilder(
           valueListenable: currentSongListNotifier,
           builder: (context, currentSongList, child) {

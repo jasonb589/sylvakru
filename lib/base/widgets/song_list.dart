@@ -30,6 +30,7 @@ import 'package:sylvakru/base/widgets/my_divider.dart';
 import 'package:sylvakru/base/widgets/my_location.dart';
 import 'package:sylvakru/base/widgets/my_sheet.dart';
 import 'package:sylvakru/base/widgets/playlist_widgets.dart';
+import 'package:sylvakru/base/widgets/recently_added.dart';
 import 'package:sylvakru/base/widgets/selectable_song_list_page.dart';
 import 'package:sylvakru/base/widgets/song_info.dart';
 import 'package:sylvakru/l10n/generated/app_localizations.dart';

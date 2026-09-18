@@ -217,8 +217,20 @@ class FeiniuClient extends StreamClient {
         id: id,
         coverArtId: id,
         year: releaseDate == null ? null : DateTime.tryParse(releaseDate)?.year,
+        created: _parseTime(item['createTime'] ?? item['createdAt']),
       ),
     );
+  }
+
+  /// Accepts either an ISO 8601 string or a millisecond timestamp.
+  DateTime? _parseTime(dynamic value) {
+    if (value is num) {
+      return DateTime.fromMillisecondsSinceEpoch(value.toInt());
+    }
+    if (value is String) {
+      return DateTime.tryParse(value);
+    }
+    return null;
   }
 
   @override
@@ -296,13 +308,18 @@ class FeiniuClient extends StreamClient {
   Future<List<Album>?> getAlbumList(
     int offset, {
     String type = 'alphabeticalByName',
+    bool descending = false,
   }) async {
     final rows = await _list(
       '/album/list',
-      query: {'sort': 'name,asc'},
+      query: {'sort': descending ? 'createTime,desc' : 'name,asc'},
       offset: offset,
       size: 500,
     );
+    if (rows == null && descending) {
+      // not every build accepts a creation time sort, fall back to the default
+      return getAlbumList(offset);
+    }
     return rows?.map(_album).toList();
   }
 

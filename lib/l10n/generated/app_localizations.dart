@@ -176,6 +176,12 @@ abstract class AppLocalizations {
   /// **'Recently Played'**
   String get recently;
 
+  /// No description provided for @recentlyAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Recently Added'**
+  String get recentlyAdded;
+
   /// No description provided for @artists.
   ///
   /// In en, this message translates to:

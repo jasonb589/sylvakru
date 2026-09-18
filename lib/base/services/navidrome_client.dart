@@ -173,7 +173,10 @@ class NavidromeClient extends StreamClient {
   Future<List<Album>?> getAlbumList(
     int offset, {
     String type = 'alphabeticalByName',
+    bool descending = false,
   }) async {
+    // the Subsonic 'newest' sort is descending on its own, so `descending` is
+    // ignored here.
     final res = await safeRequest(
       '/rest/getAlbumList2.view',
       query: {'type': type, 'size': 500, 'offset': offset},
@@ -193,6 +196,7 @@ class NavidromeClient extends StreamClient {
             id: id,
             coverArtId: map['coverArt'],
             year: map['year'],
+            created: DateTime.tryParse(map['created']?.toString() ?? ''),
           ),
         ),
       );

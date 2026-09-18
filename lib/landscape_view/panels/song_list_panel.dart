@@ -57,6 +57,18 @@ extension _SongListPanel on _SongListState {
         ),
 
         SliverToBoxAdapter(
+          child: ValueListenableBuilder(
+            valueListenable: currentSongListNotifier,
+            builder: (context, _, _) {
+              if (!isLibrary || searchValue.isNotEmpty) {
+                return const SizedBox.shrink();
+              }
+              return RecentlyAdded(padding: padding);
+            },
+          ),
+        ),
+
+        SliverToBoxAdapter(
           child: Padding(
             padding: padding,
             child: Opacity(opacity: hideOthers ? 0 : 1, child: label()),

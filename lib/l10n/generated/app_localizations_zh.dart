@@ -48,6 +48,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get recently => '最近播放';
 
   @override
+  String get recentlyAdded => '最近添加';
+
+  @override
   String get artists => '艺术家';
 
   @override
