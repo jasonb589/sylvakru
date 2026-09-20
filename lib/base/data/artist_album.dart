@@ -157,8 +157,12 @@ class ArtistAlbumManager {
         }
         recentlyAddedAlbumList = sorted.take(recentlyAddedLimit).toList();
       }
-      _recentlyAddedLoaded = true;
-      recentlyAddedNotifier.value++;
+      // a failed request must not be cached as success, otherwise the module
+      // stays empty for the whole session when the server was unreachable
+      if (albumList != null) {
+        _recentlyAddedLoaded = true;
+        recentlyAddedNotifier.value++;
+      }
     } finally {
       _recentlyAddedCompleter = null;
       completer.complete();

@@ -66,8 +66,8 @@ class _BigHomePanelState extends State<BigHomePanel> {
           }
         }
 
-        // stream sources have to ask for the newest albums, local ones are
-        // already sorted by loadRecentlyAdded
+        // stream sources have to ask the server for the newest albums; local
+        // libraries are already filled by classify() -> updateRecentlyAddedFromAlbums
         artistAlbumManager.loadRecentlyAdded().then((_) {
           if (mounted) {
             setState(() {});
