@@ -23,6 +23,7 @@ const AssetImage feiniuImage = AssetImage('assets/images/feiniu.png');
 const AssetImage folderImage = AssetImage('assets/images/folder.png');
 const AssetImage fontImage = AssetImage('assets/images/font.png');
 const AssetImage forwardImage = AssetImage('assets/images/forward.png');
+const AssetImage forYouImage = AssetImage('assets/images/for_you.png');
 const AssetImage fullscreenExitImage = AssetImage(
   'assets/images/fullscreen_exit.png',
 );

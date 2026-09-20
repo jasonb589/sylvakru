@@ -161,6 +161,19 @@ class Sidebar extends StatelessWidget {
                   slivers: [
                     SliverToBoxAdapter(
                       child: sidebarItem(
+                        label: 'forYou',
+
+                        leading: ImageIcon(forYouImage, size: 30),
+                        content: l10n.forYou,
+
+                        onTap: () {
+                          layersManager.switchRootLayer('forYou');
+                        },
+                      ),
+                    ),
+
+                    SliverToBoxAdapter(
+                      child: sidebarItem(
                         label: 'artists',
                         leading: ImageIcon(artistImage, size: 30),
                         content: l10n.artists,
@@ -231,19 +244,6 @@ class Sidebar extends StatelessWidget {
 
                         onTap: () {
                           layersManager.switchRootLayer('ranking');
-                        },
-                      ),
-                    ),
-
-                    SliverToBoxAdapter(
-                      child: sidebarItem(
-                        label: 'forYou',
-
-                        leading: ImageIcon(recentlyAddedImage, size: 30),
-                        content: l10n.forYou,
-
-                        onTap: () {
-                          layersManager.switchRootLayer('forYou');
                         },
                       ),
                     ),

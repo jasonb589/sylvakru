@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sylvakru/base/app.dart';
 import 'package:sylvakru/base/asset_images.dart';
 import 'package:sylvakru/base/data/history.dart';
 import 'package:sylvakru/base/audio_handler.dart';
@@ -54,6 +55,9 @@ class _ForYouLayerState extends State<ForYouLayer> {
 
     // playing a song changes what should be recommended
     history.recentlyChangeNotifier.addListener(_onHistoryChanged);
+
+    // stream sources have not fetched their artists yet at this point
+    _ensureArtists();
     library.changeNotifier.addListener(_onHistoryChanged);
   }
 
@@ -83,6 +87,21 @@ class _ForYouLayerState extends State<ForYouLayer> {
       }
     }
     return const {};
+  }
+
+  /// Loads the artist list if the source has not provided it yet.
+  ///
+  /// Stream sources only fetch their artists when the artist page is opened,
+  /// so without this the artist section would stay empty until the listener
+  /// happened to visit that page first.
+  Future<void> _ensureArtists() async {
+    if (artistAlbumManager.artistList.isNotEmpty || !isStreamSource) {
+      return;
+    }
+    await artistAlbumManager.loadArtists();
+    if (mounted) {
+      _rebuild();
+    }
   }
 
   void _rebuild() {
@@ -173,7 +192,7 @@ class _ForYouLayerState extends State<ForYouLayer> {
             ),
             child: Row(
               children: [
-                ImageIcon(recentlyImage, size: 34),
+                ImageIcon(forYouImage, size: 34),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -267,21 +286,28 @@ class _ForYouLayerState extends State<ForYouLayer> {
     );
   }
 
-  /// A horizontally scrolling row of recommended artists.
+  /// A horizontally scrolling row of recommended artist cards.
+  ///
+  /// Card layout follows the platform-playlist style: large cover, bold title,
+  /// muted subtitle.
   Widget artistRow(double horizontalPadding) {
+    const cardWidth = 180.0;
+    const coverSize = 180.0;
+
     return SizedBox(
-      height: 190,
+      // cover + title + subtitle
+      height: coverSize + 62,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
         itemCount: _artists.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 15),
+        separatorBuilder: (_, _) => const SizedBox(width: 18),
         itemBuilder: (context, index) {
           final recommendation = _artists[index];
           final artist = recommendation.artist;
 
           return SizedBox(
-            width: 130,
+            width: cardWidth,
             child: InkWell(
               mouseCursor: SystemMouseCursors.click,
               borderRadius: BorderRadius.circular(10),
@@ -292,27 +318,33 @@ class _ForYouLayerState extends State<ForYouLayer> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   ListenableBuilder(
-                    listenable: Listenable.merge([artist.picture.changeNotifier]),
+                    listenable: Listenable.merge([
+                      artist.picture.changeNotifier,
+                    ]),
                     builder: (_, _) {
                       return CoverArtWidget(
-                        size: 130,
-                        borderRadius: 10,
+                        size: coverSize,
+                        borderRadius: 12,
                         picture: artist.picture,
                       );
                     },
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 10),
                   Text(
                     artist.name,
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 13),
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
+                  const SizedBox(height: 2),
                   Text(
-                    _artistReasonText(recommendation),
+                    _artistSubtitle(recommendation),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 11, color: iconColor.value),
+                    style: TextStyle(fontSize: 12, color: iconColor.value),
                   ),
                 ],
               ),
@@ -323,12 +355,12 @@ class _ForYouLayerState extends State<ForYouLayer> {
     );
   }
 
-  String _artistReasonText(ArtistRecommendation recommendation) {
+  /// The muted second line of an artist card: how many songs are still
+  /// unheard when that is known, otherwise why the artist was picked.
+  String _artistSubtitle(ArtistRecommendation recommendation) {
     final l10n = AppLocalizations.of(context);
-    // an artist with unheard material is the most useful thing to say
     final unexplored = recommendation.totalSongs - recommendation.playedSongs;
-    if (recommendation.reason == RecommendReason.favoriteArtist &&
-        unexplored > 0) {
+    if (unexplored > 0) {
       return l10n.reasonUnexplored(unexplored);
     }
     return recommendReasonText(
