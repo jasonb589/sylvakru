@@ -99,10 +99,34 @@ class BottomControl extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   subtitle: currentSong != null
-                      ? Text(
-                          "${getArtist(currentSong)} - ${getAlbum(currentSong)}",
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: 13),
+                      ? Row(
+                          children: [
+                            // the artist name links to its artist page, the rest
+                            // of the tile still opens the lyrics page
+                            Flexible(
+                              child: GestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                onTap: () {
+                                  goToArtist(currentSong, context);
+                                },
+                                child: MouseRegion(
+                                  cursor: SystemMouseCursors.click,
+                                  child: Text(
+                                    getArtist(currentSong),
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(fontSize: 13),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Flexible(
+                              child: Text(
+                                " - ${getAlbum(currentSong)}",
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(fontSize: 13),
+                              ),
+                            ),
+                          ],
                         )
                       : null,
                   onTap: () {
