@@ -22,6 +22,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # full history + tags, so the release notes can diff against the
+          # previous tag (the default shallow clone has neither)
+          fetch-depth: 0
 
       # keep this in sync with .fvmrc and the `flutter:` constraint in pubspec.yaml
       - name: Set up Flutter
@@ -105,9 +109,69 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $version = "${{ github.ref_name }}".TrimStart('v')
-          gh release view "${{ github.ref_name }}" 2>$null
-          if ($LASTEXITCODE -ne 0) {
-            gh release create "${{ github.ref_name }}" --title "Sylvakru $version" --generate-notes
+          $tag = "${{ github.ref_name }}"
+          $version = $tag.TrimStart('v')
+
+          # git prints UTF-8; without this a non-UTF-8 console mangles every
+          # non-ASCII commit message
+          [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
+          $OutputEncoding = New-Object System.Text.UTF8Encoding($false)
+
+          # Build the notes from the commits since the previous tag, using each
+          # commit's full body (not just the subject) so the release explains
+          # what changed and why.
+          $prev = git describe --tags --abbrev=0 "$tag^" 2>$null
+          $range = if ($LASTEXITCODE -eq 0 -and $prev) { "$prev..$tag" } else { $tag }
+          Write-Host "Collecting changes from $range"
+
+          $lines = New-Object System.Collections.Generic.List[string]
+          $lines.Add('## 本次改动')
+          $lines.Add('')
+          # skip the version-bump chore commits, they say nothing useful
+          $commits = git log --no-merges --pretty=format:'%s%n%b%n---END---' $range |
+            ForEach-Object { $_ } | Out-String
+          $entries = $commits -split '---END---' | Where-Object { $_.Trim() -ne '' }
+          $any = $false
+          foreach ($entry in $entries) {
+            $body = $entry.Trim()
+            if ($body -eq '') { continue }
+            $first = ($body -split "`n")[0].Trim()
+            $rest = ($body -split "`n" | Select-Object -Skip 1) -join "`n"
+            # skip the version-bump chores: they carry no body and say nothing
+            # useful. Matching on "chore:" + empty body keeps this independent of
+            # the message language.
+            if ($first -match '^chore:' -and $rest.Trim() -eq '') { continue }
+            $any = $true
+            $lines.Add("### $first")
+            if ($rest.Trim() -ne '') {
+              $lines.Add('')
+              $lines.Add($rest.Trim())
+            }
+            $lines.Add('')
           }
-          gh release upload "${{ github.ref_name }}" $env:ZIP_NAME --clobber
+          if (-not $any) {
+            $lines.Add('（本次仅包含版本号变更）')
+            $lines.Add('')
+          }
+
+          $lines.Add('## 下载')
+          $lines.Add('')
+          $lines.Add("- ``$env:ZIP_NAME`` — Windows x64 免安装，解压后运行 ``Release/Sylvakru.exe``")
+          $lines.Add('')
+          if ($prev) {
+            $lines.Add("**完整对比**: https://github.com/${{ github.repository }}/compare/$prev...$tag")
+          }
+
+          $notesPath = Join-Path $env:RUNNER_TEMP 'release-notes.md'
+          [System.IO.File]::WriteAllText($notesPath, ($lines -join "`n"), (New-Object System.Text.UTF8Encoding($false)))
+          Write-Host "----- release notes -----"
+          Get-Content $notesPath | Write-Host
+
+          gh release view $tag 2>$null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create $tag --title "Sylvakru $version" --notes-file $notesPath
+          } else {
+            # keep an existing release's notes in sync on a re-run
+            gh release edit $tag --notes-file $notesPath
+          }
+          gh release upload $tag $env:ZIP_NAME --clobber
