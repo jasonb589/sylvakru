@@ -375,8 +375,6 @@ class _BigHomePanelState extends State<BigHomePanel> {
                   visualDensity: .new(vertical: -4),
                 );
               },
-              getTag: (index) =>
-                  'big${artistAlbumManager.recentlyAddedAlbumList[index].picture.id}${artistAlbumManager.recentlyAddedAlbumList[index].name}',
               verticalController: verticalController,
             );
           },
