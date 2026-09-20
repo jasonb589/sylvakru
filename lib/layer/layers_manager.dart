@@ -21,6 +21,7 @@ import 'package:sylvakru/layer/license_layer.dart';
 import 'package:sylvakru/layer/playlists_layer.dart';
 import 'package:sylvakru/layer/premium_layer.dart';
 import 'package:sylvakru/layer/ranking_layer.dart';
+import 'package:sylvakru/layer/recently_added_layer.dart';
 import 'package:sylvakru/layer/recently_layer.dart';
 import 'package:sylvakru/layer/settings_layer.dart';
 import 'package:sylvakru/layer/single_album_layer.dart';
@@ -134,6 +135,8 @@ class LayersManager {
         return RankingLayer(key: GlobalKey());
       } else if (label == 'recently') {
         return RecentlyLayer(key: GlobalKey());
+      } else if (label == 'recentlyAdded') {
+        return RecentlyAddedLayer(key: GlobalKey());
       } else if (label == 'playlists') {
         return PlaylistsLayer(key: GlobalKey());
       } else if (label == 'settings') {
@@ -234,6 +237,10 @@ class LayersManager {
       rootKey = recentlyKey;
       visibleNotifier = recentlyVisibleNotifier;
       detailLayer = SingleAlbumLayer(album: detail, rootLabel: 'recently');
+    } else if (label == 'recentlyAdded') {
+      rootKey = recentlyAddedKey;
+      visibleNotifier = recentlyAddedVisibleNotifier;
+      detailLayer = SingleAlbumLayer(album: detail, rootLabel: 'recentlyAdded');
     } else if (label == 'playlists') {
       rootKey = playlistsKey;
       visibleNotifier = playlistsVisibleNotifier;
@@ -304,6 +311,9 @@ class LayersManager {
     } else if (label == 'recently') {
       rootKey = recentlyKey;
       visibleNotifier = recentlyVisibleNotifier;
+    } else if (label == 'recentlyAdded') {
+      rootKey = recentlyAddedKey;
+      visibleNotifier = recentlyAddedVisibleNotifier;
     } else if (label == 'folders') {
       rootKey = foldersKey;
       visibleNotifier = foldersVisibleNotifier;
@@ -429,6 +439,7 @@ class LayersManager {
     popDetail('folders', executePop: false);
     popDetail('ranking', executePop: false);
     popDetail('recently', executePop: false);
+    popDetail('recentlyAdded', executePop: false);
     popDetail('playlists', executePop: false);
     while (await layersManager.popDetail('settings')) {}
 
@@ -449,6 +460,7 @@ class LayersManager {
     popDetail('folders', executePop: false);
     popDetail('ranking', executePop: false);
     popDetail('recently', executePop: false);
+    popDetail('recentlyAdded', executePop: false);
     popDetail('playlists', executePop: false);
 
     layerInfoMap.removeWhere((k, v) => k != topRootLayer);

@@ -79,15 +79,24 @@ class ArtistAlbumManager {
     updateNotifier.value++;
   }
 
+  /// The albums that have ever been added, newest added first.
+  ///
+  /// Stream sources only know the albums they have already fetched, so this
+  /// list is filled by [loadRecentlyAdded].
+  List<Album> get recentlyAddedAlbums {
+    final sorted = albumList.where((album) => album.addedTime != null).toList()
+      ..sort((a, b) => b.addedTime!.compareTo(a.addedTime!));
+    return sorted;
+  }
+
   /// Rebuilds [recentlyAddedAlbumList] from the local album list.
   ///
   /// Only meaningful for non-stream sources, where every album already knows
   /// when its files were last modified.
   void updateRecentlyAddedFromAlbums() {
-    final sorted = albumList.where((album) => album.addedTime != null).toList()
-      ..sort((a, b) => b.addedTime!.compareTo(a.addedTime!));
-
-    recentlyAddedAlbumList = sorted.take(recentlyAddedLimit).toList();
+    recentlyAddedAlbumList = recentlyAddedAlbums
+        .take(recentlyAddedLimit)
+        .toList();
     recentlyAddedNotifier.value++;
   }
 

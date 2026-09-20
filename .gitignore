@@ -48,3 +48,5 @@ app.*.map.json
 *.pfx
 # WorkBuddy local workspace data
 .workbuddy-ai/
+# Reasonix local session data (chat attachments, caches)
+.reasonix/

@@ -41,6 +41,7 @@ import 'package:sylvakru/layer/folders_layer.dart';
 import 'package:sylvakru/layer/layers_manager.dart';
 import 'package:sylvakru/layer/playlists_layer.dart';
 import 'package:sylvakru/layer/ranking_layer.dart';
+import 'package:sylvakru/layer/recently_added_layer.dart';
 import 'package:sylvakru/layer/recently_layer.dart';
 import 'package:sylvakru/portrait_view/custom_appbar_leading.dart';
 import 'package:sylvakru/portrait_view/my_search_field.dart';
@@ -324,6 +325,8 @@ class _SongListState extends State<SongList> {
         rootVisibleNotifier = albumsVisibleNotifier;
       } else if (rootLabel == 'ranking') {
         rootVisibleNotifier = rankingVisibleNotifier;
+      } else if (rootLabel == 'recentlyAdded') {
+        rootVisibleNotifier = recentlyAddedVisibleNotifier;
       } else {
         rootVisibleNotifier = recentlyVisibleNotifier;
       }

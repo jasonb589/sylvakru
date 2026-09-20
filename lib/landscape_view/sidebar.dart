@@ -247,6 +247,19 @@ class Sidebar extends StatelessWidget {
                         },
                       ),
                     ),
+
+                    SliverToBoxAdapter(
+                      child: sidebarItem(
+                        label: 'recentlyAdded',
+
+                        leading: ImageIcon(albumImage, size: 30),
+                        content: l10n.recentlyAdded,
+
+                        onTap: () {
+                          layersManager.switchRootLayer('recentlyAdded');
+                        },
+                      ),
+                    ),
                     SliverToBoxAdapter(child: SizedBox(height: 5)),
                     SliverToBoxAdapter(
                       child: MyDivider(
