@@ -35,6 +35,9 @@ class ForYouLayer extends StatefulWidget {
 class _ForYouLayerState extends State<ForYouLayer> {
   final scrollController = ScrollController();
 
+  /// Drives the horizontal artist row's scrollbar.
+  final artistController = ScrollController();
+
   /// Bumped by "refresh" to pick a different set from the same taste profile.
   int _seed = 0;
 
@@ -288,73 +291,89 @@ class _ForYouLayerState extends State<ForYouLayer> {
 
   /// A horizontally scrolling row of recommended artist cards.
   ///
-  /// Card layout follows the platform-playlist style: large cover, bold title,
-  /// muted subtitle.
+  /// Card layout follows the platform-playlist style: cover, bold title, muted
+  /// subtitle. The cover is kept modest (132px) because artist images from the
+  /// metadata provider are only around 300px, so a larger render would just be
+  /// an upscaled blur.
+  ///
+  /// A thin scrollbar sits under the row: without it there is no hint that more
+  /// artists continue past the right edge.
   Widget artistRow(double horizontalPadding) {
-    const cardWidth = 180.0;
-    const coverSize = 180.0;
+    const cardWidth = 132.0;
+    const coverSize = 132.0;
 
-    return SizedBox(
-      // cover + title + subtitle
-      height: coverSize + 62,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-        itemCount: _artists.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 18),
-        itemBuilder: (context, index) {
-          final recommendation = _artists[index];
-          final artist = recommendation.artist;
+    return Scrollbar(
+      controller: artistController,
+      // horizontal, so it hugs the bottom of the row
+      thickness: 4,
+      radius: const Radius.circular(4),
+      child: SizedBox(
+        // cover + title + subtitle + room for the scrollbar
+        height: coverSize + 62,
+        child: ListView.separated(
+          controller: artistController,
+          scrollDirection: Axis.horizontal,
+          padding: EdgeInsets.fromLTRB(
+            horizontalPadding,
+            0,
+            horizontalPadding,
+            12,
+          ),
+          itemCount: _artists.length,
+          separatorBuilder: (_, _) => const SizedBox(width: 16),
+          itemBuilder: (context, index) {
+            final recommendation = _artists[index];
+            final artist = recommendation.artist;
 
-          return SizedBox(
-            width: cardWidth,
-            child: InkWell(
-              mouseCursor: SystemMouseCursors.click,
-              borderRadius: BorderRadius.circular(10),
-              onTap: () {
-                layersManager.openArtistDetail(artist);
-              },
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ListenableBuilder(
-                    listenable: Listenable.merge([
-                      artist.picture.changeNotifier,
-                    ]),
-                    builder: (_, _) {
-                      return CoverArtWidget(
-                        size: coverSize,
-                        borderRadius: 12,
-                        picture: artist.picture,
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    artist.name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
+            return SizedBox(
+              width: cardWidth,
+              child: InkWell(
+                mouseCursor: SystemMouseCursors.click,
+                borderRadius: BorderRadius.circular(10),
+                onTap: () {
+                  layersManager.openArtistDetail(artist);
+                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ListenableBuilder(
+                      listenable: Listenable.merge([
+                        artist.picture.changeNotifier,
+                      ]),
+                      builder: (_, _) {
+                        return CoverArtWidget(
+                          size: coverSize,
+                          borderRadius: 10,
+                          picture: artist.picture,
+                        );
+                      },
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    _artistSubtitle(recommendation),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 12, color: iconColor.value),
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    Text(
+                      artist.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      _artistSubtitle(recommendation),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 11, color: iconColor.value),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
-
   /// The muted second line of an artist card: how many songs are still
   /// unheard when that is known, otherwise why the artist was picked.
   String _artistSubtitle(ArtistRecommendation recommendation) {

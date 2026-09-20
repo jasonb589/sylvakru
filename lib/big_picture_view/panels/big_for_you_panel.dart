@@ -163,7 +163,8 @@ class _BigForYouPanelState extends State<BigForYouPanel> {
                 ),
               ),
             ),
-            SizedBox(height: 280, child: artistRow()),
+            // cover + title + subtitle + room for the scrollbar
+            SizedBox(height: 132 + 76, child: artistRow()),
           ],
           if (_songs.isNotEmpty) ...[
             Padding(
@@ -193,66 +194,79 @@ class _BigForYouPanelState extends State<BigForYouPanel> {
     );
   }
 
+  /// Recommended artist cards.
+  ///
+  /// Cover is 132px rather than full size: the metadata provider's artist
+  /// images are only around 300px, so rendering them larger just upscales a
+  /// blur. A thin scrollbar under the row shows that more continue off-screen.
   Widget artistRow() {
-    return ListView.separated(
-      controller: artistController,
-      scrollDirection: Axis.horizontal,
-      padding: EdgeInsets.symmetric(
-        horizontal: isTooNarrow(context) ? 20 : 40,
-      ),
-      itemCount: _artists.length,
-      separatorBuilder: (_, _) => const SizedBox(width: 30),
-      itemBuilder: (context, index) {
-        final recommendation = _artists[index];
-        final artist = recommendation.artist;
+    const coverSize = 132.0;
+    final sidePadding = isTooNarrow(context) ? 20.0 : 40.0;
 
-        return ScaleWidget(
-          onTap: () {
-            Navigator.of(context).push(
-              ZoomPageRoute(
-                builder: (context) => BigSingleArtistPanel(artist: artist),
-              ),
-            );
-          },
-          child: SizedBox(
-            width: 200,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 15),
-                ListenableBuilder(
-                  listenable: Listenable.merge([artist.picture.changeNotifier]),
-                  builder: (_, _) {
-                    return CoverArtWidget(
-                      size: 200,
-                      borderRadius: 20,
-                      picture: artist.picture,
-                    );
-                  },
+    return Scrollbar(
+      controller: artistController,
+      thickness: 4,
+      radius: const Radius.circular(4),
+      child: ListView.separated(
+        controller: artistController,
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.fromLTRB(sidePadding, 0, sidePadding, 12),
+        itemCount: _artists.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 16),
+        itemBuilder: (context, index) {
+          final recommendation = _artists[index];
+          final artist = recommendation.artist;
+
+          return ScaleWidget(
+            onTap: () {
+              Navigator.of(context).push(
+                ZoomPageRoute(
+                  builder: (context) => BigSingleArtistPanel(artist: artist),
                 ),
-                SizedBox(
-                  width: 180,
-                  child: ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(
-                      artist.name,
-                      style: const TextStyle(overflow: TextOverflow.ellipsis),
-                    ),
-                    subtitle: Text(
-                      _artistReasonText(recommendation),
-                      style: const TextStyle(
-                        fontSize: 11,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    visualDensity: const VisualDensity(vertical: -4),
+              );
+            },
+            child: SizedBox(
+              width: coverSize,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 15),
+                  ListenableBuilder(
+                    listenable: Listenable.merge([
+                      artist.picture.changeNotifier,
+                    ]),
+                    builder: (_, _) {
+                      return CoverArtWidget(
+                        size: coverSize,
+                        borderRadius: 10,
+                        picture: artist.picture,
+                      );
+                    },
                   ),
-                ),
-              ],
+                  SizedBox(
+                    width: coverSize,
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(
+                        artist.name,
+                        style: const TextStyle(overflow: TextOverflow.ellipsis),
+                      ),
+                      subtitle: Text(
+                        _artistReasonText(recommendation),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      visualDensity: const VisualDensity(vertical: -4),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
