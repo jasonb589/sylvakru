@@ -1282,9 +1282,9 @@ void goToArtist(
     }
   } else {
     showCenterLoading();
-    await Future.delayed(Duration(milliseconds: 250));
-    layersManager.switchRootLayer('artists');
-    await layersManager.pushDetailIfNeed(artist);
+    // openArtistDetail switches layers and pushes the detail in one go, so the
+    // artist list is never shown in between
+    await layersManager.openArtistDetail(artist);
     removeCenterLoading();
   }
 }
@@ -1349,15 +1349,18 @@ void goToAlbum(
     return;
   }
 
-  layersManager.switchRootLayer('albums');
-
   showCenterLoading();
   if (isNotStreamSource) {
-    await layersManager.pushDetailIfNeed(
-      artistAlbumManager.albumMap[getAlbum(song)],
-    );
+    final target = artistAlbumManager.albumMap[getAlbum(song)];
+    if (target == null) {
+      removeCenterLoading();
+      showCenterMessage('Get album failed');
+      return;
+    }
+    await layersManager.openAlbumDetail(target);
   } else {
-    await layersManager.pushDetailIfNeed(album);
+    await layersManager.openAlbumDetail(album);
   }
+  removeCenterLoading();
   removeCenterLoading();
 }

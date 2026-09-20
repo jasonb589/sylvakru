@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:material_ui/material_ui.dart';
@@ -285,7 +286,16 @@ class LayersManager {
     });
   }
 
-  Future<bool> popDetail(String label, {bool executePop = true}) async {
+  /// Pops the detail layer of [label].
+  ///
+  /// [revealRoot] false keeps the root list hidden afterwards; the direct
+  /// navigation helpers use that so the list never flashes while one detail
+  /// page is being swapped for another.
+  Future<bool> popDetail(
+    String label, {
+    bool executePop = true,
+    bool revealRoot = true,
+  }) async {
     if (rootLayerMap[label] == null) {
       return false;
     }
@@ -334,20 +344,98 @@ class LayersManager {
     if ((rootKey.currentState?.canPop() ?? false) && executePop) {
       rootKey.currentState?.pop();
     }
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      visibleNotifier.value = true;
-    });
+    if (revealRoot) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        visibleNotifier.value = true;
+      });
+    }
 
     return true;
   }
 
-  Future<void> pushDetailIfNeed(dynamic detail) async {
+  /// Completes after the next frame has been built.
+  ///
+  /// The artist/album layers are built lazily, and pushDetail needs their
+  /// NavigatorState, so callers used to wait a fixed 500ms for that. Waiting
+  /// for an actual frame is both faster and more reliable.
+  Future<void> _nextFrame() {
+    final completer = Completer<void>();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!completer.isCompleted) {
+        completer.complete();
+      }
+    });
+    WidgetsBinding.instance.scheduleFrame();
+    return completer.future;
+  }
+
+  /// Waits until [key] has a mounted Navigator, giving up after a few frames.
+  Future<void> _waitForNavigator(GlobalKey<NavigatorState> key) async {
+    for (var i = 0; i < 10 && key.currentState == null; i++) {
+      await _nextFrame();
+    }
+  }
+
+  /// Opens [artist]'s page directly, without showing the artist list first.
+  ///
+  /// The list is hidden before switching layers so it never flashes between
+  /// the tap and the detail page, and stays hidden while a previously opened
+  /// detail is being replaced.
+  Future<void> openArtistDetail(Artist artist) async {
+    final rootLayer = getRootLayer('artists');
+    final current = (detailWidgetMap[rootLayer] as SingleArtistLayer?)?.artist;
+
+    if (current == artist) {
+      switchRootLayer('artists');
+      return;
+    }
+
+    if (current == null) {
+      artistsVisibleNotifier.value = false;
+    }
+
+    switchRootLayer('artists');
+    await pushDetailIfNeed(artist, revealRoot: false);
+  }
+
+  /// Opens [album]'s page directly, without showing the album list first.
+  ///
+  /// Mirrors [openArtistDetail]: the list is hidden before switching layers so
+  /// it never flashes between the tap and the detail page.
+  Future<void> openAlbumDetail(Album album) async {
+    final rootLayer = getRootLayer('albums');
+    final current = (detailWidgetMap[rootLayer] as SingleAlbumLayer?)?.album;
+
+    if (current == album) {
+      switchRootLayer('albums');
+      return;
+    }
+
+    if (current == null) {
+      albumsVisibleNotifier.value = false;
+    }
+
+    switchRootLayer('albums');
+    await pushDetailIfNeed(album, revealRoot: false);
+  }
+
+  /// Shows [detail] as the artist/album detail page.
+  ///
+  /// [revealRoot] is false when this is part of a direct jump (see
+  /// [openArtistDetail]): the root list stays hidden while the previous detail
+  /// is popped, so it never flashes mid-transition.
+  Future<void> pushDetailIfNeed(
+    dynamic detail, {
+    bool revealRoot = true,
+  }) async {
     if (detail is Artist) {
       if ((detailWidgetMap[getRootLayer('artists')] as SingleArtistLayer?)
               ?.artist !=
           detail) {
-        await Future.delayed(Duration(milliseconds: 500));
-        if (await popDetail('artists')) {
+        await _waitForNavigator(artistsKey);
+        if (await popDetail('artists', revealRoot: revealRoot)) {
+          // let the pop transition finish before pushing its replacement,
+          // otherwise the two transitions overlap
           await Future.delayed(Duration(milliseconds: 500));
         }
         pushDetail('artists', detail);
@@ -356,8 +444,8 @@ class LayersManager {
       if ((detailWidgetMap[getRootLayer('albums')] as SingleAlbumLayer?)
               ?.album !=
           detail) {
-        await Future.delayed(Duration(milliseconds: 500));
-        if (await popDetail('albums')) {
+        await _waitForNavigator(albumsKey);
+        if (await popDetail('albums', revealRoot: revealRoot)) {
           await Future.delayed(Duration(milliseconds: 500));
         }
 
