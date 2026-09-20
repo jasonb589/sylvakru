@@ -45,6 +45,15 @@ function(APPLY_STANDARD_SETTINGS TARGET)
   target_compile_definitions(${TARGET} PRIVATE "$<$<CONFIG:Debug>:_DEBUG>")
 endfunction()
 
+# MSVC 14.51 (Visual Studio 18, the current windows-latest image) turned the
+# deprecated <experimental/coroutine> headers into a hard error, and the
+# CppWinRT that permission_handler_windows fetches at configure time still
+# includes them, so the plugin fails to compile with C2338. Permission handling
+# is Android/iOS only in this app (see Loader.init and EditMetadata), but the
+# plugin is still built for Windows, so silence the deprecation for every
+# target added below instead of dropping the dependency.
+add_compile_definitions(_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS)
+
 # Flutter library and tool build rules.
 set(FLUTTER_MANAGED_DIR "${CMAKE_CURRENT_SOURCE_DIR}/flutter")
 add_subdirectory(${FLUTTER_MANAGED_DIR})
