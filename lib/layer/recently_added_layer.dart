@@ -37,7 +37,12 @@ class _RecentlyAddedLayerState extends CollectionListState {
   @override
   String get label => 'recentlyAdded';
 
-  List<Album> get _albumList => artistAlbumManager.recentlyAddedAlbums;
+  // recentlyAddedAlbumAll is what loadRecentlyAdded() fills; this page is
+  // documented to show the albums without the recentlyAddedLimit cap. The
+  // recentlyAddedAlbums getter derives from albumList, which stream sources
+  // only populate after the albums page was opened, so this page would show 0
+  // albums on a fresh Navidrome/Emby session.
+  List<Album> get _albumList => artistAlbumManager.recentlyAddedAlbumAll;
 
   @override
   void updateCurrentList() {

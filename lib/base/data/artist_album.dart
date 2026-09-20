@@ -22,8 +22,13 @@ class ArtistAlbumManager {
   Map<String, Album> albumMap = {};
   final updateNotifier = ValueNotifier(0);
 
-  /// The albums shown in the "recently added" module on the home page.
+  /// The newest albums, capped at [recentlyAddedLimit]. These are what the
+  /// compact "recently added" modules on the home screens render.
   List<Album> recentlyAddedAlbumList = [];
+
+  /// The same albums without the cap, for the full "recently added" page.
+  List<Album> recentlyAddedAlbumAll = [];
+
   final recentlyAddedNotifier = ValueNotifier(0);
 
   /// How many albums the "recently added" module shows at most.
@@ -89,14 +94,14 @@ class ArtistAlbumManager {
     return sorted;
   }
 
-  /// Rebuilds [recentlyAddedAlbumList] from the local album list.
+  /// Rebuilds the "recently added" lists from the local album list.
   ///
   /// Only meaningful for non-stream sources, where every album already knows
   /// when its files were last modified.
   void updateRecentlyAddedFromAlbums() {
-    recentlyAddedAlbumList = recentlyAddedAlbums
-        .take(recentlyAddedLimit)
-        .toList();
+    final sorted = recentlyAddedAlbums;
+    recentlyAddedAlbumAll = sorted;
+    recentlyAddedAlbumList = sorted.take(recentlyAddedLimit).toList();
     recentlyAddedNotifier.value++;
   }
 
@@ -155,11 +160,10 @@ class ArtistAlbumManager {
         if (sorted.every((album) => album.created != null)) {
           sorted.sort((a, b) => b.created!.compareTo(a.created!));
         }
+        recentlyAddedAlbumAll = sorted;
         recentlyAddedAlbumList = sorted.take(recentlyAddedLimit).toList();
-      }
-      // a failed request must not be cached as success, otherwise the module
-      // stays empty for the whole session when the server was unreachable
-      if (albumList != null) {
+        // a failed request must not be cached as success, otherwise the module
+        // stays empty for the whole session when the server was unreachable
         _recentlyAddedLoaded = true;
         recentlyAddedNotifier.value++;
       }
@@ -226,6 +230,7 @@ class ArtistAlbumManager {
     // stream sources have to ask the server again for their newest albums
     _recentlyAddedLoaded = false;
     recentlyAddedAlbumList = [];
+    recentlyAddedAlbumAll = [];
 
     classify();
   }

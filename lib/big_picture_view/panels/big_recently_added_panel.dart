@@ -50,7 +50,7 @@ class _BigRecentlyAddedAlbumListPanelState
   void updateCurrentList() {
     preparing = false;
     final value = textController.text;
-    final list = artistAlbumManager.recentlyAddedAlbums
+    final list = artistAlbumManager.recentlyAddedAlbumList
         .where((e) => (e.name.toLowerCase().contains(value.toLowerCase())))
         .toList();
 
