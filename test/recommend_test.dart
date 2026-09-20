@@ -4,6 +4,7 @@ import 'package:audio_tags_lofty/audio_tags_lofty.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sylvakru/base/app.dart';
 import 'package:sylvakru/base/data/recommend.dart';
+import 'package:sylvakru/base/data/artist_album.dart';
 import 'package:sylvakru/base/my_audio_metadata.dart';
 
 MyAudioMetadata song(
@@ -202,6 +203,66 @@ void main() {
       expect(
         first.map((e) => e.song.id),
         orderedEquals(second.map((e) => e.song.id)),
+      );
+    });
+
+    test('a different seed picks a different set', () {
+      final liked = song('liked', artist: 'A', genre: 'Rock', playCount: 9);
+      final candidates = List.generate(
+        30,
+        (i) => song('s$i', artist: 'A', genre: 'Rock'),
+      );
+      final taste = Recommender.buildTaste([liked]);
+      final first = Recommender.recommendSongs(
+        songs: candidates,
+        taste: taste,
+        limit: 10,
+        seed: 1,
+      );
+      final second = Recommender.recommendSongs(
+        songs: candidates,
+        taste: taste,
+        limit: 10,
+        seed: 2,
+      );
+
+      // "refresh" has to actually change the list, otherwise the button looks
+      // broken even though it runs
+      expect(
+        first.map((e) => e.song.id),
+        isNot(orderedEquals(second.map((e) => e.song.id))),
+      );
+    });
+  });
+
+  group('recommendArtists', () {
+    test('a different seed picks a different set', () {
+      // every artist needs some listening history, otherwise affinity is 0 and
+      // the candidate is filtered out before ranking
+      final history = List.generate(
+        30,
+        (i) => song('s$i', artist: 'Artist $i', genre: 'Rock', playCount: 5),
+      );
+      final taste = Recommender.buildTaste(history);
+      final artists = List.generate(30, (i) => Artist('Artist $i'));
+
+      final first = Recommender.recommendArtists(
+        artists: artists,
+        taste: taste,
+        limit: 8,
+        seed: 1,
+      );
+      final second = Recommender.recommendArtists(
+        artists: artists,
+        taste: taste,
+        limit: 8,
+        seed: 2,
+      );
+
+      expect(first, hasLength(8));
+      expect(
+        first.map((e) => e.artist.name),
+        isNot(orderedEquals(second.map((e) => e.artist.name))),
       );
     });
   });

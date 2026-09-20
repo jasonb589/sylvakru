@@ -30,7 +30,12 @@ class _BigForYouPanelState extends State<BigForYouPanel> {
   final verticalController = ScrollController();
   final artistController = ScrollController();
 
-  int _seed = 0;
+  /// Picks which of the near-equally-good candidates to show.
+  ///
+  /// Starts from the clock rather than 0, so opening the app again offers a
+  /// different set instead of repeating the same one every launch. "Refresh"
+  /// bumps it to move on from the current set.
+  int _seed = DateTime.now().millisecondsSinceEpoch;
   Taste? _taste;
   List<SongRecommendation> _songs = const [];
   List<ArtistRecommendation> _artists = const [];
@@ -94,6 +99,7 @@ class _BigForYouPanelState extends State<BigForYouPanel> {
       _artists = Recommender.recommendArtists(
         artists: artistAlbumManager.artistList,
         taste: taste,
+        seed: _seed,
       );
     });
   }
@@ -133,17 +139,21 @@ class _BigForYouPanelState extends State<BigForYouPanel> {
                 style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
               const Spacer(),
+              // matches the surrounding icons rather than the theme's purple
+              // button accent
               TextButton.icon(
                 onPressed: () {
                   _seed++;
                   _rebuild();
                 },
+                style: TextButton.styleFrom(foregroundColor: iconColor.value),
                 icon: const Icon(Icons.refresh_rounded, size: 18),
                 label: Text(l10n.refreshRecommendations),
               ),
             ],
           ),
         ),
+
         const SizedBox(height: 10),
 
         if (taste == null || taste.isEmpty)

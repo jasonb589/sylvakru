@@ -244,6 +244,12 @@ class Recommender {
 
     final reference = now ?? DateTime.now();
     final scored = <_ScoredSong>[];
+    // Per-candidate jitter: keeps the strongest matches on top while letting the
+    // seed reorder candidates whose scores are close. Sorting after a plain
+    // shuffle would discard the shuffle, which is why a refresh used to return
+    // the very same list.
+    final random = math.Random(seed);
+
 
     for (final song in songs) {
       if (playedRecently.contains(song.id)) {
@@ -298,14 +304,14 @@ class Recommender {
         basis = taste.dominantGenre;
       }
 
-      scored.add(_ScoredSong(song, score, reason, basis));
+      scored.add(_ScoredSong(song, score, reason, basis, random.nextDouble()));
     }
 
-    // stable-ish shuffle: the seed keeps the order fixed between rebuilds but
-    // varies the picks between sessions
-    final random = math.Random(seed);
-    scored.shuffle(random);
-    scored.sort((a, b) => b.score.compareTo(a.score));
+    // Rank by score, using the seed's jitter to break near-ties, so a new seed
+    // reshuffles the close calls instead of returning an identical list.
+    scored.sort(
+      (a, b) => (b.score + b.jitter).compareTo(a.score + a.jitter),
+    );
 
     return scored
         .take(limit)
@@ -320,6 +326,7 @@ class Recommender {
     required Taste taste,
     DateTime? now,
     int limit = artistLimit,
+    int seed = 0,
   }) {
     if (taste.isEmpty) {
       return const [];
@@ -327,13 +334,16 @@ class Recommender {
 
     final reference = now ?? DateTime.now();
     final result = <ArtistRecommendation>[];
+    final random = math.Random(seed);
+
+    // seed-derived offset per artist, applied when ranking
+    final jitter = <String, double>{};
 
     for (final artist in artists) {
       final affinity = taste.artistAffinity(artist.name);
       if (affinity <= 0.05) {
         continue;
       }
-
       final total = artist.songList.isNotEmpty
           ? artist.songList.length
           : artist.albumCount;
@@ -372,15 +382,20 @@ class Recommender {
           totalSongs: total,
         ),
       );
+      // seed-derived offset, so a refresh reshuffles artists whose scores are
+      // close instead of returning the same row every time
+      jitter[artist.name] = random.nextDouble();
     }
 
     result.sort((a, b) {
       final aScore = taste.artistAffinity(a.artist.name) * 3 +
           (a.reason == RecommendReason.rediscover ? 1.5 : 0) +
-          (a.totalSongs - a.playedSongs) / math.max(a.totalSongs, 1);
+          (a.totalSongs - a.playedSongs) / math.max(a.totalSongs, 1) +
+          (jitter[a.artist.name] ?? 0);
       final bScore = taste.artistAffinity(b.artist.name) * 3 +
           (b.reason == RecommendReason.rediscover ? 1.5 : 0) +
-          (b.totalSongs - b.playedSongs) / math.max(b.totalSongs, 1);
+          (b.totalSongs - b.playedSongs) / math.max(b.totalSongs, 1) +
+          (jitter[b.artist.name] ?? 0);
       return bScore.compareTo(aScore);
     });
 
@@ -394,5 +409,15 @@ class _ScoredSong {
   final RecommendReason reason;
   final String? basis;
 
-  const _ScoredSong(this.song, this.score, this.reason, this.basis);
+  /// Seed-derived offset applied when ranking, so equally good songs trade
+  /// places between refreshes.
+  final double jitter;
+
+  const _ScoredSong(
+    this.song,
+    this.score,
+    this.reason,
+    this.basis,
+    this.jitter,
+  );
 }

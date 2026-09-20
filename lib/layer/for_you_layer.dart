@@ -38,8 +38,12 @@ class _ForYouLayerState extends State<ForYouLayer> {
   /// Drives the horizontal artist row's scrollbar.
   final artistController = ScrollController();
 
-  /// Bumped by "refresh" to pick a different set from the same taste profile.
-  int _seed = 0;
+  /// Picks which of the near-equally-good candidates to show.
+  ///
+  /// Starts from the clock rather than 0, so opening the app again offers a
+  /// different set instead of repeating the same one every launch. "Refresh"
+  /// bumps it to move on from the current set.
+  int _seed = DateTime.now().millisecondsSinceEpoch;
 
   Taste? _taste;
   List<SongRecommendation> _songs = const [];
@@ -125,6 +129,7 @@ class _ForYouLayerState extends State<ForYouLayer> {
       _artists = Recommender.recommendArtists(
         artists: artistAlbumManager.artistList,
         taste: taste,
+        seed: _seed,
       );
     });
   }
@@ -214,8 +219,13 @@ class _ForYouLayerState extends State<ForYouLayer> {
                     ),
                   ),
                 ),
+                // same colour as the icons around it: the theme default for a
+                // TextButton is the purple accent, which stands out badly here
                 TextButton.icon(
                   onPressed: _refresh,
+                  style: TextButton.styleFrom(
+                    foregroundColor: iconColor.value,
+                  ),
                   icon: const Icon(Icons.refresh_rounded, size: 18),
                   label: Text(l10n.refreshRecommendations),
                 ),
