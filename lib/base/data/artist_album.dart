@@ -322,13 +322,69 @@ abstract class ArtistAlbumBase {
 }
 
 class Artist extends ArtistAlbumBase {
-  Artist(String name, {super.id, super.coverArtId}) : super(name, false);
+  Artist(
+    String name, {
+    super.id,
+    super.coverArtId,
+    this.biography,
+    this.serverAlbumCount,
+  }) : super(name, false);
 
   Set<Album> albumSet = {};
 
   List<Album> albumList = [];
 
+  /// Short description supplied by the server (Navidrome/Emby). Local and
+  /// WebDAV libraries have no such data, so this stays null there.
+  String? biography;
+
+  /// Album count reported by the server, used only until [albumList] is filled.
+  int? serverAlbumCount;
+
+  /// Whether [load] already asked the server for [biography].
+  bool biographyLoaded = false;
+
   final changeNotifier = ValueNotifier(0);
+
+  /// How many albums this artist has, preferring the loaded album list.
+  int get albumCount =>
+      albumList.isNotEmpty ? albumList.length : (serverAlbumCount ?? 0);
+
+  /// The distinct genres across this artist's songs, in first-seen order.
+  List<String> get genres {
+    final seen = <String>{};
+    for (final song in songList) {
+      final genre = song.genre;
+      if (genre == null || genre.trim().isEmpty) {
+        continue;
+      }
+      // a tag may hold several genres, e.g. "Rock/Pop"
+      for (final part in genre.split(RegExp(r'[/;]'))) {
+        final name = part.trim();
+        if (name.isNotEmpty) {
+          seen.add(name);
+        }
+      }
+    }
+    return seen.toList();
+  }
+
+  /// The active years of this artist, e.g. "1998 - 2011" or "2005".
+  ///
+  /// Derived from the album years, which every source already provides.
+  String? get yearRange {
+    final years = albumList
+        .map((album) => album.year)
+        .whereType<int>()
+        .toList()
+      ..sort();
+    if (years.isEmpty) {
+      return null;
+    }
+    final first = years.first;
+    final last = years.last;
+    return first == last ? '$first' : '$first - $last';
+  }
 
   void combineAlbums() {
     albumSet.removeWhere((album) => album.isEmpty);
@@ -349,34 +405,48 @@ class Artist extends ArtistAlbumBase {
   Future<void> load() async {
     if (completer == null) {
       completer = Completer<void>();
+
+      // the biography lives behind a separate endpoint; start it now so it
+      // arrives while the albums below are still loading
+      final biographyFuture = biographyLoaded
+          ? null
+          : streamClient?.getArtistInfo(this);
+
       if (sourceType == .navidrome || sourceType == .feiniu) {
         final albums = await streamClient?.getArtistAlbumList(id!);
-        if (albums == null) {
-          completer!.complete();
-          return;
-        } else {
+        if (albums != null) {
           albumList.addAll(albums);
-        }
-
-        for (final album in albumList) {
-          await album.load();
-          if (sourceType == .navidrome) {
-            songList.addAll(album.songList);
+          for (final album in albumList) {
+            await album.load();
+            if (sourceType == .navidrome) {
+              songList.addAll(album.songList);
+            }
+            changeNotifier.value++;
           }
-          changeNotifier.value++;
         }
         if (sourceType == .feiniu) {
           songList.addAll(await streamClient?.getArtistSongs(id!) ?? []);
           changeNotifier.value++;
         }
-        completer!.complete();
-        return;
       } else {
         songList.addAll(await streamClient?.getArtistSongs(id!) ?? []);
         changeNotifier.value++;
-        completer!.complete();
-        return;
       }
+
+      if (biographyFuture != null) {
+        try {
+          await biographyFuture;
+        } catch (_) {
+          // a missing biography must not break the artist page
+        }
+        // only remember the attempt once it succeeded, so an offline start
+        // does not permanently lose the biography
+        biographyLoaded = biography != null;
+        changeNotifier.value++;
+      }
+
+      completer!.complete();
+      return;
     }
     return completer!.future;
   }

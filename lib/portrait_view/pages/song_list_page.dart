@@ -350,6 +350,10 @@ extension _SongListPage on _SongListState {
       controller: scrollController,
       slivers: [
         SliverToBoxAdapter(child: pageHeader()),
+        // artist metadata sits between the header and the song list so the
+        // fixed-height header never overflows
+        if (artist != null)
+          SliverToBoxAdapter(child: ArtistMetadata(artist: artist!)),
         SliverToBoxAdapter(
           child: ValueListenableBuilder(
             valueListenable: currentSongListNotifier,

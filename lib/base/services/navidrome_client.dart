@@ -128,8 +128,15 @@ class NavidromeClient extends StreamClient {
     for (final index in indexs) {
       for (final map in normalize(index['artist']) ?? []) {
         final name = map['name'];
+        // albumCount is already in the payload; keep it so the artist page can
+        // show a count before the album list finishes loading
         artistList.add(
-          Artist(name, id: map['id'], coverArtId: map['coverArt']),
+          Artist(
+            name,
+            id: map['id'],
+            coverArtId: map['coverArt'],
+            serverAlbumCount: map['albumCount'] as int?,
+          ),
         );
       }
     }
@@ -152,6 +159,32 @@ class NavidromeClient extends StreamClient {
         () => Album(name, id: id, coverArtId: map['coverArt']),
       );
     }).toList();
+  }
+
+  @override
+  Future<Artist?> getArtistInfo(Artist artist) async {
+    if (artist.id == null) {
+      return null;
+    }
+    // getArtistInfo2 returns the server-side biography (and similar artists);
+    // plain getArtist.view does not carry it.
+    final res = await safeRequest(
+      '/rest/getArtistInfo2.view',
+      query: {'id': artist.id},
+    );
+    if (res == null) {
+      return null;
+    }
+    final info = res['artistInfo2'];
+    if (info is! Map) {
+      return null;
+    }
+    final biography = (info['biography'] as String?)?.trim();
+    if (biography == null || biography.isEmpty) {
+      return null;
+    }
+    artist.biography = biography;
+    return artist;
   }
 
   @override

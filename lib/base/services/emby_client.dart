@@ -169,6 +169,9 @@ class EmbyClient extends StreamClient {
           'StartIndex': 0,
           'Limit': 500,
           'SortBy': 'SortName',
+          // Emby omits these unless asked for; Overview is the biography and
+          // ChildCount the album count.
+          'Fields': 'Overview,ChildCount,PremiereDate,Genres',
         },
       ),
       parser: (res) => res.data as Map<String, dynamic>?,
@@ -184,7 +187,15 @@ class EmbyClient extends StreamClient {
     for (final map in items) {
       final name = map['Name'] ?? '';
       final id = map['Id']?.toString();
-      artistList.add(Artist(name, id: id, coverArtId: id));
+      artistList.add(
+        Artist(
+          name,
+          id: id,
+          coverArtId: id,
+          biography: (map['Overview'] as String?)?.trim(),
+          serverAlbumCount: (map['ChildCount'] as num?)?.toInt(),
+        ),
+      );
     }
 
     return artistList;

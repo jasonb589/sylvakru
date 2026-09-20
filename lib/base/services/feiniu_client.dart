@@ -282,8 +282,28 @@ class FeiniuClient extends StreamClient {
         item['name'] as String,
         id: item['guid'] as String,
         coverArtId: item['guid'] as String,
+        // the field name is not documented; accept the usual spellings and
+        // simply stay null when the server sends none
+        biography: _firstNonEmpty(item, const [
+          'description',
+          'introduction',
+          'biography',
+          'remark',
+        ]),
+        serverAlbumCount: (item['albumCount'] as num?)?.toInt(),
       );
     }).toList();
+  }
+
+  /// Returns the first non-empty string among [keys], or null.
+  String? _firstNonEmpty(Map<String, dynamic> map, List<String> keys) {
+    for (final key in keys) {
+      final value = map[key];
+      if (value is String && value.trim().isNotEmpty) {
+        return value.trim();
+      }
+    }
+    return null;
   }
 
   @override

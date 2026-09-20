@@ -47,6 +47,11 @@ abstract class StreamClient {
 
   Future<List<MyAudioMetadata>?> getArtistSongs(String id);
 
+  /// Extra metadata for one artist (biography, album count).
+  ///
+  /// Sources without such data return null; the caller keeps whatever it has.
+  Future<Artist?> getArtistInfo(Artist artist) async => null;
+
   Future<List<Album>?> getAlbumList(
     int offset, {
     String type,

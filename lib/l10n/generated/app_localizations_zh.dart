@@ -659,4 +659,13 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get savedSuccessfully => '保存成功';
+
+  @override
+  String get biography => '简介';
+
+  @override
+  String get showMore => '展开';
+
+  @override
+  String get showLess => '收起';
 }

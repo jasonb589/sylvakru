@@ -24,6 +24,7 @@ import 'package:sylvakru/base/widgets/my_divider.dart';
 import 'package:sylvakru/base/widgets/selectable_song_list_page.dart';
 import 'package:sylvakru/l10n/generated/app_localizations.dart';
 
+import 'package:sylvakru/base/widgets/artist_metadata.dart';
 class BigSingleArtistPanel extends StatefulWidget {
   final Artist artist;
   const BigSingleArtistPanel({super.key, required this.artist});
@@ -193,6 +194,11 @@ class _BigSingleArtistPanelState extends State<BigSingleArtistPanel> {
                         ),
                       ],
                     ),
+                    if (widget.artist.biography?.trim().isNotEmpty ?? false)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: ArtistMetadata(artist: widget.artist),
+                      ),
                     SizedBox(height: 10),
                   ],
                 ),
