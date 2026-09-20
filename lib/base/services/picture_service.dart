@@ -13,8 +13,10 @@ import 'package:sylvakru/base/services/logger.dart';
 import 'package:sylvakru/base/services/picture_load_scheduler.dart';
 import 'package:sylvakru/base/services/stream_client.dart';
 import 'package:sylvakru/base/services/webdav_client.dart';
+import 'package:http/http.dart' as http;
 import 'package:sylvakru/base/utils/path.dart';
 
+final _httpClient = http.Client();
 List<MyPicture> globalPictureList = [];
 
 class MyPicture {
@@ -22,6 +24,11 @@ class MyPicture {
   bool isLoaded = false;
   bool isExist = false;
   String path = '';
+
+  /// Set when the picture should be fetched from an absolute URL (an artist
+  /// image reported by the server's metadata provider) instead of the source's
+  /// own cover-art lookup.
+  String? imageUrl;
   Color? color;
   Color? lowerLuminance;
 
@@ -50,6 +57,24 @@ class MyPicture {
     return picture;
   }
 
+  /// Switches this picture to an absolute [url] reported by the server's
+  /// metadata provider, and schedules the download.
+  ///
+  /// Used for artist images: the library itself has no artist cover art, so the
+  /// only image available comes from the server's Last.fm integration.
+  void useImageUrl(String url) {
+    if (imageUrl == url) {
+      return;
+    }
+    imageUrl = url;
+    isLoaded = false;
+    isExist = false;
+    color = null;
+    lowerLuminance = null;
+    pictureLoadScheduler.resetPicture(this);
+    loadPictureSafe(this);
+  }
+
   void reset() {
     isLoaded = false;
     isExist = false;
@@ -70,11 +95,29 @@ Future<void> loadPictureSafe(MyPicture picture, {int? widgetId}) async {
   );
 }
 
+
+/// Downloads raw bytes from an absolute URL.
+Future<Uint8List?> downloadBytes(String url) async {
+  try {
+    final response = await _httpClient.get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      return response.bodyBytes;
+    }
+  } catch (e) {
+    logger.output(e.toString());
+  }
+  return null;
+}
 Future<void> _loadPicture(MyPicture picture) async {
   try {
     Uint8List? bytes;
 
     switch (sourceType) {
+      case _ when picture.imageUrl != null:
+        // an absolute URL from the server's metadata provider, fetched with the
+        // same HTTP client the stream sources use
+        bytes = await downloadBytes(picture.imageUrl!);
+        break;
       case .local:
         bytes = await readPictureAsync(picture.id);
         break;

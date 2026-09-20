@@ -166,24 +166,42 @@ class NavidromeClient extends StreamClient {
     if (artist.id == null) {
       return null;
     }
-    // getArtistInfo2 returns the server-side biography (and similar artists);
-    // plain getArtist.view does not carry it.
-    final res = await safeRequest(
+    // Both endpoints carry the same payload; getArtistInfo is the older one and
+    // is supported by every Subsonic-compatible server, getArtistInfo2 is the
+    // newer revision. Try the newer first, then fall back. (feishin only uses
+    // getArtistInfo.)
+    Map? info = (await safeRequest(
       '/rest/getArtistInfo2.view',
       query: {'id': artist.id},
-    );
-    if (res == null) {
+    ))?['artistInfo2'] as Map?;
+
+    info ??= (await safeRequest(
+      '/rest/getArtistInfo.view',
+      query: {'id': artist.id},
+    ))?['artistInfo'] as Map?;
+
+    if (info == null) {
       return null;
     }
-    final info = res['artistInfo2'];
-    if (info is! Map) {
-      return null;
-    }
+
     final biography = (info['biography'] as String?)?.trim();
-    if (biography == null || biography.isEmpty) {
-      return null;
+    if (biography != null && biography.isNotEmpty) {
+      artist.biography = biography;
     }
-    artist.biography = biography;
+
+    // Prefer the metadata provider's artist photo (Last.fm via the server) over
+    // the server's own cover art: Navidrome's artist coverArt is normally just
+    // the first album's square cover, while largeImageUrl is a proper
+    // high-resolution portrait. feishin does the same, which is why its artist
+    // images look better.
+    final imageUrl =
+        (info['largeImageUrl'] as String?) ??
+        (info['mediumImageUrl'] as String?) ??
+        (info['smallImageUrl'] as String?);
+    if (imageUrl != null && imageUrl.isNotEmpty) {
+      artist.useImageUrl(imageUrl);
+    }
+
     return artist;
   }
 

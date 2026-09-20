@@ -338,6 +338,10 @@ class Artist extends ArtistAlbumBase {
   /// WebDAV libraries have no such data, so this stays null there.
   String? biography;
 
+  /// Points this artist's picture at an absolute [url] supplied by the server's
+  /// metadata provider, and starts downloading it.
+  void useImageUrl(String url) => picture.useImageUrl(url);
+
   /// Album count reported by the server, used only until [albumList] is filled.
   int? serverAlbumCount;
 

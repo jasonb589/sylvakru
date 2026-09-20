@@ -202,6 +202,40 @@ class EmbyClient extends StreamClient {
   }
 
   @override
+  Future<Artist?> getArtistInfo(Artist artist) async {
+    if (artist.id == null) {
+      return null;
+    }
+    // The /Artists list may omit Overview, so fetch the single item with the
+    // fields spelled out.
+    final response = await safeRequest<Map<String, dynamic>>(
+      () => dio.get(
+        '/Users/$userId/Items/${artist.id}',
+        queryParameters: {
+          'Fields': 'Overview,ChildCount,PremiereDate,Genres,ImageTags',
+        },
+      ),
+      parser: (res) => res.data as Map<String, dynamic>?,
+    );
+
+    if (response == null) {
+      return null;
+    }
+
+    final biography = (response['Overview'] as String?)?.trim();
+    if (biography != null && biography.isNotEmpty) {
+      artist.biography = biography;
+    }
+
+    final albumCount = (response['ChildCount'] as num?)?.toInt();
+    if (albumCount != null) {
+      artist.serverAlbumCount = albumCount;
+    }
+
+    return artist;
+  }
+
+  @override
   Future<List<MyAudioMetadata>?> getArtistSongs(String id) async {
     final response = await safeRequest<Map<String, dynamic>>(
       () => dio.get(
