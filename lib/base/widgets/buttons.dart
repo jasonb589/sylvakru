@@ -7,6 +7,7 @@ import 'package:sylvakru/base/app.dart';
 import 'package:sylvakru/base/asset_images.dart';
 import 'package:sylvakru/base/services/interaction.dart';
 import 'package:sylvakru/base/widgets/play_queue_sheet.dart';
+import 'package:sylvakru/base/data/playlist.dart';
 import 'package:sylvakru/l10n/generated/app_localizations.dart';
 import 'package:sylvakru/landscape_view/pages/play_queue_page.dart';
 import 'package:smooth_corner/smooth_corner.dart';
@@ -255,6 +256,44 @@ Widget showPlayQueueButton(double size, {Color? iconColor}) {
             isScrollControlled: true,
             builder: (context) {
               return PlayQueueSheet();
+            },
+          );
+        },
+      );
+    },
+  );
+}
+
+/// Star toggle for the song that is playing right now.
+///
+/// Shared by the bottom bars and the lyrics pages so the affordance is the same
+/// everywhere. Renders nothing when the queue is empty.
+Widget favoriteButton(double size, {Color? color}) {
+  return Builder(
+    builder: (context) {
+      return ValueListenableBuilder(
+        valueListenable: currentSongNotifier,
+        builder: (_, currentSong, _) {
+          if (currentSong == null) {
+            return const SizedBox.shrink();
+          }
+          return ValueListenableBuilder(
+            valueListenable: currentSong.isFavoriteNotifier,
+            builder: (_, isFavorite, _) {
+              return IconButton(
+                tooltip: AppLocalizations.of(context).favorites,
+                onPressed: () {
+                  tryVibrate();
+                  toggleFavoriteState(currentSong);
+                },
+                icon: Icon(
+                  isFavorite
+                      ? Icons.star_rounded
+                      : Icons.star_outline_rounded,
+                  color: isFavorite ? Colors.red : null,
+                  size: size,
+                ),
+              );
             },
           );
         },

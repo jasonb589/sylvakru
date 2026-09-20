@@ -10,6 +10,7 @@ import 'package:sylvakru/base/utils/dynamic_lyrics_page_route.dart';
 import 'package:sylvakru/landscape_view/speaker.dart';
 import 'package:sylvakru/landscape_view/volume_bar.dart';
 import 'package:sylvakru/base/widgets/seekbar.dart';
+import 'package:sylvakru/base/widgets/lyrics_line_bar.dart';
 import 'package:sylvakru/layer/lyrics_page_layer.dart';
 import 'package:sylvakru/base/utils/metadata_utils.dart';
 import 'package:smooth_corner/smooth_corner.dart';
@@ -99,34 +100,39 @@ class BottomControl extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   subtitle: currentSong != null
-                      ? Row(
-                          children: [
-                            // the artist name links to its artist page, the rest
-                            // of the tile still opens the lyrics page
-                            Flexible(
-                              child: GestureDetector(
-                                behavior: HitTestBehavior.opaque,
-                                onTap: () {
-                                  goToArtist(currentSong, context);
-                                },
-                                child: MouseRegion(
-                                  cursor: SystemMouseCursors.click,
-                                  child: Text(
-                                    getArtist(currentSong),
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(fontSize: 13),
+                      ? LyricsLineBar(
+                          fontSize: 13,
+                          maxLines: 1,
+                          // no timed lyrics: keep showing artist - album
+                          fallback: Row(
+                            children: [
+                              // the artist name links to its artist page, the
+                              // rest of the tile still opens the lyrics page
+                              Flexible(
+                                child: GestureDetector(
+                                  behavior: HitTestBehavior.opaque,
+                                  onTap: () {
+                                    goToArtist(currentSong, context);
+                                  },
+                                  child: MouseRegion(
+                                    cursor: SystemMouseCursors.click,
+                                    child: Text(
+                                      getArtist(currentSong),
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(fontSize: 13),
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                            Flexible(
-                              child: Text(
-                                " - ${getAlbum(currentSong)}",
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(fontSize: 13),
+                              Flexible(
+                                child: Text(
+                                  " - ${getAlbum(currentSong)}",
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(fontSize: 13),
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         )
                       : null,
                   onTap: () {
@@ -184,6 +190,9 @@ class BottomControl extends StatelessWidget {
           },
           icon: const ImageIcon(desktopLyricsImage, size: 25),
         ),
+        favoriteButton(25),
+
+
         ValueListenableBuilder(
           valueListenable: iconColor.valueNotifier,
           builder: (context, value, child) {

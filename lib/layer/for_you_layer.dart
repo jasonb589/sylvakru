@@ -135,11 +135,19 @@ class _ForYouLayerState extends State<ForYouLayer> {
   }
 
   /// Plays the recommended songs starting at [index].
+  ///
+  /// The second positional argument is the play mode, not the index, so the
+  /// target has to be passed by name: passing the index positionally would be
+  /// read as a mode and the queue would start on a random song.
   void _playFrom(int index) {
     if (_songs.isEmpty) {
       return;
     }
-    audioHandler.setPlayQueue(_songs.map((e) => e.song).toList(), index);
+    audioHandler.setPlayQueue(
+      _songs.map((e) => e.song).toList(),
+      0,
+      targetIndex: index,
+    );
   }
 
   @override

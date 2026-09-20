@@ -9,6 +9,7 @@ import 'package:sylvakru/base/utils/metadata_utils.dart';
 import 'package:sylvakru/base/widgets/buttons.dart';
 import 'package:sylvakru/base/widgets/cover_art_widget.dart';
 import 'package:sylvakru/layer/lyrics_page_layer.dart';
+import 'package:sylvakru/base/widgets/lyrics_line_bar.dart';
 
 class BigPlayBar extends StatelessWidget {
   final FocusNode? focusNode;
@@ -40,6 +41,7 @@ class BigPlayBar extends StatelessWidget {
                           playOrPauseButton(30),
                           skip2NextButton(20),
                           showPlayQueueButton(20),
+                          favoriteButton(20),
                         ],
 
                         Expanded(
@@ -89,43 +91,52 @@ class BigPlayBar extends StatelessWidget {
                                           getTitle(currentSong),
                                           overflow: TextOverflow.ellipsis,
                                         ),
-                                        Row(
-                                          children: [
-                                            // the artist name links to its artist
-                                            // page, the tile itself opens lyrics
-                                            Flexible(
-                                              child: GestureDetector(
-                                                behavior:
-                                                    HitTestBehavior.opaque,
-                                                onTap: () {
-                                                  goToArtist(
-                                                    currentSong!,
-                                                    context,
-                                                  );
-                                                },
-                                                child: MouseRegion(
-                                                  cursor:
-                                                      SystemMouseCursors.click,
-                                                  child: Text(
-                                                    getArtist(currentSong),
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                    style: TextStyle(
-                                                      fontSize: 13,
+                                        LyricsLineBar(
+                                          fontSize: 13,
+                                          maxLines: 1,
+                                          // no timed lyrics: keep showing
+                                          // artist - album
+                                          fallback: Row(
+                                            children: [
+                                              // the artist name links to its
+                                              // artist page, the tile itself
+                                              // opens the lyrics page
+                                              Flexible(
+                                                child: GestureDetector(
+                                                  behavior:
+                                                      HitTestBehavior.opaque,
+                                                  onTap: () {
+                                                    goToArtist(
+                                                      currentSong!,
+                                                      context,
+                                                    );
+                                                  },
+                                                  child: MouseRegion(
+                                                    cursor: SystemMouseCursors
+                                                        .click,
+                                                    child: Text(
+                                                      getArtist(currentSong),
+                                                      overflow: TextOverflow
+                                                          .ellipsis,
+                                                      style: TextStyle(
+                                                        fontSize: 13,
+                                                      ),
                                                     ),
                                                   ),
                                                 ),
                                               ),
-                                            ),
-                                            Flexible(
-                                              child: Text(
-                                                " - ${getAlbum(currentSong)}",
-                                                overflow:
-                                                    TextOverflow.ellipsis,
-                                                style: TextStyle(fontSize: 13),
+                                              Flexible(
+                                                child: Text(
+                                                  " - ${getAlbum(currentSong)}",
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: TextStyle(
+                                                    fontSize: 13,
+                                                  ),
+                                                ),
                                               ),
-                                            ),
-                                          ],
+                                            ],
+                                          ),
                                         ),
                                       ],
                                     ),

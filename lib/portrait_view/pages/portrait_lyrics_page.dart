@@ -21,7 +21,6 @@ import 'package:sylvakru/base/widgets/my_sheet.dart';
 import 'package:sylvakru/l10n/generated/app_localizations.dart';
 import 'package:sylvakru/base/widgets/lyric_list_view.dart';
 import 'package:sylvakru/base/my_audio_metadata.dart';
-import 'package:sylvakru/base/data/playlist.dart';
 import 'package:sylvakru/base/widgets/seekbar.dart';
 import 'package:sylvakru/base/utils/metadata_utils.dart';
 import 'package:smooth_corner/smooth_corner.dart';
@@ -346,7 +345,7 @@ class _PortraitLyricsPageState extends State<PortraitLyricsPage> {
         Row(
           children: [
             SizedBox(width: 25),
-            FavoriteButton(),
+            favoriteButton(25, color: lyricsPageForegroundColor.value),
             IconButton(
               color: lyricsPageForegroundColor.value,
               onPressed: () {
@@ -801,41 +800,6 @@ class _PortraitLyricsPageState extends State<PortraitLyricsPage> {
           ),
         ),
       ],
-    );
-  }
-}
-
-class FavoriteButton extends StatelessWidget {
-  const FavoriteButton({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return ValueListenableBuilder(
-      valueListenable: currentSongNotifier,
-      builder: (_, currentSong, _) {
-        if (currentSong == null) return SizedBox();
-        return ValueListenableBuilder(
-          valueListenable: currentSong.isFavoriteNotifier,
-          builder: (_, value, _) {
-            return IconButton(
-              color: lyricsPageForegroundColor.value,
-
-              onPressed: () {
-                tryVibrate();
-                toggleFavoriteState(currentSong);
-              },
-              icon: Transform.scale(
-                scale: 1.1,
-                child: Icon(
-                  value ? Icons.star_rounded : Icons.star_outline_rounded,
-                  color: value ? Colors.red : null,
-                  size: 25,
-                ),
-              ),
-            );
-          },
-        );
-      },
     );
   }
 }

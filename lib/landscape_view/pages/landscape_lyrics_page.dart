@@ -350,6 +350,11 @@ class _LandscapeLyricsPageState extends State<LandscapeLyricsPage> {
 
                   Spacer(),
                   showPlayQueueButton(25, iconColor: value),
+
+                  // favourite the song that is playing, right next to the
+                  // queue button so both "act on this song" controls sit
+                  // together at the end of the row
+                  favoriteButton(25, color: value),
                 ],
               ),
             ),
