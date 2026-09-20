@@ -42,6 +42,11 @@ jobs:
       - name: Analyze
         run: flutter analyze --no-pub
 
+      # the unit tests are fast and caught a real crash (see the path ?? id fix
+      # in my_audio_metadata), so run them before spending time on the build
+      - name: Test
+        run: flutter test
+
       - name: Build Windows release
         run: flutter build windows --release
 
