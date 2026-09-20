@@ -51,7 +51,11 @@ class MyAudioMetadata {
     this.lastPlayed,
   }) {
     final md5Hash = md5.convert(utf8.encode(id)).toString();
-    picture = MyPicture.form(isStreamSource ? id : path!, md5Hash: md5Hash);
+    // stream sources identify cover art by song id, local/WebDAV ones by file
+    // path. path is an optional constructor argument, so fall back to id
+    // instead of asserting: MyPicture already handles an unusable id by
+    // marking itself loaded-but-absent.
+    picture = MyPicture.form(isStreamSource ? id : path ?? id, md5Hash: md5Hash);
 
     if (sourceType != .local) {
       cachePath = '${getCachesPath(sourceType)}/$md5Hash';
