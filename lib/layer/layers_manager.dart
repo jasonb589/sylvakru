@@ -22,6 +22,7 @@ import 'package:sylvakru/layer/license_layer.dart';
 import 'package:sylvakru/layer/playlists_layer.dart';
 import 'package:sylvakru/layer/premium_layer.dart';
 import 'package:sylvakru/layer/ranking_layer.dart';
+import 'package:sylvakru/layer/for_you_layer.dart';
 import 'package:sylvakru/layer/recently_added_layer.dart';
 import 'package:sylvakru/layer/recently_layer.dart';
 import 'package:sylvakru/layer/settings_layer.dart';
@@ -134,6 +135,8 @@ class LayersManager {
         return SongsLayer(key: GlobalKey());
       } else if (label == 'ranking') {
         return RankingLayer(key: GlobalKey());
+      } else if (label == 'forYou') {
+        return ForYouLayer(key: GlobalKey());
       } else if (label == 'recently') {
         return RecentlyLayer(key: GlobalKey());
       } else if (label == 'recentlyAdded') {
@@ -318,6 +321,9 @@ class LayersManager {
     } else if (label == 'ranking') {
       rootKey = rankingKey;
       visibleNotifier = rankingVisibleNotifier;
+    } else if (label == 'forYou') {
+      rootKey = forYouKey;
+      visibleNotifier = forYouVisibleNotifier;
     } else if (label == 'recently') {
       rootKey = recentlyKey;
       visibleNotifier = recentlyVisibleNotifier;
@@ -529,6 +535,7 @@ class LayersManager {
     popDetail('folders', executePop: false);
     popDetail('ranking', executePop: false);
     popDetail('recently', executePop: false);
+    popDetail('forYou', executePop: false);
     popDetail('recentlyAdded', executePop: false);
     popDetail('playlists', executePop: false);
     while (await layersManager.popDetail('settings')) {}
@@ -552,6 +559,7 @@ class LayersManager {
     popDetail('recently', executePop: false);
     popDetail('recentlyAdded', executePop: false);
     popDetail('playlists', executePop: false);
+    popDetail('forYou', executePop: false);
 
     layerInfoMap.removeWhere((k, v) => k != topRootLayer);
     rootLayerMap.removeWhere((k, v) => k != 'settings');

@@ -668,4 +668,40 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get showLess => '收起';
+
+  @override
+  String get forYou => '为你推荐';
+
+  @override
+  String get recommendSongs => '推荐歌曲';
+
+  @override
+  String get recommendArtists => '推荐艺术家';
+
+  @override
+  String get recommendEmpty => '多听几首歌，这里就会出现为你推荐的音乐。';
+
+  @override
+  String reasonFavoriteArtist(String name) {
+    return '因为你喜欢 $name';
+  }
+
+  @override
+  String reasonSimilarGenre(String name) {
+    return '更多 $name';
+  }
+
+  @override
+  String get reasonRediscover => '好久没听了';
+
+  @override
+  String get reasonExplore => '换个口味';
+
+  @override
+  String reasonUnexplored(int count) {
+    return '还有 $count 首没听过';
+  }
+
+  @override
+  String get refreshRecommendations => '换一批';
 }

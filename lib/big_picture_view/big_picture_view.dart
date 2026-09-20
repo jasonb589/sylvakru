@@ -23,6 +23,7 @@ import 'package:sylvakru/big_picture_view/panels/big_artists_panel.dart';
 import 'package:sylvakru/big_picture_view/panels/big_folders_panel.dart';
 import 'package:sylvakru/big_picture_view/panels/big_home_panel.dart';
 import 'package:sylvakru/big_picture_view/panels/big_playlists_panel.dart';
+import 'package:sylvakru/big_picture_view/panels/big_for_you_panel.dart';
 import 'package:sylvakru/big_picture_view/panels/big_ranking_panel.dart';
 import 'package:sylvakru/big_picture_view/panels/big_recently_added_panel.dart';
 import 'package:sylvakru/big_picture_view/panels/big_recently_panel.dart';
@@ -45,6 +46,7 @@ class _BigPictureViewState extends State<BigPictureView> {
 
   final pages = const [
     BigHomePanel(),
+    BigForYouPanel(),
     BigSongsPanel(),
     BigArtistsPanel(),
     BigAlbumsPanel(),
@@ -157,6 +159,7 @@ class _BigPictureViewState extends State<BigPictureView> {
     final l10n = AppLocalizations.of(context);
     final tabs = [
       l10n.home,
+      l10n.forYou,
       l10n.songs,
       l10n.artists,
       l10n.albums,

@@ -269,5 +269,36 @@
   "savedSuccessfully": "Saved successfully",
   "biography": "Biography",
   "showMore": "Show more",
-  "showLess": "Show less"
+  "showLess": "Show less",
+  "forYou": "For You",
+  "recommendSongs": "Recommended Songs",
+  "recommendArtists": "Recommended Artists",
+  "recommendEmpty": "Play a few songs and recommendations will appear here.",
+  "reasonFavoriteArtist": "Because you like {name}",
+  "@reasonFavoriteArtist": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "reasonSimilarGenre": "More {name}",
+  "@reasonSimilarGenre": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "reasonRediscover": "Not played in a while",
+  "reasonExplore": "Something different",
+  "reasonUnexplored": "{count} songs not played yet",
+  "@reasonUnexplored": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "refreshRecommendations": "Refresh"
 }

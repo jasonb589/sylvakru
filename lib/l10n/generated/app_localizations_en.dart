@@ -676,4 +676,41 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get showLess => 'Show less';
+
+  @override
+  String get forYou => 'For You';
+
+  @override
+  String get recommendSongs => 'Recommended Songs';
+
+  @override
+  String get recommendArtists => 'Recommended Artists';
+
+  @override
+  String get recommendEmpty =>
+      'Play a few songs and recommendations will appear here.';
+
+  @override
+  String reasonFavoriteArtist(String name) {
+    return 'Because you like $name';
+  }
+
+  @override
+  String reasonSimilarGenre(String name) {
+    return 'More $name';
+  }
+
+  @override
+  String get reasonRediscover => 'Not played in a while';
+
+  @override
+  String get reasonExplore => 'Something different';
+
+  @override
+  String reasonUnexplored(int count) {
+    return '$count songs not played yet';
+  }
+
+  @override
+  String get refreshRecommendations => 'Refresh';
 }

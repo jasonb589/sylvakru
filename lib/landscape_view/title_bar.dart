@@ -355,6 +355,7 @@ class _TitleBarState extends State<TitleBar> {
                       layersManager.popDetail('recently');
                       layersManager.popDetail('recentlyAdded');
                       layersManager.popDetail('playlists');
+                      layersManager.popDetail('forYou');
                       while (await layersManager.popDetail('settings')) {}
                     },
                     icon: ImageIcon(miniModeImage),

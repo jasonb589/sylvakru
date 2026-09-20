@@ -213,5 +213,15 @@
   "savedSuccessfully": "保存成功",
   "biography": "简介",
   "showMore": "展开",
-  "showLess": "收起"
+  "showLess": "收起",
+  "forYou": "为你推荐",
+  "recommendSongs": "推荐歌曲",
+  "recommendArtists": "推荐艺术家",
+  "recommendEmpty": "多听几首歌，这里就会出现为你推荐的音乐。",
+  "reasonFavoriteArtist": "因为你喜欢 {name}",
+  "reasonSimilarGenre": "更多 {name}",
+  "reasonRediscover": "好久没听了",
+  "reasonExplore": "换个口味",
+  "reasonUnexplored": "还有 {count} 首没听过",
+  "refreshRecommendations": "换一批"
 }

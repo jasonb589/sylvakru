@@ -1387,6 +1387,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Show less'**
   String get showLess;
+
+  /// No description provided for @forYou.
+  ///
+  /// In en, this message translates to:
+  /// **'For You'**
+  String get forYou;
+
+  /// No description provided for @recommendSongs.
+  ///
+  /// In en, this message translates to:
+  /// **'Recommended Songs'**
+  String get recommendSongs;
+
+  /// No description provided for @recommendArtists.
+  ///
+  /// In en, this message translates to:
+  /// **'Recommended Artists'**
+  String get recommendArtists;
+
+  /// No description provided for @recommendEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Play a few songs and recommendations will appear here.'**
+  String get recommendEmpty;
+
+  /// No description provided for @reasonFavoriteArtist.
+  ///
+  /// In en, this message translates to:
+  /// **'Because you like {name}'**
+  String reasonFavoriteArtist(String name);
+
+  /// No description provided for @reasonSimilarGenre.
+  ///
+  /// In en, this message translates to:
+  /// **'More {name}'**
+  String reasonSimilarGenre(String name);
+
+  /// No description provided for @reasonRediscover.
+  ///
+  /// In en, this message translates to:
+  /// **'Not played in a while'**
+  String get reasonRediscover;
+
+  /// No description provided for @reasonExplore.
+  ///
+  /// In en, this message translates to:
+  /// **'Something different'**
+  String get reasonExplore;
+
+  /// No description provided for @reasonUnexplored.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} songs not played yet'**
+  String reasonUnexplored(int count);
+
+  /// No description provided for @refreshRecommendations.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get refreshRecommendations;
 }
 
 class _AppLocalizationsDelegate
