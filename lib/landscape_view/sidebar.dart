@@ -252,7 +252,7 @@ class Sidebar extends StatelessWidget {
                       child: sidebarItem(
                         label: 'recentlyAdded',
 
-                        leading: ImageIcon(albumImage, size: 30),
+                        leading: ImageIcon(recentlyAddedImage, size: 30),
                         content: l10n.recentlyAdded,
 
                         onTap: () {

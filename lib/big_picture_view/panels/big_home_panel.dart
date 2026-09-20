@@ -65,6 +65,14 @@ class _BigHomePanelState extends State<BigHomePanel> {
             });
           }
         }
+
+        // stream sources have to ask for the newest albums, local ones are
+        // already sorted by loadRecentlyAdded
+        artistAlbumManager.loadRecentlyAdded().then((_) {
+          if (mounted) {
+            setState(() {});
+          }
+        });
       }
     });
   }
@@ -327,6 +335,51 @@ class _BigHomePanelState extends State<BigHomePanel> {
             );
           },
           verticalController: verticalController,
+        ),
+
+        ValueListenableBuilder(
+          valueListenable: artistAlbumManager.recentlyAddedNotifier,
+          builder: (context, value, child) {
+            return _ListView(
+              title: l10n.recentlyAdded,
+              count: artistAlbumManager.recentlyAddedAlbumList.length,
+              getPicture: (index) =>
+                  artistAlbumManager.recentlyAddedAlbumList[index].picture,
+              onTap: (index) async {
+                final baseColor = await computeColor(
+                  artistAlbumManager.recentlyAddedAlbumList[index].picture,
+                );
+                if (!context.mounted) {
+                  return;
+                }
+                Navigator.of(context).push(
+                  ZoomPageRoute(
+                    builder: (context) {
+                      return BigSingleAlbumPanel(
+                        album: artistAlbumManager.recentlyAddedAlbumList[index],
+                        baseColor: baseColor,
+                      );
+                    },
+                  ),
+                );
+              },
+              getBottomWidget: (index) {
+                return ListTile(
+                  contentPadding: .zero,
+                  mouseCursor: SystemMouseCursors.click,
+                  title: Text(
+                    artistAlbumManager.recentlyAddedAlbumList[index].name,
+                    style: .new(overflow: .ellipsis),
+                  ),
+
+                  visualDensity: .new(vertical: -4),
+                );
+              },
+              getTag: (index) =>
+                  'big${artistAlbumManager.recentlyAddedAlbumList[index].picture.id}${artistAlbumManager.recentlyAddedAlbumList[index].name}',
+              verticalController: verticalController,
+            );
+          },
         ),
 
         ValueListenableBuilder(

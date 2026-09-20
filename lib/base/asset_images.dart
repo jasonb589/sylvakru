@@ -70,6 +70,9 @@ const AssetImage previousButtonImage = AssetImage(
   'assets/images/previous_button.png',
 );
 const AssetImage rankingImage = AssetImage('assets/images/ranking.png');
+const AssetImage recentlyAddedImage = AssetImage(
+  'assets/images/recently_added.png',
+);
 const AssetImage recentlyImage = AssetImage('assets/images/recently.png');
 const AssetImage reloadImage = AssetImage('assets/images/reload.png');
 const AssetImage reorderImage = AssetImage('assets/images/reorder.png');

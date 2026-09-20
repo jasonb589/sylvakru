@@ -378,6 +378,8 @@ class LayersManager {
       return getFirstSong(library.songList)?.picture;
     } else if (layer is RankingLayer && sourceType != .navidrome) {
       return getFirstSong(history.rankingSongList)?.picture;
+    } else if (layer is RecentlyAddedLayer) {
+      return artistAlbumManager.recentlyAddedAlbums.firstOrNull?.picture;
     } else if (layer is RecentlyLayer && sourceType != .navidrome) {
       return getFirstSong(history.recentlySongList)?.picture;
     } else if (layer is SinglePlaylistLayer) {

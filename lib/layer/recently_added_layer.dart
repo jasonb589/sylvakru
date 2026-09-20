@@ -28,7 +28,7 @@ class _RecentlyAddedLayerState extends CollectionListState {
   ValueNotifier<bool> get visibleNotifier => recentlyAddedVisibleNotifier;
 
   @override
-  AssetImage get image => albumImage;
+  AssetImage get image => recentlyAddedImage;
 
   @override
   String Function(int) get countFunction =>
