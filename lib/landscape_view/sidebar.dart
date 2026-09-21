@@ -162,6 +162,19 @@ class Sidebar extends StatelessWidget {
                   slivers: [
                     SliverToBoxAdapter(
                       child: sidebarItem(
+                        label: 'home',
+
+                        leading: ImageIcon(homeImage, size: 30),
+                        content: l10n.home,
+
+                        onTap: () {
+                          layersManager.switchRootLayer('home');
+                        },
+                      ),
+                    ),
+
+                    SliverToBoxAdapter(
+                      child: sidebarItem(
                         label: 'forYou',
 
                         leading: ImageIcon(forYouImage, size: 30),
@@ -219,18 +232,6 @@ class Sidebar extends StatelessWidget {
                       },
                     ),
 
-                    SliverToBoxAdapter(
-                      child: sidebarItem(
-                        label: 'home',
-
-                        leading: ImageIcon(homeImage, size: 30),
-                        content: l10n.home,
-
-                        onTap: () {
-                          layersManager.switchRootLayer('home');
-                        },
-                      ),
-                    ),
 
                     SliverToBoxAdapter(
                       child: sidebarItem(
