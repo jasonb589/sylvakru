@@ -17,6 +17,13 @@ final artistAlbumManager = ArtistAlbumManager();
 class ArtistAlbumManager {
   List<Artist> artistList = [];
   Map<String, Artist> artistMap = {};
+  /// Artists the server reported in [loadArtists], keyed by name.
+  ///
+  /// A server artist knows its id, cover art, album count and biography but
+  /// carries no songs; the locally classified artist owns the songs but none of
+  /// that metadata. Both describe the same artist, so they are merged by name
+  /// instead of being kept as two entries (see [_mergeServerArtists]).
+  final Map<String, Artist> _serverArtists = {};
 
   List<Album> albumList = [];
   // streamSoure will has duplicate name album
@@ -68,7 +75,19 @@ class ArtistAlbumManager {
         : albumsUseLargePictureNotifier;
   }
 
+  /// Rebuilds the artist/album lists from the library.
+  ///
+  /// This runs again after every reload/sync, so it rebuilds from scratch:
+  /// appending to the previous pass duplicated every song, and an artist's song
+  /// list grew on each call (1 -> 4 -> ...). The objects are therefore replaced
+  /// rather than reused, which is why the reload that triggers this also drops
+  /// the artist/album detail layers.
   void classify() async {
+    artistList.clear();
+    artistMap.clear();
+    albumList.clear();
+    albumMap.clear();
+
     for (final song in library.songList) {
       _processSong(song);
     }
@@ -83,6 +102,11 @@ class ArtistAlbumManager {
     for (final artist in artistList) {
       artist.combineAlbums();
     }
+
+    // the artist objects that carried the server metadata were replaced above,
+    // so the merge has to be re-applied
+    _mergeServerArtists();
+    sortArtists();
 
     updateRecentlyAddedFromAlbums();
     done = true;
@@ -242,6 +266,13 @@ class ArtistAlbumManager {
     recentlyAddedAlbumList = [];
     recentlyAddedAlbumAll = [];
 
+    // The lists above are empty now, so a completed completer would make the
+    // next loadArtists/loadAlbums return immediately and the artist/album
+    // layers would stay empty for the rest of the session.
+    artistCompleter = null;
+    ablumCompleter = null;
+    _serverArtists.clear();
+
     done = false;
 
     classify();
@@ -262,9 +293,9 @@ class ArtistAlbumManager {
       }
 
       for (final artist in tmpArtistList) {
-        artistList.add(artist);
-        artistMap[artist.name] = artist;
+        _serverArtists[artist.name] = artist;
       }
+      _mergeServerArtists();
       sortArtists();
       artistAlbumManager.updateNotifier.value++;
       artistCompleter!.complete();
@@ -272,6 +303,30 @@ class ArtistAlbumManager {
     }
     artistAlbumManager.updateNotifier.value++;
     return artistCompleter!.future;
+  }
+
+  /// Folds the server's artist metadata into the locally classified artists.
+  ///
+  /// The two describe one artist but own different fields, so they are matched
+  /// by name: the local entry keeps its songs and takes the server's id, cover
+  /// art, album count and biography. Appending the server entry instead (the
+  /// old behaviour) put a *second* artist of the same name into [artistList]
+  /// and let it overwrite [artistMap], so opening that artist showed an empty
+  /// page: the server object has no songs and nothing ever filled them.
+  ///
+  /// An artist the server knows but the library holds no song for is added
+  /// as-is, so it still appears in the artists list.
+  void _mergeServerArtists() {
+    for (final entry in _serverArtists.entries) {
+      final server = entry.value;
+      final existing = artistMap[entry.key];
+      if (existing == null) {
+        artistList.add(server);
+        artistMap[entry.key] = server;
+      } else if (!identical(existing, server)) {
+        existing.adoptServerMetadata(server);
+      }
+    }
   }
 
   // null: error; 0: end
@@ -438,6 +493,30 @@ class Artist extends ArtistAlbumBase {
     for (final album in albumList) {
       songList.addAll(album.artist2SongList[name]!);
     }
+  }
+
+  /// Takes the identifying metadata from a server entry of the same name.
+  ///
+  /// The server id is what the artist endpoints need, and its cover art is a
+  /// real artist image instead of the first album's square cover.
+  void adoptServerMetadata(Artist server) {
+    final serverId = server.id;
+    if (serverId != null && serverId.isNotEmpty) {
+      id = serverId;
+    }
+
+    final serverPicture = server._picture;
+    if (serverPicture != null && serverPicture.id.isNotEmpty) {
+      _picture = serverPicture;
+    }
+
+    final serverBiography = server.biography;
+    if (serverBiography != null && serverBiography.isNotEmpty) {
+      biography = serverBiography;
+      biographyLoaded = true;
+    }
+
+    serverAlbumCount ??= server.serverAlbumCount;
   }
 
   @override

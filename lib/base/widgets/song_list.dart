@@ -15,6 +15,7 @@ import 'package:sylvakru/base/services/interaction.dart';
 import 'package:sylvakru/base/services/keyboard.dart';
 import 'package:sylvakru/base/services/picture_service.dart';
 import 'package:sylvakru/base/utils/common_utils.dart';
+import 'package:sylvakru/base/services/logger.dart';
 import 'package:sylvakru/base/utils/media_query.dart';
 import 'package:sylvakru/base/utils/source_type.dart';
 import 'package:sylvakru/base/widgets/cover_art_widget.dart';
@@ -298,12 +299,46 @@ class _SongListState extends State<SongList> {
     rootVisibleNotifier?.addListener(updateHideOthers);
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _loadStreamSongsIfNeeded();
+      if (!mounted) {
+        return;
+      }
       updateSongList();
     });
 
     sortTypeNotifier.addListener(resetSelectedAndUpdateSongList);
     changeNotifier.addListener(updateSongList);
     textController.addListener(startNewSearchIfNeed);
+  }
+
+  /// Fetches the songs of a stream-source artist/album page.
+  ///
+  /// A server's artist/album lists only carry the id, name and cover art, so
+  /// the songs have to be requested when the page is opened. This is what an
+  /// artist the library holds no song for depends on: such an artist comes
+  /// straight from the server and would otherwise render an empty page.
+  ///
+  /// Local and WebDAV libraries already have their songs, and the songs page
+  /// reads the fully synced library, so both are skipped.
+  Future<void> _loadStreamSongsIfNeeded() async {
+    if (!isStreamSource || isLibrary || songList.isNotEmpty) {
+      return;
+    }
+    try {
+      if (artist != null) {
+        await artist!.load();
+      } else if (album != null) {
+        await album!.load();
+      }
+    } catch (e) {
+      // an unreachable server must leave the page empty rather than take the
+      // whole route down with it
+      logger.output('Failed to load songs for the detail page: $e');
+      return;
+    }
+    if (mounted) {
+      layersManager.updateBackground();
+    }
   }
 
   @override
