@@ -51,8 +51,75 @@ jobs:
       - name: Test
         run: flutter test
 
+      # The media_kit plugin's own CMake fetches libmpv with file(DOWNLOAD ...)
+      # during configure and never checks the HTTP result: a transient failure
+      # leaves a 0-byte libmpv-2.dll in the bundle while the build still reports
+      # success. The packaged app then opens a blank window because the player
+      # cannot initialise - that is exactly what v4.4.3 shipped (37 MB -> 25 MB).
+      #
+      # Seed the exact file that CMake looks for so its flaky download is skipped,
+      # and verify the bundled copy afterwards so this can never ship again.
+      - name: Seed libmpv runtime
+        shell: pwsh
+        run: |
+          $url = 'https://github.com/AfalpHy/libmpv-audio-winbuild/releases/download/v0.41.0/libmpv-2.dll'
+          $minSize = 1MB
+          $tmp = Join-Path $env:RUNNER_TEMP 'libmpv-2.dll'
+          for ($i = 1; $i -le 3; $i++) {
+            try {
+              Invoke-WebRequest -Uri $url -OutFile $tmp -TimeoutSec 300
+              if ((Get-Item $tmp).Length -ge $minSize) { break }
+            } catch {
+              Write-Host "Attempt ${i} failed: $($_.Exception.Message)"
+            }
+            Start-Sleep -Seconds 5
+          }
+          if (-not (Test-Path $tmp) -or (Get-Item $tmp).Length -lt $minSize) {
+            throw 'Could not download libmpv-2.dll'
+          }
+          Write-Host ("Seeded libmpv-2.dll: {0:N1} MB" -f ((Get-Item $tmp).Length / 1MB))
+          # CMAKE_BINARY_DIR is build/windows/x64 on current Flutter and
+          # build/windows on older ones; the plugin caches under <build>/libmpv.
+          foreach ($dir in @('build/windows/x64/libmpv', 'build/windows/libmpv')) {
+            New-Item -ItemType Directory -Force -Path $dir | Out-Null
+            Copy-Item $tmp (Join-Path $dir 'libmpv-2.dll') -Force
+            Write-Host "Placed in $dir"
+          }
+
       - name: Build Windows release
         run: flutter build windows --release
+
+      # file(DOWNLOAD) failures are silent, so never trust the bundle blindly:
+      # a truncated runtime is what makes the window come up blank.
+      - name: Verify bundled libraries
+        shell: pwsh
+        run: |
+          $release = if (Test-Path 'build/windows/x64/runner/Release') {
+            'build/windows/x64/runner/Release'
+          } else {
+            'build/windows/runner/Release'
+          }
+          if (-not (Test-Path $release)) {
+            throw "Release directory not found: $release"
+          }
+
+          $minSize = 1MB
+          $libmpv = Join-Path $release 'libmpv-2.dll'
+          $size = if (Test-Path $libmpv) { (Get-Item $libmpv).Length } else { 0 }
+          if ($size -lt $minSize) {
+            Write-Host "libmpv-2.dll is missing or truncated ($size bytes); repairing..."
+            Invoke-WebRequest -Uri 'https://github.com/AfalpHy/libmpv-audio-winbuild/releases/download/v0.41.0/libmpv-2.dll' -OutFile $libmpv -TimeoutSec 300
+            $size = (Get-Item $libmpv).Length
+          }
+          if ($size -lt $minSize) {
+            throw "libmpv-2.dll is still truncated ($size bytes); the package would show a blank window"
+          }
+          Write-Host ("libmpv-2.dll OK: {0:N1} MB" -f ($size / 1MB))
+
+          $empty = Get-ChildItem $release -File | Where-Object { $_.Length -eq 0 }
+          if ($empty) {
+            Write-Host "Warning - zero-byte files: $($empty.Name -join ', ')"
+          }
 
       # Flutter moved the runner output into an arch subdirectory at some point,
       # so accept both layouts instead of hardcoding one.
