@@ -322,6 +322,10 @@ class KaraokeText extends StatefulWidget {
   final bool expanded;
   final bool isDesktopLyrics;
 
+  /// Colour used for the desktop lyrics window, which draws on its own dark
+  /// backdrop instead of following the app's lyrics page theme.
+  final Color? desktopLyricsTextColor;
+
   const KaraokeText({
     super.key,
     required this.line,
@@ -329,6 +333,7 @@ class KaraokeText extends StatefulWidget {
     required this.fontSize,
     required this.expanded,
     this.isDesktopLyrics = false,
+    this.desktopLyricsTextColor,
   });
 
   @override
@@ -378,7 +383,7 @@ class KaraokeTextState extends State<KaraokeText>
     }
 
     textColor = widget.isDesktopLyrics
-        ? Colors.white
+        ? (widget.desktopLyricsTextColor ?? Colors.white)
         : viewModeNotifier.value == .mini
         ? miniViewHighlightTextColor.value
         : lyricsPageHighlightTextColor.value;

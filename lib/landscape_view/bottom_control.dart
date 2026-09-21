@@ -11,6 +11,7 @@ import 'package:sylvakru/landscape_view/speaker.dart';
 import 'package:sylvakru/landscape_view/volume_bar.dart';
 import 'package:sylvakru/base/widgets/seekbar.dart';
 import 'package:sylvakru/base/widgets/lyrics_line_bar.dart';
+import 'package:sylvakru/landscape_view/desktop_lyrics.dart';
 import 'package:sylvakru/layer/lyrics_page_layer.dart';
 import 'package:sylvakru/base/utils/metadata_utils.dart';
 import 'package:smooth_corner/smooth_corner.dart';
@@ -186,9 +187,7 @@ class BottomControl extends StatelessWidget {
       children: [
         Spacer(),
         IconButton(
-          onPressed: () {
-            showCenterMessage('Desktop lyrics has been removed');
-          },
+          onPressed: toggleDesktopLyrics,
           icon: const ImageIcon(desktopLyricsImage, size: 25),
         ),
         favoriteButton(25),

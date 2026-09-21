@@ -3,7 +3,10 @@ import 'dart:ui';
 
 import 'package:charset/charset.dart';
 import 'package:sylvakru/base/app.dart';
+import 'package:sylvakru/base/audio_handler.dart';
 import 'package:sylvakru/base/my_audio_metadata.dart';
+import 'package:sylvakru/landscape_view/desktop_lyrics.dart';
+import 'package:sylvakru/base/extensions/window_controller_extension.dart';
 import 'package:sylvakru/base/services/stream_client.dart';
 import 'package:sylvakru/base/services/webdav_client.dart';
 import 'package:sylvakru/base/services/logger.dart';
@@ -223,4 +226,26 @@ void applyLrcParsing(
       result.lines.last.tokens.last.end = songDuration;
     }
   }
+}
+
+Future<void> updateDesktopLyrics() async {
+  await lyricsWindowController?.updateLyric(
+    audioHandler.getPosition(),
+    currentLyricLine,
+    currentLyricLineIsKaraoke,
+  );
+}
+
+void getDesktopLyricFromMap(dynamic data) {
+  final raw = data as Map;
+  final map = Map<String, dynamic>.from(raw);
+
+  desktopLyricsCurrentPosition = Duration(microseconds: map['position'] as int);
+  final lyricLineMap = map['lyric_line'] as Map?;
+  currentLyricLine = lyricLineMap != null
+      ? LyricLine.fromMap(lyricLineMap)
+      : null;
+
+  currentLyricLineIsKaraoke = map['isKaraoke'] as bool;
+  updateDesktopLyricsNotifier.value++;
 }

@@ -7,6 +7,7 @@ import Foundation
 
 import audio_service
 import audio_session
+import desktop_multi_window
 import file_picker_darwin
 import flutter_secure_storage_darwin
 import gamepads_darwin
@@ -22,6 +23,7 @@ import window_manager
 func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
   AudioServicePlugin.register(with: registry.registrar(forPlugin: "AudioServicePlugin"))
   AudioSessionPlugin.register(with: registry.registrar(forPlugin: "AudioSessionPlugin"))
+  FlutterMultiWindowPlugin.register(with: registry.registrar(forPlugin: "FlutterMultiWindowPlugin"))
   FilePickerPlugin.register(with: registry.registrar(forPlugin: "FilePickerPlugin"))
   FlutterSecureStorageDarwinPlugin.register(with: registry.registrar(forPlugin: "FlutterSecureStorageDarwinPlugin"))
   GamepadsDarwinPlugin.register(with: registry.registrar(forPlugin: "GamepadsDarwinPlugin"))

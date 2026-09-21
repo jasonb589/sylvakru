@@ -10,10 +10,20 @@ class ContrastColorTextTheme {
 class ContrastColorGenerator {
   /// Regular: High-contrast complementary tint for best readability.
   /// Accent: Subtle neighboring hue for a gentle highlight.
-  static ContrastColorTextTheme generate(Color backgroundColor) {
+  ///
+  /// [darkBackground] describes the surface the text will sit on. By default it
+  /// is inferred from [backgroundColor]'s luminance, which is right when the
+  /// colour *is* the background (the lyrics page tints itself with the cover
+  /// art). Pass it explicitly when the text sits on a fixed backdrop: the
+  /// desktop lyrics always draw on translucent black, so a light cover would
+  /// otherwise produce near-black text on a black window.
+  static ContrastColorTextTheme generate(
+    Color backgroundColor, {
+    bool? darkBackground,
+  }) {
     final hsl = HSLColor.fromColor(backgroundColor);
     final double luminance = backgroundColor.computeLuminance();
-    final bool isDark = luminance < 0.45;
+    final bool isDark = darkBackground ?? luminance < 0.45;
 
     // --- 1. Regular Text (Optimized for Readability) ---
     // We use the 180° hue shift but keep saturation very low.
