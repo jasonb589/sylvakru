@@ -312,7 +312,26 @@ abstract class ArtistAlbumBase {
   /// Picture for stream sources, which know their own cover art. Local/WebDAV
   /// libraries have no such id and derive it from the first song instead.
   MyPicture? _picture;
-  MyPicture get picture => isStreamSource ? _picture! : songList.first.picture;
+
+  /// The cover to render for this artist/album.
+  ///
+  /// Stream sources identify cover art by the server's coverArtId, but an
+  /// album/artist built from the local song list (see [_processSong]) carries
+  /// none, so its id is empty and the row would render blank. Falling back to
+  /// the first song's cover keeps those entries showing real artwork.
+  MyPicture get picture {
+    final own = _picture;
+    if (own != null && own.id.isNotEmpty) {
+      return own;
+    }
+    if (songList.isNotEmpty) {
+      return songList.first.picture;
+    }
+    // Neither a server cover id nor any song to borrow one from. Derive a
+    // stable id from the name and cache it, so repeated reads return the same
+    // picture (Hero tags and changeNotifier listeners depend on that).
+    return _picture = MyPicture.form(name);
+  }
 
   ArtistAlbumBase({required this.name, required this.isArtist, this.id, String? coverArtId}) {
     id ??= name;

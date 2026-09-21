@@ -141,6 +141,153 @@ class HomeLayerState extends State<HomeLayer> {
     double extraSize = max(0, (shortestSide - 750) * 0.2);
     return ListView(
       children: [
+        // "For You": a straight random draw from the library, refreshed by the
+        // button on the right. It is deliberately not a taste model, so the
+        // only thing that changes the set is the seed.
+        Row(
+          mainAxisSize: .min,
+          children: [
+            SizedBox(width: 20),
+            GestureDetector(
+              onTap: () {
+                layersManager.switchRootLayer('forYou');
+              },
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: Row(
+                  children: [
+                    Text(
+                      l10n.forYou,
+                      style: .new(fontWeight: .bold, fontSize: 20),
+                    ),
+                    Icon(Icons.arrow_forward_ios_rounded, size: 20),
+                  ],
+                ),
+              ),
+            ),
+            Spacer(),
+            TextButton.icon(
+              onPressed: _refreshRecommendations,
+              style: TextButton.styleFrom(foregroundColor: iconColor.value),
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: Text(l10n.refreshRecommendations),
+            ),
+            SizedBox(width: 20),
+          ],
+        ),
+        SizedBox(height: 10),
+
+        // nothing to draw from yet: a stream source may still be loading
+        if (recommendedSongs.isEmpty && recommendedArtists.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            child: Text(
+              l10n.recommendEmpty,
+              style: .new(fontSize: 13, color: iconColor.value),
+            ),
+          )
+        else ...[
+          if (recommendedArtists.isNotEmpty) ...[
+            Padding(
+              padding: const EdgeInsets.only(left: 20, bottom: 8),
+              child: Text(
+                l10n.recommendArtists,
+                style: .new(fontWeight: .bold, fontSize: 15),
+              ),
+            ),
+            mouseRegionForScroll(
+              child: SizedBox(
+                height: 194,
+                child: ListView.separated(
+                  controller: recommendArtistsSC,
+                  scrollDirection: .horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: recommendedArtists.length,
+                  separatorBuilder: (context, index) {
+                    return SizedBox(width: 16);
+                  },
+                  itemBuilder: (context, index) {
+                    final artist = recommendedArtists[index].artist;
+                    return SizedBox(
+                      width: 132,
+                      child: GestureDetector(
+                        onTap: () {
+                          layersManager.openArtistDetail(artist);
+                        },
+                        child: MouseRegion(
+                          cursor: SystemMouseCursors.click,
+                          child: Column(
+                            crossAxisAlignment: .start,
+                            children: [
+                              ListenableBuilder(
+                                listenable: Listenable.merge([
+                                  artist.picture.changeNotifier,
+                                ]),
+                                builder: (context, child) {
+                                  return CoverArtWidget(
+                                    size: 132,
+                                    borderRadius: 10,
+                                    picture: artist.picture,
+                                  );
+                                },
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                artist.name,
+                                style: .new(
+                                  fontWeight: .bold,
+                                  fontSize: 14,
+                                  overflow: .ellipsis,
+                                ),
+                              ),
+                              SizedBox(height: 1),
+                              Text(
+                                _artistSubtitle(recommendedArtists[index]),
+                                style: .new(
+                                  fontSize: 11,
+                                  color: iconColor.value,
+                                  overflow: .ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              scrollController: recommendArtistsSC,
+              displayIconNotifier: recommendArtistsDisplayIconNotifier,
+              changeNotifier: recommendArtistsChangeNotifier,
+              iconTop: 66,
+            ),
+            SizedBox(height: 15),
+          ],
+          if (recommendedSongs.isNotEmpty) ...[
+            Padding(
+              padding: const EdgeInsets.only(left: 20, bottom: 8),
+              child: Text(
+                l10n.recommendSongs,
+                style: .new(fontWeight: .bold, fontSize: 15),
+              ),
+            ),
+            mouseRegionForScroll(
+              child: songListView(
+                recommendedSongs.map((recommendation) {
+                  return recommendation.song;
+                }).toList(),
+                recommendSongsSC,
+              ),
+              scrollController: recommendSongsSC,
+              displayIconNotifier: recommendSongsDisplayIconNotifier,
+              changeNotifier: recommendSongsChangeNotifier,
+              iconTop: 67,
+            ),
+            SizedBox(height: 15),
+          ],
+        ],
+
         Row(
           mainAxisSize: .min,
           children: [
@@ -400,153 +547,6 @@ class HomeLayerState extends State<HomeLayer> {
         ),
         SizedBox(height: 15),
 
-
-        // "For You": a straight random draw from the library, refreshed by the
-        // button on the right. It is deliberately not a taste model, so the
-        // only thing that changes the set is the seed.
-        Row(
-          mainAxisSize: .min,
-          children: [
-            SizedBox(width: 20),
-            GestureDetector(
-              onTap: () {
-                layersManager.switchRootLayer('forYou');
-              },
-              child: MouseRegion(
-                cursor: SystemMouseCursors.click,
-                child: Row(
-                  children: [
-                    Text(
-                      l10n.forYou,
-                      style: .new(fontWeight: .bold, fontSize: 20),
-                    ),
-                    Icon(Icons.arrow_forward_ios_rounded, size: 20),
-                  ],
-                ),
-              ),
-            ),
-            Spacer(),
-            TextButton.icon(
-              onPressed: _refreshRecommendations,
-              style: TextButton.styleFrom(foregroundColor: iconColor.value),
-              icon: const Icon(Icons.refresh_rounded, size: 18),
-              label: Text(l10n.refreshRecommendations),
-            ),
-            SizedBox(width: 20),
-          ],
-        ),
-        SizedBox(height: 10),
-
-        // nothing to draw from yet: a stream source may still be loading
-        if (recommendedSongs.isEmpty && recommendedArtists.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-            child: Text(
-              l10n.recommendEmpty,
-              style: .new(fontSize: 13, color: iconColor.value),
-            ),
-          )
-        else ...[
-          if (recommendedArtists.isNotEmpty) ...[
-            Padding(
-              padding: const EdgeInsets.only(left: 20, bottom: 8),
-              child: Text(
-                l10n.recommendArtists,
-                style: .new(fontWeight: .bold, fontSize: 15),
-              ),
-            ),
-            mouseRegionForScroll(
-              child: SizedBox(
-                height: 194,
-                child: ListView.separated(
-                  controller: recommendArtistsSC,
-                  scrollDirection: .horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  itemCount: recommendedArtists.length,
-                  separatorBuilder: (context, index) {
-                    return SizedBox(width: 16);
-                  },
-                  itemBuilder: (context, index) {
-                    final artist = recommendedArtists[index].artist;
-                    return SizedBox(
-                      width: 132,
-                      child: GestureDetector(
-                        onTap: () {
-                          layersManager.openArtistDetail(artist);
-                        },
-                        child: MouseRegion(
-                          cursor: SystemMouseCursors.click,
-                          child: Column(
-                            crossAxisAlignment: .start,
-                            children: [
-                              ListenableBuilder(
-                                listenable: Listenable.merge([
-                                  artist.picture.changeNotifier,
-                                ]),
-                                builder: (context, child) {
-                                  return CoverArtWidget(
-                                    size: 132,
-                                    borderRadius: 10,
-                                    picture: artist.picture,
-                                  );
-                                },
-                              ),
-                              SizedBox(height: 8),
-                              Text(
-                                artist.name,
-                                style: .new(
-                                  fontWeight: .bold,
-                                  fontSize: 14,
-                                  overflow: .ellipsis,
-                                ),
-                              ),
-                              SizedBox(height: 1),
-                              Text(
-                                _artistSubtitle(recommendedArtists[index]),
-                                style: .new(
-                                  fontSize: 11,
-                                  color: iconColor.value,
-                                  overflow: .ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              scrollController: recommendArtistsSC,
-              displayIconNotifier: recommendArtistsDisplayIconNotifier,
-              changeNotifier: recommendArtistsChangeNotifier,
-              iconTop: 66,
-            ),
-            SizedBox(height: 15),
-          ],
-          if (recommendedSongs.isNotEmpty) ...[
-            Padding(
-              padding: const EdgeInsets.only(left: 20, bottom: 8),
-              child: Text(
-                l10n.recommendSongs,
-                style: .new(fontWeight: .bold, fontSize: 15),
-              ),
-            ),
-            mouseRegionForScroll(
-              child: songListView(
-                recommendedSongs.map((recommendation) {
-                  return recommendation.song;
-                }).toList(),
-                recommendSongsSC,
-              ),
-              scrollController: recommendSongsSC,
-              displayIconNotifier: recommendSongsDisplayIconNotifier,
-              changeNotifier: recommendSongsChangeNotifier,
-              iconTop: 67,
-            ),
-            SizedBox(height: 15),
-          ],
-        ],
         if (isTooNarrow(context)) SizedBox(height: 60),
       ],
     );
