@@ -23,25 +23,23 @@ LyricLine? currentLyricLine;
 bool currentLyricLineIsKaraoke = false;
 final updateDesktopLyricsNotifier = ValueNotifier(0);
 
-/// The text and control colours derived from the current album colour.
+/// The colour the desktop lyrics draw in, derived from the current album.
+///
+/// The colour the desktop lyrics draw in, derived from the current album.
 ///
 /// The desktop lyrics live in their own Flutter engine, so they cannot read the
 /// main window's currentCoverArtColor. The main window pushes the album colour
 /// over the method channel (see WindowControllerExtension.sendColor) and it is
-/// turned into the very same contrast theme the playback lyrics page uses.
-final desktopLyricsThemeNotifier = ValueNotifier<ContrastColorTextTheme>(
-  ContrastColorGenerator.generate(Colors.grey, darkBackground: true),
+/// turned into a tint that keeps the album's hue while staying legible on the
+/// window's own translucent black backdrop.
+final desktopLyricsColorNotifier = ValueNotifier<Color>(
+  ContrastColorGenerator.onDarkBackdrop(Colors.grey),
 );
 
-/// Recomputes the desktop lyrics colours from an ARGB album colour.
-///
-/// [darkBackground] is pinned because the window always draws on its own
-/// translucent black backdrop, whatever the cover art happens to look like;
-/// letting the cover decide would put near-black text on a black window.
+/// Recomputes the desktop lyrics colour from an ARGB album colour.
 void setDesktopLyricsColor(int argb) {
-  desktopLyricsThemeNotifier.value = ContrastColorGenerator.generate(
+  desktopLyricsColorNotifier.value = ContrastColorGenerator.onDarkBackdrop(
     Color(argb),
-    darkBackground: true,
   );
 }
 
@@ -105,29 +103,35 @@ class DesktopLyrics extends StatelessWidget {
                 }
                 _isTransparentNotifier.value = true;
               },
-              child: Material(
-                color: isTransparent ? Colors.transparent : Colors.black45,
-                shape: SmoothRectangleBorder(
-                  smoothness: 1,
-                  borderRadius: BorderRadius.circular(5),
-                ),
-                child: ValueListenableBuilder(
-                  valueListenable: desktopLyricsThemeNotifier,
-                  builder: (context, theme, child) {
-                    return Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Column(
-                        children: [
-                          SizedBox(
-                            height: 50,
-                            child: isTransparent ? null : controlsRow(theme),
-                          ),
-                          content(theme),
-                          Spacer(),
-                        ],
-                      ),
-                    );
-                  },
+              // The window itself stays transparent: the backdrop only wraps
+              // the lyric line (plus the controls on hover), so it hugs the
+              // text instead of filling the whole 1000x200 window.
+              child: Center(
+                child: Material(
+                  color: isTransparent ? Colors.transparent : Colors.black45,
+                  shape: SmoothRectangleBorder(
+                    smoothness: 1,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: ValueListenableBuilder(
+                    valueListenable: desktopLyricsColorNotifier,
+                    builder: (context, color, child) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 8,
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (!isTransparent)
+                              SizedBox(height: 50, child: controlsRow(color)),
+                            content(color),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
             ),
@@ -137,7 +141,7 @@ class DesktopLyrics extends StatelessWidget {
     );
   }
 
-  Widget content(ContrastColorTextTheme theme) {
+  Widget content(Color color) {
     return ValueListenableBuilder(
       valueListenable: updateDesktopLyricsNotifier,
       builder: (context, value, child) {
@@ -146,7 +150,7 @@ class DesktopLyrics extends StatelessWidget {
             'Sylvakru',
             style: TextStyle(
               fontSize: isMobile ? 20 : 30,
-              color: theme.regular,
+              color: color,
               shadows: [
                 Shadow(
                   offset: Offset(0, 1),
@@ -172,7 +176,7 @@ class DesktopLyrics extends StatelessWidget {
                     fontSize: isMobile ? 20 : 30,
                     expanded: false,
                     isDesktopLyrics: true,
-                    desktopLyricsTextColor: theme.accent,
+                    desktopLyricsTextColor: color,
                   );
                 },
               )
@@ -182,7 +186,7 @@ class DesktopLyrics extends StatelessWidget {
 
                 style: TextStyle(
                   fontSize: isMobile ? 20 : 30,
-                  color: theme.regular,
+                  color: color,
                   shadows: [
                     Shadow(
                       offset: Offset(0, 1),
@@ -198,7 +202,7 @@ class DesktopLyrics extends StatelessWidget {
 
                 style: TextStyle(
                   fontSize: isMobile ? 14 : 24,
-                  color: theme.regular.withAlpha(128),
+                  color: color.withAlpha(140),
                   shadows: [
                     Shadow(
                       offset: Offset(0, 1),
@@ -214,13 +218,14 @@ class DesktopLyrics extends StatelessWidget {
     );
   }
 
-  Widget controlsRow(ContrastColorTextTheme theme) {
-    // the buttons follow the album colour too, but keep enough contrast against
-    // the window's black backdrop
-    final buttonColor = theme.regular;
+  Widget controlsRow(Color color) {
+    // the buttons follow the album colour too
+    final buttonColor = color;
+    // mainAxisSize.min keeps the row hugging the buttons: a Spacer would make
+    // it as wide as the window and stretch the backdrop with it
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Spacer(),
         IconButton(
           color: buttonColor,
 
@@ -287,7 +292,6 @@ class DesktopLyrics extends StatelessWidget {
           },
           icon: Icon(Icons.close),
         ),
-        Spacer(),
       ],
     );
   }

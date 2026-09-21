@@ -10,20 +10,10 @@ class ContrastColorTextTheme {
 class ContrastColorGenerator {
   /// Regular: High-contrast complementary tint for best readability.
   /// Accent: Subtle neighboring hue for a gentle highlight.
-  ///
-  /// [darkBackground] describes the surface the text will sit on. By default it
-  /// is inferred from [backgroundColor]'s luminance, which is right when the
-  /// colour *is* the background (the lyrics page tints itself with the cover
-  /// art). Pass it explicitly when the text sits on a fixed backdrop: the
-  /// desktop lyrics always draw on translucent black, so a light cover would
-  /// otherwise produce near-black text on a black window.
-  static ContrastColorTextTheme generate(
-    Color backgroundColor, {
-    bool? darkBackground,
-  }) {
+  static ContrastColorTextTheme generate(Color backgroundColor) {
     final hsl = HSLColor.fromColor(backgroundColor);
     final double luminance = backgroundColor.computeLuminance();
-    final bool isDark = darkBackground ?? luminance < 0.45;
+    final bool isDark = luminance < 0.45;
 
     // --- 1. Regular Text (Optimized for Readability) ---
     // We use the 180° hue shift but keep saturation very low.
@@ -48,5 +38,25 @@ class ContrastColorGenerator {
     ).toColor();
 
     return ContrastColorTextTheme(regular: regularColor, accent: accentColor);
+  }
+
+  /// A readable, hue-preserving version of [cover] for a fixed dark backdrop.
+  ///
+  /// [generate] is tuned for the lyrics page, where the text sits on a mid-tone
+  /// blurred cover: its colours are pushed to lightness 0.90/0.95, and the
+  /// regular tint is desaturated to 0.10 so it "cuts through" a coloured
+  /// background. On the desktop lyrics window, which always draws on its own
+  /// translucent black, both render as plain white - the album colour appeared
+  /// not to apply at all.
+  ///
+  /// So the album's own hue is kept and only the lightness is pulled down to a
+  /// level that stays legible on black while the tint remains visible. Greys
+  /// stay grey rather than picking up an arbitrary hue.
+  static Color onDarkBackdrop(Color cover) {
+    final hsl = HSLColor.fromColor(cover);
+    final saturation = hsl.saturation < 0.12
+        ? 0.0
+        : hsl.saturation.clamp(0.35, 0.80);
+    return HSLColor.fromAHSL(1.0, hsl.hue, saturation, 0.72).toColor();
   }
 }
