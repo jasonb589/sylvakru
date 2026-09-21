@@ -38,6 +38,7 @@ class ArtistRecommendation {
 class Recommender {
   static const int songLimit = 50;
   static const int artistLimit = 24;
+  static const int albumLimit = 20;
 
   /// Picks up to [limit] songs at random.
   ///
@@ -73,5 +74,20 @@ class Recommender {
             : artist.albumCount,
       );
     }).toList();
+  }
+
+  /// Picks up to [limit] albums at random.
+  ///
+  /// Same plain random draw as [randomSongs] and [randomArtists]: the home page
+  /// used to list the alphabetically first albums, so it always opened on the
+  /// same handful ("'The Story of Light'", "0-1", "10年朋友4", ...).
+  static List<Album> randomAlbums({
+    required List<Album> albums,
+    int limit = albumLimit,
+    int seed = 0,
+  }) {
+    final pool = List<Album>.from(albums);
+    pool.shuffle(math.Random(seed));
+    return pool.take(limit).toList();
   }
 }

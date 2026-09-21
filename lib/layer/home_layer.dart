@@ -66,6 +66,13 @@ class HomeLayerState extends State<HomeLayer> {
   List<SongRecommendation> recommendedSongs = const [];
   List<ArtistRecommendation> recommendedArtists = const [];
 
+  /// The albums shown in the home page's "albums" row.
+  ///
+  /// A random draw rather than the alphabetically first albums, which is what
+  /// made that row always open on the same handful. It shares [recommendSeed]
+  /// with the "For You" section, so "refresh" moves this row on as well.
+  List<Album> recommendedAlbums = const [];
+
   @override
   void initState() {
     super.initState();
@@ -76,10 +83,20 @@ class HomeLayerState extends State<HomeLayer> {
 
     // stream sources have not fetched their artists yet at this point
     _ensureArtists();
+
+    // classify() finishes after this layer is built, so the album row would
+    // otherwise stay empty until something else rebuilt it. The seed is
+    // unchanged, so this redraws the same draw rather than shuffling again.
+    artistAlbumManager.updateNotifier.addListener(_onArtistAlbumChanged);
+  }
+
+  void _onArtistAlbumChanged() {
+    _rebuildRecommendations();
   }
 
   @override
   void dispose() {
+    artistAlbumManager.updateNotifier.removeListener(_onArtistAlbumChanged);
     albumsSC.dispose();
     frequentlySC.dispose();
     recentlySC.dispose();
@@ -115,6 +132,10 @@ class HomeLayerState extends State<HomeLayer> {
       );
       recommendedArtists = Recommender.randomArtists(
         artists: artistAlbumManager.artistList,
+        seed: recommendSeed,
+      );
+      recommendedAlbums = Recommender.randomAlbums(
+        albums: artistAlbumManager.albumList,
         seed: recommendSeed,
       );
     });
@@ -322,7 +343,7 @@ class HomeLayerState extends State<HomeLayer> {
                 return ListView.separated(
                   controller: albumsSC,
                   scrollDirection: .horizontal,
-                  itemCount: artistAlbumManager.albumList.length + 1,
+                  itemCount: recommendedAlbums.length + 1,
                   separatorBuilder: (context, index) {
                     return SizedBox(width: 15);
                   },
@@ -331,7 +352,7 @@ class HomeLayerState extends State<HomeLayer> {
                       return SizedBox(width: 5);
                     }
                     index--;
-                    final album = artistAlbumManager.albumList[index];
+                    final album = recommendedAlbums[index];
                     return Column(
                       children: [
                         GestureDetector(

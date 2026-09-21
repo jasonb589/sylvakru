@@ -149,4 +149,55 @@ void main() {
       expect(Recommender.randomArtists(artists: const []), isEmpty);
     });
   });
+
+  group('randomAlbums', () {
+    List<Album> makeAlbums([int count = 30]) =>
+        List.generate(count, (i) => Album('Album $i'));
+
+    test('picks the requested number', () {
+      expect(
+        Recommender.randomAlbums(albums: makeAlbums(), limit: 5),
+        hasLength(5),
+      );
+      expect(Recommender.randomAlbums(albums: makeAlbums()), hasLength(20));
+    });
+
+    test('is stable for a given seed', () {
+      final albums = makeAlbums();
+      final first = Recommender.randomAlbums(albums: albums, seed: 3);
+      final second = Recommender.randomAlbums(albums: albums, seed: 3);
+      expect(
+        first.map((e) => e.name),
+        orderedEquals(second.map((e) => e.name)),
+      );
+    });
+
+    test('a different seed picks a different set', () {
+      final albums = makeAlbums();
+      final first = Recommender.randomAlbums(albums: albums, seed: 1);
+      final second = Recommender.randomAlbums(albums: albums, seed: 2);
+      expect(
+        first.map((e) => e.name),
+        isNot(orderedEquals(second.map((e) => e.name))),
+      );
+    });
+
+    test('does not just take the alphabetically first albums', () {
+      // the bug being fixed: the row always showed albumList.take(n)
+      final albums = makeAlbums();
+      final picked = Recommender.randomAlbums(
+        albums: albums,
+        limit: 5,
+        seed: 9,
+      );
+      expect(
+        picked.map((e) => e.name),
+        isNot(orderedEquals(albums.take(5).map((e) => e.name))),
+      );
+    });
+
+    test('handles an empty album list', () {
+      expect(Recommender.randomAlbums(albums: const []), isEmpty);
+    });
+  });
 }
