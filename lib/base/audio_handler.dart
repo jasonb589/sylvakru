@@ -10,7 +10,6 @@ import 'package:sylvakru/base/services/my_window_listener.dart';
 import 'package:sylvakru/base/services/picture_service.dart';
 import 'package:sylvakru/base/services/play_queue_logic.dart';
 import 'package:sylvakru/base/services/stream_client.dart';
-import 'package:sylvakru/base/services/feiniu_client.dart';
 import 'package:sylvakru/base/services/taskbar_service.dart';
 import 'package:sylvakru/base/services/webdav_client.dart';
 import 'package:sylvakru/base/services/color_manager.dart';
@@ -581,42 +580,29 @@ class MyAudioHandler extends BaseAudioHandler {
         );
       } else {
         String? resource;
-        Map<String, String>? streamHeaders;
-        bool needHeader = false;
+        Map<String, String>? headers;
+
         switch (sourceType) {
           case .webdav:
             final tmpPath = await covertToRedirectPathIfNeed(currentSong.path!);
             if (tmpPath == null) {
-              needHeader = true;
+              headers = webdavClient?.headers;
             } else {
               resource = tmpPath;
             }
-            break;
           case .navidrome:
           case .emby:
-            resource = streamClient?.getStreamUrl(currentSong.id);
-            break;
           case .feiniu:
-            final client = streamClient;
-            final authenticated = client is FeiniuClient && await client.ping();
-            if (!authenticated) {
-              throw StateError('Feiniu music authentication failed');
-            }
-            resource = client.getStreamUrl(currentSong.id);
-            streamHeaders = client.headers;
-            break;
+            await streamClient?.ping();
+            resource = streamClient?.getStreamUrl(currentSong.id);
+            headers = streamClient?.headers;
           default:
             break;
         }
         resource ??= currentSong.path!;
 
         await _player.open(
-          Media(
-            resource,
-            httpHeaders:
-                streamHeaders ?? (needHeader ? webdavClient?.headers : null),
-            start: start,
-          ),
+          Media(resource, httpHeaders: headers, start: start),
           play: isPlayingNotifier.value,
         );
       }
