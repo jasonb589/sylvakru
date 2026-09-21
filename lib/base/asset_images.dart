@@ -72,7 +72,6 @@ const AssetImage premiumImage = AssetImage('assets/images/premium.png');
 const AssetImage previousButtonImage = AssetImage(
   'assets/images/previous_button.png',
 );
-const AssetImage rankingImage = AssetImage('assets/images/ranking.png');
 const AssetImage recentlyAddedImage = AssetImage(
   'assets/images/recently_added.png',
 );
