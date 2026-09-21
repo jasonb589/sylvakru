@@ -1,17 +1,18 @@
+import 'package:lpinyin/lpinyin.dart';
 import 'dart:async';
 
-import 'package:lpinyin/lpinyin.dart';
-import 'package:material_ui/material_ui.dart';
+
 import 'package:sylvakru/base/app.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sylvakru/base/data/library.dart';
 import 'package:sylvakru/base/data/setting.dart';
 import 'package:sylvakru/base/services/picture_service.dart';
-import 'package:sylvakru/base/services/stream_client.dart';
 import 'package:sylvakru/base/my_audio_metadata.dart';
 import 'package:sylvakru/base/utils/metadata_utils.dart';
+import 'package:sylvakru/base/services/stream_client.dart';
 import 'package:sylvakru/layer/layers_manager.dart';
 
-ArtistAlbumManager artistAlbumManager = ArtistAlbumManager();
+final artistAlbumManager = ArtistAlbumManager();
 
 class ArtistAlbumManager {
   List<Artist> artistList = [];
@@ -33,6 +34,10 @@ class ArtistAlbumManager {
 
   /// How many albums the "recently added" module shows at most.
   static const int recentlyAddedLimit = 20;
+
+  /// Set once [classify] has finished, so the artists/albums layers know
+  /// whether they are still waiting for the first pass.
+  bool done = false;
 
   ArtistAlbumManager() {
     artistsIsAscendingNotifier.addListener(() {
@@ -63,7 +68,7 @@ class ArtistAlbumManager {
         : albumsUseLargePictureNotifier;
   }
 
-  void classify() {
+  void classify() async {
     for (final song in library.songList) {
       _processSong(song);
     }
@@ -80,7 +85,7 @@ class ArtistAlbumManager {
     }
 
     updateRecentlyAddedFromAlbums();
-
+    done = true;
     updateNotifier.value++;
   }
 
@@ -222,6 +227,11 @@ class ArtistAlbumManager {
 
   void updateArtistAlbum() {
     layersManager.clearArtistAlbum();
+    clear();
+    classify();
+  }
+
+  void clear() {
     artistList.clear();
     albumList.clear();
     artistMap.clear();
@@ -231,6 +241,8 @@ class ArtistAlbumManager {
     _recentlyAddedLoaded = false;
     recentlyAddedAlbumList = [];
     recentlyAddedAlbumAll = [];
+
+    done = false;
 
     classify();
   }
@@ -297,10 +309,12 @@ abstract class ArtistAlbumBase {
 
   final bool isArtist;
 
+  /// Picture for stream sources, which know their own cover art. Local/WebDAV
+  /// libraries have no such id and derive it from the first song instead.
   MyPicture? _picture;
-  MyPicture get picture => isStreamSource ? _picture! : getCoverSong().picture;
+  MyPicture get picture => isStreamSource ? _picture! : songList.first.picture;
 
-  ArtistAlbumBase(this.name, this.isArtist, {this.id, String? coverArtId}) {
+  ArtistAlbumBase({required this.name, required this.isArtist, this.id, String? coverArtId}) {
     id ??= name;
     compareName = PinyinHelper.getPinyinE(name);
     if (isStreamSource) {
@@ -310,15 +324,10 @@ abstract class ArtistAlbumBase {
 
   bool get isEmpty => songList.isEmpty;
 
-  MyAudioMetadata getCoverSong() {
-    return songList.first;
-  }
 
-  int get totalCount => songList.length;
-
-  Completer<void>? completer;
-
+  /// Fills this entry from its source (server or local library).
   Future<void> load();
+  int get totalCount => songList.length;
 }
 
 class Artist extends ArtistAlbumBase {
@@ -328,9 +337,10 @@ class Artist extends ArtistAlbumBase {
     super.coverArtId,
     this.biography,
     this.serverAlbumCount,
-  }) : super(name, false);
+  }) : super(name: name, isArtist: true);
 
   Set<Album> albumSet = {};
+
 
   List<Album> albumList = [];
 
@@ -348,6 +358,9 @@ class Artist extends ArtistAlbumBase {
   /// Whether [load] already asked the server for [biography].
   bool biographyLoaded = false;
 
+
+  /// Guards [load] so the server is only asked once per artist.
+  Completer<void>? completer;
   final changeNotifier = ValueNotifier(0);
 
   /// How many albums this artist has, preferring the loaded album list.
@@ -396,8 +409,11 @@ class Artist extends ArtistAlbumBase {
     albumList.sort((a, b) {
       int aYear = a.year ?? 9999;
       int bYear = b.year ?? 9999;
-
-      return aYear.compareTo(bYear);
+      final yearCompre = aYear.compareTo(bYear);
+      if (yearCompre != 0) {
+        return yearCompre;
+      }
+      return a.compareName.compareTo(b.compareName);
     });
 
     for (final album in albumList) {
@@ -452,18 +468,21 @@ class Artist extends ArtistAlbumBase {
       completer!.complete();
       return;
     }
-    return completer!.future;
   }
 }
 
 class Album extends ArtistAlbumBase {
   Album(String name, {super.id, super.coverArtId, this.year, this.created})
-    : super(name, false);
+    : super(name: name, isArtist: false);
 
+  /// This album's songs grouped by artist name, filled by [sort].
   Map<String, List<MyAudioMetadata>> artist2SongList = {};
   int? year;
 
   /// Creation time reported by the server, only available for stream sources.
+
+  /// Guards [load] so the server is only asked once per album.
+  Completer<void>? completer;
   DateTime? created;
 
   DateTime? _addedTime;

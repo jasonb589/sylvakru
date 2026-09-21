@@ -140,6 +140,23 @@ class FeiniuClient extends StreamClient {
   @override
   Future<bool> ping() async => await _request('/user/me') != null;
 
+  @override
+  Future<int> getSongCount() async {
+    final response = await _request(
+      '/track/list',
+      query: {'sort': 'title,asc', 'page': 1, 'size': 1},
+    );
+    return (response?['data']?['total'] as num?)?.toInt() ?? 0;
+  }
+
+  /// Songs from the server's play history, most recent first.
+  Future<List<MyAudioMetadata>?> getRecentlySongs() async {
+    final rows = await _list('/play-history/list', size: 100, offset: 0);
+    return rows == null ? null : _songs(rows);
+  }
+
+
+
   Future<List<Map<String, dynamic>>?> _list(
     String path, {
     Map<String, dynamic>? query,

@@ -101,7 +101,7 @@ extension _SongListPanel on _SongListState {
                   }
                   return ReorderableDragStartListener(
                     key: ValueKey(currentSongList[index]),
-                    enabled: !isFixed & canModify,
+                    enabled: !isFixed,
                     index: index,
                     child: songListItem(index),
                   );
@@ -237,7 +237,7 @@ extension _SongListPanel on _SongListState {
                                                 songList: currentSongList,
                                                 playlist: playlist,
                                                 folder: folder,
-                                                isRanking: isRanking,
+                                                isFrequently: isFrequently,
                                                 isRecently: isRecently,
                                                 isLibrary: isLibrary,
                                                 reorderable: reorderable,
@@ -377,7 +377,7 @@ extension _SongListPanel on _SongListState {
 
   Widget label() {
     final l10n = AppLocalizations.of(context);
-    bool canSort = !isRanking && !isRecently;
+    bool canSort = !isFrequently && !isRecently;
     return SizedBox(
       height: 50,
       child: Row(
@@ -524,7 +524,7 @@ extension _SongListPanel on _SongListState {
               ),
             ),
           ),
-          if (isRanking)
+          if (isFrequently && sourceType != .emby)
             SizedBox(
               width: 50,
               child: Padding(
@@ -633,7 +633,7 @@ extension _SongListPanel on _SongListState {
                           ),
                         ),
 
-                        if (widget.isRanking)
+                        if (widget.isFrequently && sourceType != .emby)
                           SizedBox(
                             width: 50,
                             child: Text(
@@ -888,7 +888,7 @@ extension _SongListPanel on _SongListState {
             callback: () => goToArtist(song, context),
           ),
         );
-      } else if (isNotStreamSource && artist!.name != song.artist) {
+      } else if (artist!.name != song.artist) {
         menuItems.add(
           MenuItem(
             text: l10n.go2Artist,

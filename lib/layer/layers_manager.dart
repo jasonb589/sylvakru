@@ -18,10 +18,11 @@ import 'package:sylvakru/layer/albums_layer.dart';
 import 'package:sylvakru/layer/artists_layer.dart';
 import 'package:sylvakru/layer/folders_layer.dart';
 import 'package:sylvakru/layer/font_picker_layer.dart';
+import 'package:sylvakru/layer/home_layer.dart';
 import 'package:sylvakru/layer/license_layer.dart';
 import 'package:sylvakru/layer/playlists_layer.dart';
 import 'package:sylvakru/layer/premium_layer.dart';
-import 'package:sylvakru/layer/ranking_layer.dart';
+import 'package:sylvakru/layer/frequently_layer.dart';
 import 'package:sylvakru/layer/for_you_layer.dart';
 import 'package:sylvakru/layer/recently_added_layer.dart';
 import 'package:sylvakru/layer/recently_layer.dart';
@@ -131,10 +132,12 @@ class LayersManager {
         return AlbumsLayer(key: GlobalKey());
       } else if (label == 'folders') {
         return FoldersLayer(key: GlobalKey());
+      } else if (label == 'home') {
+        return HomeLayer(key: GlobalKey());
       } else if (label == 'songs') {
         return SongsLayer(key: GlobalKey());
-      } else if (label == 'ranking') {
-        return RankingLayer(key: GlobalKey());
+      } else if (label == 'frequently') {
+        return FrequentlyLayer(key: GlobalKey());
       } else if (label == 'forYou') {
         return ForYouLayer(key: GlobalKey());
       } else if (label == 'recently') {
@@ -233,18 +236,26 @@ class LayersManager {
       rootKey = foldersKey;
       visibleNotifier = foldersVisibleNotifier;
       detailLayer = SingleFolderLayer(folder: detail);
-    } else if (label == 'ranking') {
-      rootKey = rankingKey;
-      visibleNotifier = rankingVisibleNotifier;
-      detailLayer = SingleAlbumLayer(album: detail, rootLabel: 'ranking');
-    } else if (label == 'recently') {
-      rootKey = recentlyKey;
-      visibleNotifier = recentlyVisibleNotifier;
-      detailLayer = SingleAlbumLayer(album: detail, rootLabel: 'recently');
+    } else if (label == 'home') {
+      rootKey = homeKey;
+      visibleNotifier = homeVisibleNotifier;
+      if (detail is Album) {
+        detailLayer = SingleAlbumLayer(album: detail, isHomeDetaile: true);
+      } else {
+        detailLayer = SinglePlaylistLayer(
+          playlist: detail,
+          isRoot: false,
+          isHomeDetaile: true,
+        );
+      }
     } else if (label == 'recentlyAdded') {
       rootKey = recentlyAddedKey;
       visibleNotifier = recentlyAddedVisibleNotifier;
       detailLayer = SingleAlbumLayer(album: detail, rootLabel: 'recentlyAdded');
+    } else if (label == 'recently') {
+      // RecentlyLayer is stateless now, so an album opened from it carries no
+      // root label: it returns to the album's own root instead.
+      detailLayer = SingleAlbumLayer(album: detail);
     } else if (label == 'playlists') {
       rootKey = playlistsKey;
       visibleNotifier = playlistsVisibleNotifier;
@@ -318,18 +329,18 @@ class LayersManager {
     } else if (label == 'albums') {
       rootKey = albumsKey;
       visibleNotifier = albumsVisibleNotifier;
-    } else if (label == 'ranking') {
-      rootKey = rankingKey;
-      visibleNotifier = rankingVisibleNotifier;
+    } else if (label == 'home') {
+      rootKey = homeKey;
+      visibleNotifier = homeVisibleNotifier;
     } else if (label == 'forYou') {
       rootKey = forYouKey;
       visibleNotifier = forYouVisibleNotifier;
-    } else if (label == 'recently') {
-      rootKey = recentlyKey;
-      visibleNotifier = recentlyVisibleNotifier;
     } else if (label == 'recentlyAdded') {
       rootKey = recentlyAddedKey;
       visibleNotifier = recentlyAddedVisibleNotifier;
+    } else if (label == 'recently') {
+      // RecentlyLayer/FrequentlyLayer are stateless and have no key of their own,
+      // so there is nothing to resolve here for them.
     } else if (label == 'folders') {
       rootKey = foldersKey;
       visibleNotifier = foldersVisibleNotifier;
@@ -466,18 +477,17 @@ class LayersManager {
     } else if (layer is SingleAlbumLayer) {
       return layer.album.picture;
     } else if (layer is SingleFolderLayer) {
-      final songList = layer.folder.songList;
-      return getFirstSong(songList)?.picture;
+      return getFirstSong(layer.folder.songList)?.picture;
     } else if (layer is SongsLayer) {
       return getFirstSong(library.songList)?.picture;
-    } else if (layer is RankingLayer && sourceType != .navidrome) {
-      return getFirstSong(history.rankingSongList)?.picture;
+    } else if (layer is FrequentlyLayer && sourceType != .navidrome) {
+      return getFirstSong(history.frequentlySongList)?.picture;
     } else if (layer is RecentlyAddedLayer) {
       return artistAlbumManager.recentlyAddedAlbumList.firstOrNull?.picture;
-    } else if (layer is RecentlyLayer && sourceType != .navidrome) {
+    } else if (layer is RecentlyLayer) {
       return getFirstSong(history.recentlySongList)?.picture;
     } else if (layer is SinglePlaylistLayer) {
-      return layer.playlist.getCoverSong()?.picture;
+      return layer.playlist.picture;
     } else {
       return currentSongNotifier.value?.picture;
     }
@@ -533,11 +543,12 @@ class LayersManager {
     popDetail('artists', executePop: false);
     popDetail('albums', executePop: false);
     popDetail('folders', executePop: false);
-    popDetail('ranking', executePop: false);
+    popDetail('frequently', executePop: false);
     popDetail('recently', executePop: false);
     popDetail('forYou', executePop: false);
     popDetail('recentlyAdded', executePop: false);
     popDetail('playlists', executePop: false);
+    popDetail('home', executePop: false);
     while (await layersManager.popDetail('settings')) {}
 
     layerInfoMap.clear();
@@ -555,11 +566,12 @@ class LayersManager {
     popDetail('artists', executePop: false);
     popDetail('albums', executePop: false);
     popDetail('folders', executePop: false);
-    popDetail('ranking', executePop: false);
+    popDetail('frequently', executePop: false);
     popDetail('recently', executePop: false);
     popDetail('recentlyAdded', executePop: false);
     popDetail('playlists', executePop: false);
     popDetail('forYou', executePop: false);
+    popDetail('home', executePop: false);
 
     layerInfoMap.removeWhere((k, v) => k != topRootLayer);
     rootLayerMap.removeWhere((k, v) => k != 'settings');

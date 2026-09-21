@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sylvakru/base/app.dart';
 import 'package:sylvakru/base/data/artist_album.dart';
+import 'package:sylvakru/base/data/library.dart';
 import 'package:sylvakru/base/data/playlist.dart';
 import 'package:sylvakru/base/my_audio_metadata.dart';
 import 'package:sylvakru/base/services/interaction.dart';
@@ -138,6 +139,63 @@ class EmbyClient extends StreamClient {
     );
     return result != null;
   }
+
+  @override
+  Future<int> getSongCount() async {
+    final response = await safeRequest<Map<String, dynamic>>(
+      () => dio.get('/Items/Counts'),
+      parser: (res) => res.data as Map<String, dynamic>?,
+    );
+
+    if (response == null) {
+      return 0;
+    }
+
+    return response['SongCount'] as int? ?? 0;
+  }
+
+
+  /// Songs Emby reports as played, ordered by play count or play date.
+  ///
+  /// [isRecently] picks the ordering: most recent first, or most played first.
+  Future<List<MyAudioMetadata>?> _getHistorySongs(bool isRecently) async {
+    final response = await safeRequest<Map<String, dynamic>>(
+      () => dio.get(
+        '/Users/$userId/Items',
+        queryParameters: {
+          'SearchTerm': '',
+          'SortBy': isRecently ? 'DatePlayed' : 'PlayCount',
+          'SortOrder': 'Descending',
+          'IncludeItemTypes': 'Audio',
+          'Recursive': true,
+          'StartIndex': 0,
+          'Limit': 100,
+        },
+      ),
+      parser: (res) => res.data as Map<String, dynamic>?,
+    );
+
+    if (response == null) {
+      return null;
+    }
+
+    return (normalize(response['Items']) ?? [])
+        .map(
+          (e) =>
+              e['UserData']['Played'] == true ? library.id2Song[e['Id']] : null,
+        )
+        .whereType<MyAudioMetadata>()
+        .toList();
+  }
+
+  Future<List<MyAudioMetadata>?> getFrequentlySongs() async {
+    return _getHistorySongs(false);
+  }
+
+  Future<List<MyAudioMetadata>?> getRecentlySongs() async {
+    return _getHistorySongs(true);
+  }
+
 
   /// Get all libraries
   Future<List<dynamic>> _getLibraries() async {

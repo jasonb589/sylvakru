@@ -117,6 +117,17 @@ class NavidromeClient extends StreamClient {
   }
 
   @override
+  Future<int> getSongCount() async {
+    final response = await safeRequest('/rest/getScanStatus.view');
+
+    if (response == null) {
+      return 0;
+    }
+
+    return response['scanStatus']['count'];
+  }
+
+  @override
   Future<List<Artist>?> getArtistList() async {
     final res = await safeRequest('/rest/getArtists.view');
     if (res == null) {

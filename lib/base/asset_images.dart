@@ -24,6 +24,7 @@ const AssetImage folderImage = AssetImage('assets/images/folder.png');
 const AssetImage fontImage = AssetImage('assets/images/font.png');
 const AssetImage forwardImage = AssetImage('assets/images/forward.png');
 const AssetImage forYouImage = AssetImage('assets/images/for_you.png');
+const AssetImage frequentlyImage = AssetImage('assets/images/frequently.png');
 const AssetImage fullscreenExitImage = AssetImage(
   'assets/images/fullscreen_exit.png',
 );
@@ -32,6 +33,7 @@ const AssetImage futurePremiumImage = AssetImage(
   'assets/images/futurePremium.png',
 );
 const AssetImage gridImage = AssetImage('assets/images/grid.png');
+const AssetImage homeImage = AssetImage('assets/images/home.png');
 const AssetImage iconImage = AssetImage('assets/images/icon.png');
 const AssetImage infoImage = AssetImage('assets/images/info.png');
 const AssetImage languageImage = AssetImage('assets/images/language.png');

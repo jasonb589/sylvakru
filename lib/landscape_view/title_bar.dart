@@ -351,7 +351,7 @@ class _TitleBarState extends State<TitleBar> {
                       layersManager.popDetail('artists');
                       layersManager.popDetail('albums');
                       layersManager.popDetail('folders');
-                      layersManager.popDetail('ranking');
+                      layersManager.popDetail('frequently');
                       layersManager.popDetail('recently');
                       layersManager.popDetail('recentlyAdded');
                       layersManager.popDetail('playlists');

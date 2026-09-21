@@ -14,6 +14,7 @@ import 'package:sylvakru/base/utils/path.dart';
 
 class MyAudioMetadata {
   final String id;
+  final String? coverId;
 
   String? path;
   DateTime? modified;
@@ -30,9 +31,6 @@ class MyAudioMetadata {
   final isFavoriteNotifier = ValueNotifier(false);
   final updateNotifier = ValueNotifier(0);
 
-  String? artistId;
-  String? albumId;
-
   int playCount;
   DateTime? lastPlayed;
 
@@ -43,20 +41,21 @@ class MyAudioMetadata {
   MyAudioMetadata(
     this._audioMetadata, {
     required this.id,
+    this.coverId,
     this.path,
-    this.artistId,
-    this.albumId,
     this.modified,
     this.playCount = 0,
     this.lastPlayed,
   }) {
-    final md5Hash = md5.convert(utf8.encode(id)).toString();
-    // stream sources identify cover art by song id, local/WebDAV ones by file
-    // path. path is an optional constructor argument, so fall back to id
-    // instead of asserting: MyPicture already handles an unusable id by
-    // marking itself loaded-but-absent.
-    picture = MyPicture.form(isStreamSource ? id : path ?? id, md5Hash: md5Hash);
+    // Cover art identity differs per source: stream sources identify it by the
+    // server's coverId (falling back to the song id), local/WebDAV ones by file
+    // path. path is optional, so fall back to id instead of asserting: MyPicture
+    // already handles an unusable id by marking itself loaded-but-absent.
+    picture = MyPicture.form(
+      isStreamSource ? (coverId ?? id) : (path ?? id),
+    );
 
+    final md5Hash = md5.convert(utf8.encode(id)).toString();
     if (sourceType != .local) {
       cachePath = '${getCachesPath(sourceType)}/$md5Hash';
       cacheExist = File(cachePath!).existsSync();
@@ -102,6 +101,8 @@ class MyAudioMetadata {
   factory MyAudioMetadata.fromMap(
     Map<String, dynamic> song,
     SourceType sourceType, {
+    /// When false the caller only wants the metadata, not a cache lookup that
+    /// touches the filesystem on every song.
     bool cache = true,
   }) {
     if (sourceType == .navidrome) {
@@ -126,8 +127,6 @@ class MyAudioMetadata {
           ),
           id: song['id'],
           path: song['path'],
-          artistId: song['artistId'],
-          albumId: song['albumId'],
           playCount: song['playCount'] as int? ?? 0,
           lastPlayed: song['played'] != null
               ? DateTime.parse(song['played'])
@@ -137,57 +136,57 @@ class MyAudioMetadata {
     }
 
     if (sourceType == .feiniu) {
-      final audioSpec = song['audioSpec'] as Map? ?? const {};
-      final album = song['album'] as Map? ?? const {};
-      final artists = (song['artists'] as List?) ?? const [];
-      final genres = (song['genres'] as List?) ?? const [];
-      final durationMs = (song['duration'] ?? audioSpec['duration']) as num?;
-      final bitrate = audioSpec['bitrate'] as num?;
-      final releaseDate = DateTime.tryParse(album['releaseDate'] ?? '');
-      MyAudioMetadata createMetadata() => MyAudioMetadata(
-        AudioMetadata(
-          format: audioSpec['format'],
-          title: song['title'],
-          artist: artists.map((artist) => artist['name']).join('/'),
-          album: album['name'],
-          genre: genres.map((genre) => genre['name']).join('/'),
-          year: (song['year'] as num?)?.toInt() ?? releaseDate?.year,
-          track: (song['trackNo'] as num?)?.toInt(),
-          disc: (song['discNo'] as num?)?.toInt(),
-          // 飞牛时长为毫秒、码率为 bps；播放器码率统一使用 kbps。
-          bitrate: bitrate == null ? null : (bitrate / 1000).round(),
-          samplerate: (audioSpec['sampleRate'] as num?)?.toInt(),
-          duration: durationMs == null
-              ? null
-              : Duration(milliseconds: durationMs.toInt()),
-        ),
-        id: song['guid'],
-        path: audioSpec['path'],
-        artistId: artists.isEmpty ? null : artists.first['guid'],
-        albumId: album['guid'],
-      )..isFavoriteNotifier.value = song['isFavorite'] == true;
+      MyAudioMetadata createMetadata() {
+        final audioSpec = song['audioSpec'] as Map? ?? const {};
+        final album = song['album'] as Map? ?? const {};
+        final artists = (song['artists'] as List?) ?? const [];
+        final genres = (song['genres'] as List?) ?? const [];
+        final durationMs = (song['duration'] ?? audioSpec['duration']) as num?;
+        final bitrate = audioSpec['bitrate'] as num?;
+        final releaseDate = DateTime.tryParse(album['releaseDate'] ?? '');
+
+        return MyAudioMetadata(
+          AudioMetadata(
+            format: audioSpec['format'],
+            title: song['title'],
+            artist: artists.map((artist) => artist['name']).join('/'),
+            album: album['name'],
+            genre: genres.map((genre) => genre['name']).join('/'),
+            year: (song['year'] as num?)?.toInt() ?? releaseDate?.year,
+            track: (song['trackNo'] as num?)?.toInt(),
+            disc: (song['discNo'] as num?)?.toInt(),
+            // 飞牛时长为毫秒、码率为 bps；播放器码率统一使用 kbps。
+            bitrate: bitrate == null ? null : (bitrate / 1000).round(),
+            samplerate: (audioSpec['sampleRate'] as num?)?.toInt(),
+            duration: durationMs == null
+                ? null
+                : Duration(milliseconds: durationMs.toInt()),
+          ),
+          id: song['guid'],
+          coverId: song['coverId'],
+          path: audioSpec['path'],
+        );
+      }
       return cache
           ? library.id2Song.putIfAbsent(song['guid'], createMetadata)
           : createMetadata();
     }
 
-    final mediaSources = (song['MediaSources'] as List?) ?? [];
-    final primarySource = mediaSources.isNotEmpty ? mediaSources.first : null;
-    final streams = (primarySource?['MediaStreams'] as List?) ?? [];
+    return library.id2Song.putIfAbsent(song['Id'], () {
+      final mediaSources = (song['MediaSources'] as List?) ?? [];
+      final primarySource = mediaSources.isNotEmpty ? mediaSources.first : null;
+      final streams = (primarySource?['MediaStreams'] as List?) ?? [];
 
-    final audioStream = streams.firstWhere(
-      (s) => s['Type'] == 'Audio',
-      orElse: () => null,
-    );
+      final audioStream = streams.firstWhere(
+        (s) => s['Type'] == 'Audio',
+        orElse: () => null,
+      );
 
-    final lyricStream = streams.firstWhere(
-      (s) => s['Type'] == 'Subtitle',
-      orElse: () => null,
-    );
-
-    return library.id2Song.putIfAbsent(
-      song['Id'],
-      () => MyAudioMetadata(
+      final lyricStream = streams.firstWhere(
+        (s) => s['Type'] == 'Subtitle',
+        orElse: () => null,
+      );
+      return MyAudioMetadata(
         AudioMetadata(
           format: audioStream?['Codec'] ?? primarySource?['Container'],
 
@@ -222,15 +221,13 @@ class MyAudioMetadata {
 
         id: song['Id'],
 
-        albumId: song['AlbumId'],
-
         playCount: song['UserData']?['PlayCount'] as int? ?? 0,
 
         lastPlayed: song['UserData']?['LastPlayedDate'] != null
             ? DateTime.parse(song['UserData']['LastPlayedDate'])
             : DateTime.fromMillisecondsSinceEpoch(0),
-      ),
-    );
+      );
+    });
   }
 
   @override

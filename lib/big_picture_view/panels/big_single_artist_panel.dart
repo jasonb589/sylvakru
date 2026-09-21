@@ -54,10 +54,6 @@ class _BigSingleArtistPanelState extends State<BigSingleArtistPanel> {
       colorManager.updateBigPictureRelatedColors(
         currentSongNotifier.value?.picture,
       );
-      if (isStreamSource) {
-        widget.artist.changeNotifier.addListener(update);
-        await widget.artist.load();
-      }
     });
 
     super.initState();
@@ -363,7 +359,9 @@ class _BigSingleArtistPanelState extends State<BigSingleArtistPanel> {
             itemBuilder: (context, index) {
               final song = songList[index];
               final artist = getArtist(song);
-
+              if (!artist.contains(widget.artist.name)) {
+                return SizedBox.shrink();
+              }
               return Builder(
                 builder: (itemContext) {
                   return Material(
