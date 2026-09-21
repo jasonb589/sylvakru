@@ -1,9 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sylvakru/base/audio_handler.dart';
 import 'package:sylvakru/base/data/artist_album.dart';
-import 'package:sylvakru/base/data/history.dart';
 import 'package:sylvakru/base/data/library.dart';
-import 'package:sylvakru/base/data/playlist.dart';
 import 'package:sylvakru/base/data/recommend.dart';
 import 'package:sylvakru/base/services/color_manager.dart';
 import 'package:sylvakru/base/utils/common_utils.dart';
@@ -36,10 +34,8 @@ class _BigForYouPanelState extends State<BigForYouPanel> {
   /// different set instead of repeating the same one every launch. "Refresh"
   /// bumps it to move on from the current set.
   int _seed = DateTime.now().millisecondsSinceEpoch;
-  Taste? _taste;
   List<SongRecommendation> _songs = const [];
   List<ArtistRecommendation> _artists = const [];
-  final Set<String> _playedThisSession = {};
 
   @override
   void initState() {
@@ -48,57 +44,23 @@ class _BigForYouPanelState extends State<BigForYouPanel> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _rebuild();
     });
-
-    history.recentlyChangeNotifier.addListener(_onHistoryChanged);
-    library.changeNotifier.addListener(_onHistoryChanged);
   }
 
   @override
   void dispose() {
-    history.recentlyChangeNotifier.removeListener(_onHistoryChanged);
-    library.changeNotifier.removeListener(_onHistoryChanged);
     verticalController.dispose();
     artistController.dispose();
     super.dispose();
   }
 
-  void _onHistoryChanged() {
-    if (!mounted) {
-      return;
-    }
-    for (final song in history.recentlySongList.take(20)) {
-      _playedThisSession.add(song.id);
-    }
-    _rebuild();
-  }
-
-  Set<String> get _favoriteIds {
-    for (final playlist in playlistManager.playlists) {
-      if (playlist.isFavorite) {
-        return playlist.songList.map((e) => e.id).toSet();
-      }
-    }
-    return const {};
-  }
-
   void _rebuild() {
-    final taste = Recommender.buildTaste(
-      library.songList,
-      favoriteIds: _favoriteIds,
-    );
-
     setState(() {
-      _taste = taste;
-      _songs = Recommender.recommendSongs(
+      _songs = Recommender.randomSongs(
         songs: library.songList,
-        taste: taste,
-        playedRecently: _playedThisSession,
-        favoriteIds: _favoriteIds,
         seed: _seed,
       );
-      _artists = Recommender.recommendArtists(
+      _artists = Recommender.randomArtists(
         artists: artistAlbumManager.artistList,
-        taste: taste,
         seed: _seed,
       );
     });
@@ -122,7 +84,7 @@ class _BigForYouPanelState extends State<BigForYouPanel> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final taste = _taste;
+    final empty = _songs.isEmpty && _artists.isEmpty;
 
     return ListView(
       controller: verticalController,
@@ -156,7 +118,7 @@ class _BigForYouPanelState extends State<BigForYouPanel> {
 
         const SizedBox(height: 10),
 
-        if (taste == null || taste.isEmpty)
+        if (empty)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 60),
             child: Center(
@@ -291,19 +253,13 @@ class _BigForYouPanelState extends State<BigForYouPanel> {
   String _artistReasonText(ArtistRecommendation recommendation) {
     final l10n = AppLocalizations.of(context);
     final unexplored = recommendation.totalSongs - recommendation.playedSongs;
-    if (recommendation.reason == RecommendReason.favoriteArtist &&
-        unexplored > 0) {
+    if (unexplored > 0) {
       return l10n.reasonUnexplored(unexplored);
     }
-    return bigRecommendReasonText(
-      l10n,
-      recommendation.reason,
-      basis: recommendation.basis,
-    );
+    return l10n.reasonExplore;
   }
 
   Widget songTile(BuildContext context, int index) {
-    final l10n = AppLocalizations.of(context);
     final recommendation = _songs[index];
     final song = recommendation.song;
     final playing = currentSongNotifier.value?.id == song.id;
@@ -329,7 +285,7 @@ class _BigForYouPanelState extends State<BigForYouPanel> {
             ),
           ),
           subtitle: Text(
-            '${getArtist(song)} · ${bigRecommendReasonText(l10n, recommendation.reason, basis: recommendation.basis)}',
+            '${getArtist(song)} · ${getAlbum(song)}',
             style: const TextStyle(fontSize: 12, overflow: TextOverflow.ellipsis),
           ),
           trailing: Text(formatDuration(getDuration(song))),
@@ -338,27 +294,5 @@ class _BigForYouPanelState extends State<BigForYouPanel> {
         );
       },
     );
-  }
-}
-
-/// Caption explaining why something was recommended (big picture styling).
-String bigRecommendReasonText(
-  AppLocalizations l10n,
-  RecommendReason reason, {
-  String? basis,
-}) {
-  switch (reason) {
-    case RecommendReason.favoriteArtist:
-      return basis == null
-          ? l10n.reasonExplore
-          : l10n.reasonFavoriteArtist(basis);
-    case RecommendReason.similarGenre:
-      return basis == null
-          ? l10n.reasonExplore
-          : l10n.reasonSimilarGenre(basis);
-    case RecommendReason.rediscover:
-      return l10n.reasonRediscover;
-    case RecommendReason.explore:
-      return l10n.reasonExplore;
   }
 }

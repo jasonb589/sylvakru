@@ -1,11 +1,9 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sylvakru/base/app.dart';
 import 'package:sylvakru/base/asset_images.dart';
-import 'package:sylvakru/base/data/history.dart';
 import 'package:sylvakru/base/audio_handler.dart';
 import 'package:sylvakru/base/data/artist_album.dart';
 import 'package:sylvakru/base/data/library.dart';
-import 'package:sylvakru/base/data/playlist.dart';
 import 'package:sylvakru/base/data/recommend.dart';
 import 'package:sylvakru/base/utils/common_utils.dart';
 import 'package:sylvakru/base/services/color_manager.dart';
@@ -38,19 +36,15 @@ class _ForYouLayerState extends State<ForYouLayer> {
   /// Drives the horizontal artist row's scrollbar.
   final artistController = ScrollController();
 
-  /// Picks which of the near-equally-good candidates to show.
+  /// Picks the random draw to show.
   ///
   /// Starts from the clock rather than 0, so opening the app again offers a
   /// different set instead of repeating the same one every launch. "Refresh"
   /// bumps it to move on from the current set.
   int _seed = DateTime.now().millisecondsSinceEpoch;
 
-  Taste? _taste;
   List<SongRecommendation> _songs = const [];
   List<ArtistRecommendation> _artists = const [];
-
-  /// Ids played during this session, so the list keeps offering something new.
-  final Set<String> _playedThisSession = {};
 
   @override
   void initState() {
@@ -60,40 +54,15 @@ class _ForYouLayerState extends State<ForYouLayer> {
       _rebuild();
     });
 
-    // playing a song changes what should be recommended
-    history.recentlyChangeNotifier.addListener(_onHistoryChanged);
-
     // stream sources have not fetched their artists yet at this point
     _ensureArtists();
-    library.changeNotifier.addListener(_onHistoryChanged);
   }
 
   @override
   void dispose() {
-    history.recentlyChangeNotifier.removeListener(_onHistoryChanged);
-    library.changeNotifier.removeListener(_onHistoryChanged);
     scrollController.dispose();
+    artistController.dispose();
     super.dispose();
-  }
-
-  void _onHistoryChanged() {
-    if (!mounted) {
-      return;
-    }
-    for (final song in history.recentlySongList.take(20)) {
-      _playedThisSession.add(song.id);
-    }
-    _rebuild();
-  }
-
-  /// Ids of every favourited song, used to weight the taste profile.
-  Set<String> get _favoriteIds {
-    for (final playlist in playlistManager.playlists) {
-      if (playlist.isFavorite) {
-        return playlist.songList.map((e) => e.id).toSet();
-      }
-    }
-    return const {};
   }
 
   /// Loads the artist list if the source has not provided it yet.
@@ -112,23 +81,13 @@ class _ForYouLayerState extends State<ForYouLayer> {
   }
 
   void _rebuild() {
-    final taste = Recommender.buildTaste(
-      library.songList,
-      favoriteIds: _favoriteIds,
-    );
-
     setState(() {
-      _taste = taste;
-      _songs = Recommender.recommendSongs(
+      _songs = Recommender.randomSongs(
         songs: library.songList,
-        taste: taste,
-        playedRecently: _playedThisSession,
-        favoriteIds: _favoriteIds,
         seed: _seed,
       );
-      _artists = Recommender.recommendArtists(
+      _artists = Recommender.randomArtists(
         artists: artistAlbumManager.artistList,
-        taste: taste,
         seed: _seed,
       );
     });
@@ -193,7 +152,8 @@ class _ForYouLayerState extends State<ForYouLayer> {
 
   Widget content(BuildContext context, {required double horizontalPadding}) {
     final l10n = AppLocalizations.of(context);
-    final taste = _taste;
+    // nothing to draw from yet: a stream source may still be loading
+    final empty = _songs.isEmpty && _artists.isEmpty;
 
     return CustomScrollView(
       controller: scrollController,
@@ -235,7 +195,7 @@ class _ForYouLayerState extends State<ForYouLayer> {
         ),
 
         // nothing to work with yet: say so instead of showing an empty grid
-        if (taste == null || taste.isEmpty)
+        if (empty)
           SliverFillRemaining(
             hasScrollBody: false,
             child: Center(
@@ -393,22 +353,17 @@ class _ForYouLayerState extends State<ForYouLayer> {
     );
   }
   /// The muted second line of an artist card: how many songs are still
-  /// unheard when that is known, otherwise why the artist was picked.
+  /// unheard, or the artist's name when everything is known.
   String _artistSubtitle(ArtistRecommendation recommendation) {
     final l10n = AppLocalizations.of(context);
     final unexplored = recommendation.totalSongs - recommendation.playedSongs;
     if (unexplored > 0) {
       return l10n.reasonUnexplored(unexplored);
     }
-    return recommendReasonText(
-      l10n,
-      recommendation.reason,
-      basis: recommendation.basis,
-    );
+    return l10n.reasonExplore;
   }
 
   Widget songTile(BuildContext context, int index) {
-    final l10n = AppLocalizations.of(context);
     final recommendation = _songs[index];
     final song = recommendation.song;
     final playing = currentSongNotifier.value?.id == song.id;
@@ -436,7 +391,7 @@ class _ForYouLayerState extends State<ForYouLayer> {
             ),
           ),
           subtitle: Text(
-            '${getArtist(song)} · ${recommendReasonText(l10n, recommendation.reason, basis: recommendation.basis)}',
+            '${getArtist(song)} · ${getAlbum(song)}',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontSize: 12),
@@ -449,27 +404,5 @@ class _ForYouLayerState extends State<ForYouLayer> {
         );
       },
     );
-  }
-}
-
-/// Caption explaining why something was recommended.
-String recommendReasonText(
-  AppLocalizations l10n,
-  RecommendReason reason, {
-  String? basis,
-}) {
-  switch (reason) {
-    case RecommendReason.favoriteArtist:
-      return basis == null
-          ? l10n.reasonExplore
-          : l10n.reasonFavoriteArtist(basis);
-    case RecommendReason.similarGenre:
-      return basis == null
-          ? l10n.reasonExplore
-          : l10n.reasonSimilarGenre(basis);
-    case RecommendReason.rediscover:
-      return l10n.reasonRediscover;
-    case RecommendReason.explore:
-      return l10n.reasonExplore;
   }
 }

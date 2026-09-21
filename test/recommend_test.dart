@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:audio_tags_lofty/audio_tags_lofty.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sylvakru/base/app.dart';
-import 'package:sylvakru/base/data/recommend.dart';
 import 'package:sylvakru/base/data/artist_album.dart';
+import 'package:sylvakru/base/data/recommend.dart';
 import 'package:sylvakru/base/my_audio_metadata.dart';
 
 MyAudioMetadata song(
@@ -34,172 +34,22 @@ void main() {
     appSupportDir = Directory.systemTemp.createTempSync('sylvakru_rec');
   });
 
-  group('splitGenres', () {
-    test('splits the separators taggers actually write', () {
-      expect(splitGenres('Rock/Pop'), ['Rock', 'Pop']);
-      expect(splitGenres('Rock; Pop'), ['Rock', 'Pop']);
-      expect(splitGenres('Rock, Pop'), ['Rock', 'Pop']);
-      expect(splitGenres('  Rock  '), ['Rock']);
-      expect(splitGenres(''), isEmpty);
-    });
-  });
+  // building a song needs appSupportDir, so every list is built inside a test
+  // rather than in the group body
+  List<MyAudioMetadata> makeSongs([int count = 40]) =>
+      List.generate(count, (i) => song('s$i', artist: 'A$i'));
 
-  group('buildTaste', () {
-    test('ignores songs that were never played and never favourited', () {
-      final taste = Recommender.buildTaste([
-        song('a', artist: 'X', genre: 'Rock', playCount: 0),
-      ]);
-      expect(taste.isEmpty, isTrue);
-    });
-
-    test('weights artists and genres by play count', () {
-      final taste = Recommender.buildTaste([
-        song('a', artist: 'A', genre: 'Rock', playCount: 10),
-        song('b', artist: 'B', genre: 'Jazz', playCount: 1),
-      ]);
-
-      expect(taste.artistAffinity('A'), 1.0);
-      expect(taste.artistAffinity('B'), lessThan(1.0));
-      expect(taste.artistAffinity('Nobody'), 0);
-      expect(taste.genreAffinity('Rock'), 1.0);
-      expect(taste.genreAffinity('Jazz'), lessThan(1.0));
-    });
-
-    test('a favourite outranks a plain play count', () {
-      final taste = Recommender.buildTaste(
-        [
-          song('plain', artist: 'A', genre: 'Rock', playCount: 5),
-          song('star', artist: 'B', genre: 'Jazz', playCount: 1),
-        ],
-        favoriteIds: {'star'},
-      );
-      expect(taste.artistAffinity('B'), greaterThan(taste.artistAffinity('A')));
-    });
-
-    test('splits a multi-genre tag so every part counts', () {
-      final taste = Recommender.buildTaste([
-        song('a', artist: 'A', genre: 'Rock/Pop', playCount: 3),
-      ]);
-      expect(taste.genreAffinity('Rock'), greaterThan(0));
-      expect(taste.genreAffinity('Pop'), greaterThan(0));
-    });
-
-    test('nearby years count partially, distant ones do not', () {
-      final taste = Recommender.buildTaste([
-        song('a', artist: 'A', year: 2005, playCount: 5),
-      ]);
-      expect(taste.yearAffinity(2005), greaterThan(taste.yearAffinity(2007)));
-      expect(taste.yearAffinity(2007), greaterThan(0));
-      expect(taste.yearAffinity(1990), 0);
-    });
-  });
-
-  group('recommendSongs', () {
-    final now = DateTime(2026, 9, 20);
-
-    test('returns nothing before any listening history exists', () {
-      final songs = [song('a', artist: 'A', genre: 'Rock')];
-      final result = Recommender.recommendSongs(
-        songs: songs,
-        taste: Recommender.buildTaste(songs),
-      );
-      expect(result, isEmpty);
-    });
-
-    test('prefers more of what the listener already plays', () {
-      final liked = song(
-        'liked',
-        artist: 'A',
-        genre: 'Rock',
-        playCount: 20,
-        lastPlayed: now,
-      );
-      final sameArtist = song('sameArtist', artist: 'A', genre: 'Rock');
-      final unrelated = song('unrelated', artist: 'Z', genre: 'Polka');
-
-      final taste = Recommender.buildTaste([liked]);
-      final result = Recommender.recommendSongs(
-        songs: [unrelated, sameArtist],
-        taste: taste,
-        now: now,
-      );
-
-      expect(result, isNotEmpty);
-      expect(result.first.song.id, 'sameArtist');
-      expect(result.first.reason, RecommendReason.favoriteArtist);
-    });
-
-    test('never suggests something just played', () {
-      final liked = song(
-        'liked',
-        artist: 'A',
-        genre: 'Rock',
-        playCount: 20,
-        lastPlayed: now,
-      );
-      final taste = Recommender.buildTaste([liked]);
-
-      final result = Recommender.recommendSongs(
-        songs: [liked, song('other', artist: 'A', genre: 'Rock')],
-        taste: taste,
-        playedRecently: {'liked'},
-        now: now,
-      );
-
-      expect(result.map((e) => e.song.id), isNot(contains('liked')));
-    });
-
-    test('keeps a song that was played long ago as a rediscovery', () {
-      final old = song(
-        'old',
-        artist: 'A',
-        genre: 'Rock',
-        playCount: 8,
-        lastPlayed: now.subtract(const Duration(days: 200)),
-      );
-      final taste = Recommender.buildTaste([old]);
-
-      final result = Recommender.recommendSongs(
-        songs: [old],
-        taste: taste,
-        now: now,
-      );
-
-      expect(result, hasLength(1));
-      expect(result.first.reason, RecommendReason.rediscover);
-    });
-
-    test('respects the limit', () {
-      final liked = song('liked', artist: 'A', genre: 'Rock', playCount: 9);
-      final candidates = List.generate(
-        80,
-        (i) => song('s$i', artist: 'A', genre: 'Rock'),
-      );
-      final result = Recommender.recommendSongs(
-        songs: candidates,
-        taste: Recommender.buildTaste([liked]),
-        limit: 10,
-      );
-      expect(result, hasLength(10));
+  group('randomSongs', () {
+    test('picks the requested number', () {
+      final songs = makeSongs();
+      expect(Recommender.randomSongs(songs: songs, limit: 10), hasLength(10));
+      expect(Recommender.randomSongs(songs: songs), hasLength(40));
     });
 
     test('is stable for a given seed', () {
-      final liked = song('liked', artist: 'A', genre: 'Rock', playCount: 9);
-      final candidates = List.generate(
-        30,
-        (i) => song('s$i', artist: 'A', genre: 'Rock'),
-      );
-      final taste = Recommender.buildTaste([liked]);
-      final first = Recommender.recommendSongs(
-        songs: candidates,
-        taste: taste,
-        seed: 7,
-      );
-      final second = Recommender.recommendSongs(
-        songs: candidates,
-        taste: taste,
-        seed: 7,
-      );
+      final songs = makeSongs();
+      final first = Recommender.randomSongs(songs: songs, seed: 7);
+      final second = Recommender.randomSongs(songs: songs, seed: 7);
       expect(
         first.map((e) => e.song.id),
         orderedEquals(second.map((e) => e.song.id)),
@@ -207,63 +57,96 @@ void main() {
     });
 
     test('a different seed picks a different set', () {
-      final liked = song('liked', artist: 'A', genre: 'Rock', playCount: 9);
-      final candidates = List.generate(
-        30,
-        (i) => song('s$i', artist: 'A', genre: 'Rock'),
-      );
-      final taste = Recommender.buildTaste([liked]);
-      final first = Recommender.recommendSongs(
-        songs: candidates,
-        taste: taste,
-        limit: 10,
-        seed: 1,
-      );
-      final second = Recommender.recommendSongs(
-        songs: candidates,
-        taste: taste,
-        limit: 10,
-        seed: 2,
-      );
-
-      // "refresh" has to actually change the list, otherwise the button looks
-      // broken even though it runs
+      final songs = makeSongs();
+      final first = Recommender.randomSongs(songs: songs, limit: 10, seed: 1);
+      final second = Recommender.randomSongs(songs: songs, limit: 10, seed: 2);
       expect(
         first.map((e) => e.song.id),
         isNot(orderedEquals(second.map((e) => e.song.id))),
       );
     });
+
+    test('does not depend on listening history', () {
+      // the whole point of the change: play counts must not influence who comes
+      // up, only the seed does
+      final quiet = List.generate(30, (i) => song('q$i', artist: 'Quiet $i'));
+      final loud = List.generate(
+        30,
+        (i) => song('l$i', artist: 'Loud $i', playCount: 500),
+      );
+
+      // same seed and same length -> the same positions are drawn from each pool
+      final quietPicks = Recommender.randomSongs(
+        songs: quiet,
+        limit: 5,
+        seed: 3,
+      );
+      final loudPicks = Recommender.randomSongs(songs: loud, limit: 5, seed: 3);
+
+      expect(
+        quietPicks.map((e) => e.song.id),
+        orderedEquals(loudPicks.map((e) => e.song.id.replaceFirst('l', 'q'))),
+      );
+    });
+
+    test('handles an empty library', () {
+      expect(Recommender.randomSongs(songs: const []), isEmpty);
+    });
   });
 
-  group('recommendArtists', () {
-    test('a different seed picks a different set', () {
-      // every artist needs some listening history, otherwise affinity is 0 and
-      // the candidate is filtered out before ranking
-      final history = List.generate(
-        30,
-        (i) => song('s$i', artist: 'Artist $i', genre: 'Rock', playCount: 5),
-      );
-      final taste = Recommender.buildTaste(history);
-      final artists = List.generate(30, (i) => Artist('Artist $i'));
+  group('randomArtists', () {
+    List<Artist> makeArtists([int count = 30]) =>
+        List.generate(count, (i) => Artist('Artist $i'));
 
-      final first = Recommender.recommendArtists(
+    test('picks the requested number', () {
+      expect(
+        Recommender.randomArtists(artists: makeArtists(), limit: 8),
+        hasLength(8),
+      );
+    });
+
+    test('is stable for a given seed', () {
+      final artists = makeArtists();
+      final first = Recommender.randomArtists(artists: artists, seed: 5);
+      final second = Recommender.randomArtists(artists: artists, seed: 5);
+      expect(
+        first.map((e) => e.artist.name),
+        orderedEquals(second.map((e) => e.artist.name)),
+      );
+    });
+
+    test('a different seed picks a different set', () {
+      final artists = makeArtists();
+      final first = Recommender.randomArtists(
         artists: artists,
-        taste: taste,
         limit: 8,
         seed: 1,
       );
-      final second = Recommender.recommendArtists(
+      final second = Recommender.randomArtists(
         artists: artists,
-        taste: taste,
         limit: 8,
         seed: 2,
       );
-
-      expect(first, hasLength(8));
       expect(
         first.map((e) => e.artist.name),
         isNot(orderedEquals(second.map((e) => e.artist.name))),
       );
+    });
+
+    test('reports how much of the artist is unheard', () {
+      final artist = Artist('A');
+      artist.songList.addAll([
+        song('played', artist: 'A', playCount: 3),
+        song('fresh', artist: 'A'),
+      ]);
+
+      final result = Recommender.randomArtists(artists: [artist]).single;
+      expect(result.totalSongs, 2);
+      expect(result.playedSongs, 1);
+    });
+
+    test('handles an empty artist list', () {
+      expect(Recommender.randomArtists(artists: const []), isEmpty);
     });
   });
 }
