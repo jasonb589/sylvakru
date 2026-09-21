@@ -273,17 +273,6 @@ Future<void> main() async {
     ),
   );
   logger.output('App start');
-
-  // The window was kept hidden by _setupWindow so the empty client area is
-  // never on screen. Reveal it only once the first frame is on the compositor,
-  // which is what removes the white flash at launch.
-  if (!isMobile) {
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await windowManager.show();
-      await windowManager.focus();
-    });
-  }
-
   await Loader.load();
   if (!isMobile) {
     await initDesktopLyrics();
@@ -301,14 +290,10 @@ Future<void> _setupWindow(WindowController windowController) async {
     windowButtonVisibility: false,
   );
   await windowManager.ensureInitialized();
-  // Keep the window hidden until the first frame has been painted, otherwise
-  // its still-empty client area is on screen for the whole of startup: the
-  // native window is created visible, and runApp() only runs after
-  // initAudioService/Loader.init/LiquidGlassWidgets.initialize, which is the
-  // white flash on launch. The window is shown in main() instead.
-  await windowManager.hide();
   await windowManager.waitUntilReadyToShow(windowOptions, () async {
     await windowManager.setPreventClose(true);
+    await windowManager.show();
+    await windowManager.focus();
     if (viewModeNotifier.value == .mini) {
       if (Platform.isWindows) {
         await windowManager.setMinimumSize(Size(325 + 16, 150 + 9));
