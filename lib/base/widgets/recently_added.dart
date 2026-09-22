@@ -30,6 +30,8 @@ class _RecentlyAddedState extends State<RecentlyAdded> {
     artistAlbumManager.recentlyAddedNotifier.addListener(_onUpdate);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // no-op while the cached list is still fresh; this is what picks up
+      // albums added on the server without restarting the app
       artistAlbumManager.loadRecentlyAdded();
     });
   }

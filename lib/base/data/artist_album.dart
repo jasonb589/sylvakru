@@ -151,15 +151,43 @@ class ArtistAlbumManager {
   Completer<void>? _recentlyAddedCompleter;
   bool _recentlyAddedLoaded = false;
 
+  /// When the "recently added" albums were last fetched from the server.
+  ///
+  /// [_recentlyAddedLoaded] alone meant "fetched once, ever": a later call
+  /// returned immediately, so albums added on the server were invisible until
+  /// the whole process was restarted. This timestamp lets a refresh happen
+  /// after [recentlyAddedRefreshInterval] without re-asking on every rebuild.
+  DateTime? _recentlyAddedLoadedAt;
+
+  /// How long a fetched "recently added" list is considered fresh.
+  ///
+  /// Short enough that an album added on the server shows up while the app is
+  /// still running, long enough that the usual rebuilds (switching layers,
+  /// resizing) do not hammer the server.
+  static const Duration recentlyAddedRefreshInterval = Duration(minutes: 5);
+
   /// Whether the "recently added" albums have been fetched already.
   bool get recentlyAddedLoaded => _recentlyAddedLoaded;
+
+  /// Whether a refresh is due, i.e. the cached list has aged out.
+  bool get recentlyAddedStale {
+    if (!_recentlyAddedLoaded || _recentlyAddedLoadedAt == null) {
+      return true;
+    }
+    return DateTime.now().difference(_recentlyAddedLoadedAt!) >=
+        recentlyAddedRefreshInterval;
+  }
 
   /// Loads the albums for the "recently added" module.
   ///
   /// Local and WebDAV libraries are sorted locally, stream sources are asked
   /// for their newest albums instead.
+  ///
+  /// [force] bypasses both the "already loaded" flag and the freshness window;
+  /// the staleness check is what keeps a long-running session in step with a
+  /// server that gained albums after startup.
   Future<void> loadRecentlyAdded({bool force = false}) async {
-    if (_recentlyAddedLoaded && !force) {
+    if (!force && _recentlyAddedLoaded && !recentlyAddedStale) {
       return;
     }
 
@@ -172,6 +200,7 @@ class ArtistAlbumManager {
       // notifies through updateRecentlyAddedFromAlbums
       updateRecentlyAddedFromAlbums();
       _recentlyAddedLoaded = true;
+      _recentlyAddedLoadedAt = DateTime.now();
       return;
     }
 
@@ -194,6 +223,7 @@ class ArtistAlbumManager {
         // a failed request must not be cached as success, otherwise the module
         // stays empty for the whole session when the server was unreachable
         _recentlyAddedLoaded = true;
+        _recentlyAddedLoadedAt = DateTime.now();
         recentlyAddedNotifier.value++;
       }
     } finally {
@@ -263,6 +293,7 @@ class ArtistAlbumManager {
 
     // stream sources have to ask the server again for their newest albums
     _recentlyAddedLoaded = false;
+    _recentlyAddedLoadedAt = null;
     recentlyAddedAlbumList = [];
     recentlyAddedAlbumAll = [];
 

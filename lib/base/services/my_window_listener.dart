@@ -8,6 +8,7 @@ import 'package:sylvakru/base/services/exit.dart';
 import 'package:sylvakru/base/data/setting.dart';
 import 'package:sylvakru/base/utils/path.dart';
 import 'package:sylvakru/mini_view/mini_view.dart';
+import 'package:sylvakru/base/data/artist_album.dart';
 import 'package:window_manager/window_manager.dart';
 
 late final MyWindowListener myWindowListener;
@@ -131,6 +132,14 @@ class MyWindowListener extends WindowListener {
     } else {
       windowManager.hide();
     }
+  }
+
+  @override
+  void onWindowFocus() {
+    // Coming back to the window is the moment a listener expects to see what
+    // was added on the server meanwhile. loadRecentlyAdded() no-ops while its
+    // list is still fresh, so this is cheap when nothing has changed.
+    artistAlbumManager.loadRecentlyAdded();
   }
 
   @override
