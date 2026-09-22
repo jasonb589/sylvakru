@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:sylvakru/base/audio_handler.dart';
 import 'package:sylvakru/base/services/exit.dart';
 import 'package:sylvakru/base/services/my_window_listener.dart';
 import 'package:sylvakru/base/services/taskbar_service.dart';
@@ -35,12 +34,6 @@ class MyTrayListener extends TrayListener {
       }
     } else if (menuItem.key == 'exit') {
       exitApp();
-    } else if (menuItem.key == 'skipToPrevious') {
-      audioHandler.skipToPrevious();
-    } else if (menuItem.key == 'togglePlay') {
-      audioHandler.togglePlay();
-    } else if (menuItem.key == 'skipToNext') {
-      audioHandler.skipToNext();
     }
   }
 }

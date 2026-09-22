@@ -79,7 +79,13 @@ class _RecentlyAddedLayerState extends CollectionListState {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (isStreamSource || _albumList.isEmpty) {
+      if (isStreamSource) {
+        // Opening this page is an explicit "show me what is new", so ask the
+        // server right away instead of waiting for the freshness window to
+        // lapse. Without force, a session that had already fetched once would
+        // keep showing the albums from that first fetch.
+        await artistAlbumManager.loadRecentlyAdded(force: true);
+      } else if (_albumList.isEmpty) {
         await artistAlbumManager.loadRecentlyAdded();
       }
       if (!mounted) {

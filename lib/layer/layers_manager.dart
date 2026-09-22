@@ -159,6 +159,13 @@ class LayersManager {
   }
 
   void switchRootLayer(String label) {
+    // Opening "recently added" is an explicit request for what is new, so ask
+    // the server every time rather than relying on the cached list. The layer
+    // itself is kept alive, so its initState only runs once and cannot do this.
+    if (label == 'recentlyAdded') {
+      artistAlbumManager.loadRecentlyAdded(force: true);
+    }
+
     Widget layer = getRootLayer(label);
     if (layer == topRootLayer) {
       return;

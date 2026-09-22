@@ -130,13 +130,7 @@ class _SettingsListState extends State<SettingsList> {
 
         sliverBox(paddingIfNeed(isLandscape, syncListTile(context, l10n))),
 
-        sliverBox(
-          paddingIfNeed(isLandscape, cleanCacheListTile(context, l10n)),
-        ),
-        sliverBox(
-          paddingIfNeed(isLandscape, cacheLimitListTile(context, l10n)),
-        ),
-
+        sliverBox(paddingIfNeed(isLandscape, cacheListTile(context, l10n))),
 
         sliverBox(paddingIfNeed(isLandscape, themeListTile(context, l10n))),
 
@@ -498,94 +492,165 @@ class _SettingsListState extends State<SettingsList> {
     );
   }
 
-  Widget cleanCacheListTile(BuildContext context, AppLocalizations l10n) {
-    return ListTile(
-      leading: ImageIcon(cacheImage, size: iconSize),
-      title: Text(l10n.clearCache),
-      onTap: () async {
-        if (Loader.busy) {
-          showCenterMessage(l10n.syncLibrary);
-          return;
-        }
-        if (await showConfirmDialog(context, l10n.clear)) {
-          showCenterLoading();
-          layersManager.clearDataLayers();
-          await library.clearCache();
-          await library.clearPicture();
-          playlistManager.updateNotifier.value++;
-          removeCenterLoading();
-        }
-      },
-      trailing: ValueListenableBuilder(
-        valueListenable: cacheSizeNotifier,
-        builder: (context, value, child) {
-          // use blank as placeholders
-          return Text("${value.toStringAsFixed(1)}MB  ");
-        },
-      ),
-    );
-  }
-
-  /// Picks the upper bound for the audio cache.
+  /// The cache row: shows how much is cached and, on tap, offers both the
+  /// upper bound and a way to clear it.
   ///
-  /// Without a bound the folder only ever grew (the settings page showed
-  /// 5.7 GB), so this is what keeps it in check.
-  Widget cacheLimitListTile(BuildContext context, AppLocalizations l10n) {
+  /// These used to be two rows with the same icon, which read as duplicates.
+  Widget cacheListTile(BuildContext context, AppLocalizations l10n) {
     return ListTile(
       leading: ImageIcon(cacheImage, size: iconSize),
-      title: Text(l10n.cacheLimit),
+      title: Text(l10n.cache),
       onTap: () {
         showAnimationDialog(
           context: context,
           child: SizedBox(
-            width: 300,
+            width: 320,
             child: Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 10.0,
                 vertical: 15,
               ),
-              child: ValueListenableBuilder(
-                valueListenable: cacheLimitMbNotifier,
-                builder: (context, current, child) {
-                  return Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        height: 35,
-                        child: Text(
-                          l10n.cacheLimit,
-                          style: .new(fontSize: 18, fontWeight: .bold),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    height: 35,
+                    child: Text(
+                      l10n.cache,
+                      style: .new(fontSize: 18, fontWeight: .bold),
+                    ),
+                  ),
+
+                  // used / limit
+                  ValueListenableBuilder(
+                    valueListenable: cacheSizeNotifier,
+                    builder: (context, used, child) {
+                      return ValueListenableBuilder(
+                        valueListenable: cacheLimitMbNotifier,
+                        builder: (context, limit, child) {
+                          return ListTile(
+                            title: Text(l10n.cacheUsage),
+                            subtitle: Text(
+                              limit <= 0
+                                  ? '${used.toStringAsFixed(1)}MB / '
+                                        '${l10n.cacheLimitUnlimited}'
+                                  : '${used.toStringAsFixed(1)}MB / $limit MB',
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+
+                  ValueListenableBuilder(
+                    valueListenable: cacheLimitMbNotifier,
+                    builder: (context, current, child) {
+                      return ListTile(
+                        title: Text(l10n.cacheLimit),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(cacheLimitLabel(l10n, current)),
+                            const Icon(Icons.chevron_right),
+                          ],
                         ),
-                      ),
-                      for (final option in cacheLimitOptionsMb)
-                        ListTile(
-                          title: Text(cacheLimitLabel(l10n, option)),
-                          trailing: current == option
-                              ? const Icon(Icons.check)
-                              : null,
-                          onTap: () {
-                            cacheLimitMbNotifier.value = option;
-                            setting.save();
-                            // apply immediately, so picking a smaller bound
-                            // frees the space now rather than on the next play
-                            library.enforceCacheLimit();
-                          },
-                        ),
-                    ],
-                  );
-                },
+                        onTap: () {
+                          Navigator.pop(context);
+                          _showCacheLimitPicker(context, l10n);
+                        },
+                      );
+                    },
+                  ),
+
+                  ListTile(
+                    title: Text(l10n.clearCache),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _clearCache(context, l10n);
+                    },
+                  ),
+                ],
               ),
             ),
           ),
         );
       },
       trailing: ValueListenableBuilder(
-        valueListenable: cacheLimitMbNotifier,
-        builder: (context, value, child) {
-          return Text(cacheLimitLabel(l10n, value));
+        valueListenable: cacheSizeNotifier,
+        builder: (context, used, child) {
+          return ValueListenableBuilder(
+            valueListenable: cacheLimitMbNotifier,
+            builder: (context, limit, child) {
+              final usedText = '${used.toStringAsFixed(1)}MB';
+              return Text(
+                limit <= 0 ? usedText : '$usedText / $limit MB',
+              );
+            },
+          );
         },
       ),
     );
+  }
+
+  void _showCacheLimitPicker(BuildContext context, AppLocalizations l10n) {
+    showAnimationDialog(
+      context: context,
+      child: SizedBox(
+        width: 300,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 15),
+          child: ValueListenableBuilder(
+            valueListenable: cacheLimitMbNotifier,
+            builder: (context, current, child) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    height: 35,
+                    child: Text(
+                      l10n.cacheLimit,
+                      style: .new(fontSize: 18, fontWeight: .bold),
+                    ),
+                  ),
+                  for (final option in cacheLimitOptionsMb)
+                    ListTile(
+                      title: Text(cacheLimitLabel(l10n, option)),
+                      trailing: current == option
+                          ? const Icon(Icons.check)
+                          : null,
+                      onTap: () {
+                        cacheLimitMbNotifier.value = option;
+                        setting.save();
+                        // apply immediately, so picking a smaller bound frees
+                        // the space now rather than on the next play
+                        library.enforceCacheLimit();
+                      },
+                    ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _clearCache(
+    BuildContext context,
+    AppLocalizations l10n,
+  ) async {
+    if (Loader.busy) {
+      showCenterMessage(l10n.syncLibrary);
+      return;
+    }
+    if (await showConfirmDialog(context, l10n.clear)) {
+      showCenterLoading();
+      layersManager.clearDataLayers();
+      await library.clearCache();
+      await library.clearPicture();
+      playlistManager.updateNotifier.value++;
+      removeCenterLoading();
+    }
   }
 
   String cacheLimitLabel(AppLocalizations l10n, int mb) {

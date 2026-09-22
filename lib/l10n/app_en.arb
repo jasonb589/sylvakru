@@ -204,6 +204,8 @@
   "clearCache": "Clear Cache",
   "cacheLimit": "Cache Limit",
   "cacheLimitUnlimited": "Unlimited",
+  "cache": "Cache",
+  "cacheUsage": "Used Space",
   "tapAgain": "Tap Again to Exit",
   "close": "Close",
   "fonts": "Fonts",

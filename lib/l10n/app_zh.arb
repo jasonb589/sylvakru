@@ -155,6 +155,8 @@
   "clearCache": "清除缓存",
   "cacheLimit": "缓存上限",
   "cacheLimitUnlimited": "不限制",
+  "cache": "缓存",
+  "cacheUsage": "已用空间",
   "tapAgain": "再按一次退出",
   "close": "关闭",
   "fonts": "字体",
