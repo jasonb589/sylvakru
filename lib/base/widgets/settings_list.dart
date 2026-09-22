@@ -36,6 +36,9 @@ import 'package:sylvakru/base/widgets/my_switch.dart';
 import 'package:smooth_corner/smooth_corner.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+
+/// Selectable cache bounds, in MB. 0 means "no limit".
+const List<int> cacheLimitOptionsMb = [0, 1024, 2048, 5120, 10240];
 class SettingsList extends StatefulWidget {
   final double? iconSize;
   const SettingsList({super.key, this.iconSize});
@@ -130,6 +133,10 @@ class _SettingsListState extends State<SettingsList> {
         sliverBox(
           paddingIfNeed(isLandscape, cleanCacheListTile(context, l10n)),
         ),
+        sliverBox(
+          paddingIfNeed(isLandscape, cacheLimitListTile(context, l10n)),
+        ),
+
 
         sliverBox(paddingIfNeed(isLandscape, themeListTile(context, l10n))),
 
@@ -519,6 +526,71 @@ class _SettingsListState extends State<SettingsList> {
     );
   }
 
+  /// Picks the upper bound for the audio cache.
+  ///
+  /// Without a bound the folder only ever grew (the settings page showed
+  /// 5.7 GB), so this is what keeps it in check.
+  Widget cacheLimitListTile(BuildContext context, AppLocalizations l10n) {
+    return ListTile(
+      leading: ImageIcon(cacheImage, size: iconSize),
+      title: Text(l10n.cacheLimit),
+      onTap: () {
+        showAnimationDialog(
+          context: context,
+          child: SizedBox(
+            width: 300,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 10.0,
+                vertical: 15,
+              ),
+              child: ValueListenableBuilder(
+                valueListenable: cacheLimitMbNotifier,
+                builder: (context, current, child) {
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        height: 35,
+                        child: Text(
+                          l10n.cacheLimit,
+                          style: .new(fontSize: 18, fontWeight: .bold),
+                        ),
+                      ),
+                      for (final option in cacheLimitOptionsMb)
+                        ListTile(
+                          title: Text(cacheLimitLabel(l10n, option)),
+                          trailing: current == option
+                              ? const Icon(Icons.check)
+                              : null,
+                          onTap: () {
+                            cacheLimitMbNotifier.value = option;
+                            setting.save();
+                            // apply immediately, so picking a smaller bound
+                            // frees the space now rather than on the next play
+                            library.enforceCacheLimit();
+                          },
+                        ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+      },
+      trailing: ValueListenableBuilder(
+        valueListenable: cacheLimitMbNotifier,
+        builder: (context, value, child) {
+          return Text(cacheLimitLabel(l10n, value));
+        },
+      ),
+    );
+  }
+
+  String cacheLimitLabel(AppLocalizations l10n, int mb) {
+    return mb <= 0 ? l10n.cacheLimitUnlimited : '$mb MB';
+  }
   Widget languageListTile(BuildContext context, AppLocalizations l10n) {
     return ListTile(
       leading: ImageIcon(languageImage, size: iconSize),

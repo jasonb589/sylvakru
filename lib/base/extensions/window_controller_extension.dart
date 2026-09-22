@@ -19,9 +19,6 @@ extension WindowControllerExtension on WindowController {
         case 'set_playing':
           isPlayingNotifier.value = call.arguments as bool;
           break;
-        case 'unlock':
-          await windowManager.setIgnoreMouseEvents(false);
-          break;
         case 'set_color':
           setDesktopLyricsColor(call.arguments as int);
           break;
@@ -90,10 +87,6 @@ extension WindowControllerExtension on WindowController {
 
   Future<void> skipToNext() {
     return invokeMethod('skip_to_next');
-  }
-
-  Future<void> unlock() {
-    return invokeMethod('unlock');
   }
 
   /// Pushes the current album colour to the desktop lyrics window.

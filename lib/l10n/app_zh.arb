@@ -153,6 +153,8 @@
   "modifiedTimedescending": "修改时间降序",
   "cannotBeUndone": "不可撤销",
   "clearCache": "清除缓存",
+  "cacheLimit": "缓存上限",
+  "cacheLimitUnlimited": "不限制",
   "tapAgain": "再按一次退出",
   "close": "关闭",
   "fonts": "字体",

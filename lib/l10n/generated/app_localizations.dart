@@ -1022,6 +1022,18 @@ abstract class AppLocalizations {
   /// **'Clear Cache'**
   String get clearCache;
 
+  /// No description provided for @cacheLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Cache Limit'**
+  String get cacheLimit;
+
+  /// No description provided for @cacheLimitUnlimited.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlimited'**
+  String get cacheLimitUnlimited;
+
   /// No description provided for @tapAgain.
   ///
   /// In en, this message translates to:

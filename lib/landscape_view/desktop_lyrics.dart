@@ -226,14 +226,10 @@ class DesktopLyrics extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        IconButton(
-          color: buttonColor,
-
-          onPressed: () async {
-            await windowManager.setIgnoreMouseEvents(true);
-          },
-          icon: Icon(Icons.lock_rounded, size: 20),
-        ),
+        // The lock button is gone with the tray's "unlock" item: locking made
+        // the window ignore mouse events, and window_manager's
+        // setIgnoreMouseEvents(false) also clears WS_EX_LAYERED, so unlocking
+        // could not restore the transparent window properly.
         IconButton(
           color: buttonColor,
           icon: const ImageIcon(previousButtonImage, size: 25),

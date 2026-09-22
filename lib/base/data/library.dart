@@ -12,6 +12,7 @@ import 'package:sylvakru/base/services/picture_load_scheduler.dart';
 import 'package:sylvakru/base/services/picture_service.dart';
 import 'package:sylvakru/base/services/stream_client.dart';
 import 'package:sylvakru/base/services/webdav_client.dart';
+import 'package:sylvakru/base/data/setting.dart';
 import 'package:sylvakru/base/utils/path.dart';
 import 'package:sylvakru/base/data/folder.dart';
 import 'package:sylvakru/layer/layers_manager.dart';
@@ -191,6 +192,9 @@ class Library {
       if (success) {
         song.cacheExist = true;
         cacheSizeNotifier.value += await tmp.length() / (1024 * 1024);
+        // keep the folder inside the configured bound; without this the cache
+        // only ever grew
+        await enforceCacheLimit(keepSongId: song.id);
       } else {
         await tmp.delete();
       }
@@ -210,6 +214,118 @@ class Library {
     cacheSizeNotifier.value = 0;
     for (final song in library.id2Song.values) {
       song.cacheExist = false;
+    }
+  }
+
+  /// Deletes the least recently used cache files until the cache fits
+  /// [cacheLimitMbNotifier].
+  ///
+  /// Cached songs were never evicted, so the folder grew without bound. The
+  /// limit is what keeps it in check; 0 means "no limit" and does nothing.
+  /// The currently playing song is skipped so playback never loses its file.
+  Future<void> enforceCacheLimit({String? keepSongId}) async {
+    final limitMb = cacheLimitMbNotifier.value;
+    if (limitMb <= 0) {
+      return;
+    }
+
+    final cacheDir = Directory(getCachesPath(sourceType));
+    if (!await cacheDir.exists()) {
+      return;
+    }
+
+    final files = <File>[];
+    var totalBytes = 0;
+    await for (final entity in cacheDir.list()) {
+      if (entity is! File) {
+        continue;
+      }
+      files.add(entity);
+      totalBytes += await entity.length();
+    }
+
+    final limitBytes = limitMb * 1024 * 1024;
+    if (totalBytes <= limitBytes) {
+      return;
+    }
+
+    // the cached file name is the md5 of the song id, so the playing song's
+    // path identifies exactly the file to spare. Compare file names rather than
+    // whole paths: cachePath is built with forward slashes ('<dir>/<md5>') while
+    // Directory.list() yields the platform's own separators, so a string
+    // comparison silently never matched on Windows and the playing song's file
+    // could be evicted mid-playback.
+    final keepPath = keepSongId == null ? null : id2Song[keepSongId]?.cachePath;
+    final keepName = keepPath == null ? null : _fileNameOf(keepPath);
+
+    final entries = <({File file, DateTime time, int size})>[];
+    for (final file in files) {
+      entries.add((
+        file: file,
+        time: await _lastUsed(file),
+        size: await file.length(),
+      ));
+    }
+    // oldest first, so the head is what gets removed
+    entries.sort((a, b) => a.time.compareTo(b.time));
+
+    var removedBytes = 0;
+    for (final entry in entries) {
+      if (totalBytes - removedBytes <= limitBytes) {
+        break;
+      }
+      if (keepName != null && _fileNameOf(entry.file.path) == keepName) {
+        continue;
+      }
+      try {
+        await entry.file.delete();
+        removedBytes += entry.size;
+        _markCacheMissing(entry.file.path);
+      } catch (e) {
+        logger.output('Failed to evict ${entry.file.path}: $e');
+      }
+    }
+
+    if (removedBytes > 0) {
+      logger.output(
+        'Cache limit ${limitMb}MB: evicted '
+        '${(removedBytes / (1024 * 1024)).toStringAsFixed(1)}MB',
+      );
+      cacheSizeNotifier.value = (totalBytes - removedBytes) / (1024 * 1024);
+    }
+  }
+
+  /// The file name part of [path], accepting either separator.
+  String _fileNameOf(String path) {
+    final slash = path.lastIndexOf('/');
+    final backslash = path.lastIndexOf('\\');
+    final cut = slash > backslash ? slash : backslash;
+    return cut < 0 ? path : path.substring(cut + 1);
+  }
+
+  /// When a cache file was last read.
+  ///
+  /// `lastAccessed` is not maintained by every platform, so a zero timestamp
+  /// would make that file look like the oldest; falling back to the
+  /// modification time keeps the order meaningful.
+  Future<DateTime> _lastUsed(File file) async {
+    try {
+      final stat = await file.stat();
+      return stat.accessed.isAfter(stat.modified)
+          ? stat.accessed
+          : stat.modified;
+    } catch (_) {
+      return DateTime.fromMillisecondsSinceEpoch(0);
+    }
+  }
+
+  /// Clears [MyAudioMetadata.cacheExist] for the song whose file was removed.
+  void _markCacheMissing(String path) {
+    for (final song in id2Song.values) {
+      if (song.cachePath == path) {
+        song.cacheExist = false;
+        break;
+      }
     }
   }
 

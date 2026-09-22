@@ -202,6 +202,8 @@
   "modifiedTimedescending": "Modified Time Descending",
   "cannotBeUndone": "Cannot be Undone",
   "clearCache": "Clear Cache",
+  "cacheLimit": "Cache Limit",
+  "cacheLimitUnlimited": "Unlimited",
   "tapAgain": "Tap Again to Exit",
   "close": "Close",
   "fonts": "Fonts",

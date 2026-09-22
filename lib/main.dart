@@ -376,11 +376,8 @@ Future<void> _setTrayMemu(Locale locale) async {
         MenuItem(key: 'skipToPrevious', label: l10n.skip2Previous),
         MenuItem(key: 'togglePlay', label: l10n.playOrPause),
         MenuItem(key: 'skipToNext', label: l10n.skip2Next),
-
         MenuItem.separator(),
-        MenuItem(key: 'unlock', label: l10n.unlockDeskLrc),
-
-        MenuItem.separator(),
+        MenuItem(key: 'exit', label: l10n.exit),
         MenuItem(key: 'exit', label: l10n.exit),
       ],
     ),

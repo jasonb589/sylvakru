@@ -485,6 +485,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get clearCache => '清除缓存';
 
   @override
+  String get cacheLimit => '缓存上限';
+
+  @override
+  String get cacheLimitUnlimited => '不限制';
+
+  @override
   String get tapAgain => '再按一次退出';
 
   @override

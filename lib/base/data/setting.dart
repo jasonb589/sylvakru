@@ -24,6 +24,12 @@ final playlistsUseLargePictureNotifier = ValueNotifier(true);
 
 final exitOnCloseNotifier = ValueNotifier(false);
 
+/// Upper bound for the audio cache, in MB. 0 means "no limit".
+///
+/// Cached downloads used to grow without bound (the settings page showed
+/// 5.7 GB), because nothing ever removed a file once it had been fetched.
+final cacheLimitMbNotifier = ValueNotifier<int>(0);
+
 final setting = Setting();
 
 class Setting {
@@ -101,6 +107,9 @@ class Setting {
         json['exitOnClose'] as bool? ?? exitOnCloseNotifier.value;
 
     recursiveScanNotifier.value = json['recursiveScan'] as bool? ?? false;
+
+    cacheLimitMbNotifier.value =
+        (json['cacheLimitMb'] as num?)?.toInt() ?? cacheLimitMbNotifier.value;
   }
 
   void save() {
@@ -132,6 +141,7 @@ class Setting {
         'exitOnClose': exitOnCloseNotifier.value,
 
         'recursiveScan': recursiveScanNotifier.value,
+        'cacheLimitMb': cacheLimitMbNotifier.value,
       }),
     );
   }

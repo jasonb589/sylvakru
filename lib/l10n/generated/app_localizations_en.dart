@@ -485,6 +485,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clearCache => 'Clear Cache';
 
   @override
+  String get cacheLimit => 'Cache Limit';
+
+  @override
+  String get cacheLimitUnlimited => 'Unlimited';
+
+  @override
   String get tapAgain => 'Tap Again to Exit';
 
   @override
