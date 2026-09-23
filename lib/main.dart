@@ -12,6 +12,7 @@ import 'package:sylvakru/base/app.dart';
 import 'package:sylvakru/base/services/logger.dart';
 import 'package:sylvakru/landscape_view/desktop_lyrics.dart';
 import 'package:sylvakru/base/extensions/window_controller_extension.dart';
+import 'package:sylvakru/base/data/desktop_lyrics_setting.dart';
 import 'package:sylvakru/base/services/keyboard.dart';
 import 'package:sylvakru/base/services/my_tray_listener.dart';
 import 'package:sylvakru/base/services/my_window_listener.dart';
@@ -345,10 +346,20 @@ Future<void> _setupDesktopLyricsWindow(
   WindowController windowController,
 ) async {
   await windowController.desktopLyricsCustomInitialize();
+
+  // This engine owns the window's saved position and lock state, so they are
+  // read before the window is shown; otherwise the lock button would start out
+  // unlocked even when the listener had locked it.
+  await desktopLyricsSetting.load();
+  // The window is created at a small size and then fitted to the lyric text by
+  // the lyrics view itself. `center` is only a fallback: a window the listener
+  // has dragged before reopens where they left it, and one that has never moved
+  // opens centred just above the taskbar.
+  final savedPosition = desktopLyricsSetting.positionNotifier.value;
   WindowOptions windowOptions = WindowOptions(
     title: "Desktop Lyrics",
-    size: Platform.isLinux ? Size(1000, 250) : Size(1000, 200),
-    center: true,
+    size: desktopLyricsInitialSize,
+    center: savedPosition == null,
     backgroundColor: Colors.transparent,
     titleBarStyle: TitleBarStyle.hidden,
     // prevent hiding the Dock on macOS
@@ -357,6 +368,11 @@ Future<void> _setupDesktopLyricsWindow(
   );
   await windowManager.waitUntilReadyToShow(windowOptions, () async {
     await windowManager.setAsFrameless();
+    // Position before the window is shown, so it never flashes at the centre of
+    // the screen before jumping to where it belongs.
+    await windowManager.setPosition(
+      savedPosition ?? await desktopLyricsDefaultPosition(desktopLyricsInitialSize),
+    );
   });
 }
 
