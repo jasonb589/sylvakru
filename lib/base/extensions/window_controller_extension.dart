@@ -34,6 +34,9 @@ extension WindowControllerExtension on WindowController {
         case 'hide_desktop_lyrics':
           lyricsWindowVisible = false;
           break;
+        case 'desktop_lyrics_ready':
+          desktopLyricsReadyNotifier.value = true;
+          break;
         case 'skip_to_previous':
           audioHandler.skipToPrevious();
           break;

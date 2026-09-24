@@ -4,9 +4,15 @@ import 'dart:io';
 import 'package:material_ui/material_ui.dart';
 import 'package:sylvakru/base/app.dart';
 
-/// Position and lock state of the desktop lyrics window.
+/// Version of the text-only desktop lyrics window layout.
 ///
-/// That window runs in its own Flutter engine, so it cannot read the main
+/// Increment this when the window's content geometry changes enough that old
+/// saved coordinates are no longer meaningful.
+const int desktopLyricsLayoutVersion = 3;
+
+/// Saved layout state of the desktop lyrics window.
+///
+/// The window runs in its own Flutter engine, so it cannot read the main
 /// window's state. It keeps this small file of its own rather than going
 /// through the shared setting.json, which would drag the whole settings
 /// machinery into the second engine.
@@ -20,16 +26,7 @@ class DesktopLyricsSetting {
   /// (a `late final` field would throw on the second call).
   File get file => _file ??= File('${appSupportDir.path}/desktop_lyrics.json');
 
-  /// Whether the window is pinned in place.
-  ///
-  /// Locked means dragging is disabled; the buttons stay clickable, and the
-  /// window keeps receiving mouse input (locking never turns on click-through).
-  final lockedNotifier = ValueNotifier(false);
-
   /// Last position the user dragged the window to, or null if never moved.
-  ///
-  /// A null position is what makes the window come back to its default spot
-  /// above the taskbar; a stored one is restored as-is.
   final positionNotifier = ValueNotifier<Offset?>(null);
 
   Future<void> load() async {
@@ -40,15 +37,23 @@ class DesktopLyricsSetting {
     }
     try {
       final json = jsonDecode(file.readAsStringSync()) as Map;
-      lockedNotifier.value = json['locked'] as bool? ?? false;
+      final savedLayout = (json['layout'] as num?)?.toInt() ?? 1;
+      if (savedLayout != desktopLyricsLayoutVersion) {
+        // The previous layout reserved a controls row above the lyric. Its
+        // saved coordinates are not meaningful for the text-only window.
+        positionNotifier.value = null;
+        loaded = true;
+        save();
+        return;
+      }
       final dx = (json['dx'] as num?)?.toDouble();
       final dy = (json['dy'] as num?)?.toDouble();
       if (dx != null && dy != null) {
         positionNotifier.value = Offset(dx, dy);
       }
     } catch (_) {
-      // a corrupt file must not stop the lyrics window from opening; it simply
-      // falls back to the defaults above
+      // A corrupt file must not stop the lyrics window from opening; it simply
+      // falls back to the default position.
     }
     loaded = true;
   }
@@ -61,13 +66,13 @@ class DesktopLyricsSetting {
     try {
       file.writeAsStringSync(
         jsonEncode({
-          'locked': lockedNotifier.value,
+          'layout': desktopLyricsLayoutVersion,
           if (position != null) 'dx': position.dx,
           if (position != null) 'dy': position.dy,
         }),
       );
     } catch (_) {
-      // losing the saved position is not worth breaking playback over
+      // Losing the saved position is not worth breaking playback over.
     }
   }
 }

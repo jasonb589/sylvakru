@@ -347,22 +347,17 @@ Future<void> _setupDesktopLyricsWindow(
 ) async {
   await windowController.desktopLyricsCustomInitialize();
 
-  // This engine owns the window's saved position and lock state, so they are
-  // read before the window is shown; otherwise the lock button would start out
-  // unlocked even when the listener had locked it.
+  // Load the saved layout state, but do not query screen_retriever here. The
+  // secondary engine has not rendered its Flutter view yet, and the plugin's
+  // `views.single` lookup can fail at this stage. DesktopLyrics resolves and
+  // applies the position after its first frame instead.
   await desktopLyricsSetting.load();
-  // The window is created at a small size and then fitted to the lyric text by
-  // the lyrics view itself. It is also positioned here, before it is shown, so
-  // it never flashes at the centre of the screen first: a window the listener
-  // dragged before reopens where they left it, and one that never moved (or
-  // whose saved spot no longer exists, e.g. an unplugged monitor) opens centred
-  // just above the taskbar. The lyrics view re-resolves the position on its
-  // first fit, so both agree on the same answer.
-  final position = await resolveDesktopLyricsPosition(desktopLyricsInitialSize);
-  WindowOptions windowOptions = WindowOptions(
+  final windowOptions = WindowOptions(
     title: "Desktop Lyrics",
     size: desktopLyricsInitialSize,
-    center: position == null,
+    // Never use `center: true` as a failure fallback: that was why the lyrics
+    // kept reopening in the middle of the screen when screen lookup failed.
+    center: false,
     backgroundColor: Colors.transparent,
     titleBarStyle: TitleBarStyle.hidden,
     // prevent hiding the Dock on macOS
@@ -371,9 +366,8 @@ Future<void> _setupDesktopLyricsWindow(
   );
   await windowManager.waitUntilReadyToShow(windowOptions, () async {
     await windowManager.setAsFrameless();
-    if (position != null) {
-      await windowManager.setPosition(position);
-    }
+    // The child remains hidden until DesktopLyrics has applied the actual
+    // taskbar-relative position and fitted its lyric-only content.
   });
 }
 

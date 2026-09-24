@@ -88,6 +88,18 @@ void main() {
       expect(position, desktopLyricsCenteredPosition(primary, size));
     });
 
+    test('drops a saved position whose window would cross a display edge', () {
+      const saved = Offset(1800, 980);
+      final position = desktopLyricsPosition(
+        size: size,
+        saved: saved,
+        primaryWorkArea: primary,
+        workAreas: const [primary],
+      );
+
+      expect(position, desktopLyricsCenteredPosition(primary, size));
+    });
+
     test('drops a saved position that is off every work area', () {
       const saved = Offset(-5000, -5000);
       final position = desktopLyricsPosition(
