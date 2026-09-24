@@ -5,8 +5,8 @@ import 'package:material_ui/material_ui.dart';
 
 // Kept in step with `version:` in pubspec.yaml, without the build suffix:
 // compareVersion() parses each dot-separated part with int.parse, so a value
-// like '4.4.11+28' would throw. Used for the About page and the update check.
-const String versionNumber = '4.4.11';
+// like '4.4.12+29' would throw. Used for the About page and the update check.
+const String versionNumber = '4.4.12';
 
 late final Directory appDocsDir;
 late final Directory appSupportDir;
