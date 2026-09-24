@@ -37,7 +37,60 @@ const Size desktopLyricsInitialSize = Size(360, 110);
 
 /// Space kept between the lyrics and the bottom of the work area, so the window
 /// sits a little above the taskbar instead of touching it.
-const double _taskbarGap = 12;
+const double desktopLyricsTaskbarGap = 12;
+
+/// Top-left corner that centres a window of [size] just above the taskbar.
+Offset desktopLyricsCenteredPosition(Rect workArea, Size size) => Offset(
+  workArea.left + (workArea.width - size.width) / 2,
+  workArea.bottom - size.height - desktopLyricsTaskbarGap,
+);
+
+/// Where a desktop lyrics window of [size] should open.
+///
+/// A [saved] position is honoured as long as it still lands inside one of the
+/// current [workAreas]. It is dropped when it does not: a window dragged onto a
+/// second monitor that is later unplugged would otherwise reopen off-screen,
+/// where it can neither be seen nor reached. A dropped or missing position
+/// falls back to [primaryWorkArea], centred above the taskbar.
+Offset desktopLyricsPosition({
+  required Size size,
+  required Offset? saved,
+  required Rect primaryWorkArea,
+  required List<Rect> workAreas,
+}) {
+  if (saved != null && workAreas.any((area) => area.contains(saved))) {
+    return saved;
+  }
+  return desktopLyricsCenteredPosition(primaryWorkArea, size);
+}
+
+/// Work area of [display] in logical pixels, already excluding the taskbar
+/// (that is what the `visible*` fields report).
+Rect _workAreaOf(Display display) {
+  final position = display.visiblePosition ?? Offset.zero;
+  final size = display.visibleSize ?? display.size;
+  return Rect.fromLTWH(position.dx, position.dy, size.width, size.height);
+}
+
+/// Resolves where a window of [size] should sit right now, or null when the
+/// platform will not report the displays.
+///
+/// screen_retriever is best effort: on failure the caller leaves the window
+/// wherever it already is rather than guessing.
+Future<Offset?> resolveDesktopLyricsPosition(Size size) async {
+  try {
+    final primary = await screenRetriever.getPrimaryDisplay();
+    final displays = await screenRetriever.getAllDisplays();
+    return desktopLyricsPosition(
+      size: size,
+      saved: desktopLyricsSetting.positionNotifier.value,
+      primaryWorkArea: _workAreaOf(primary),
+      workAreas: [for (final display in displays) _workAreaOf(display)],
+    );
+  } catch (_) {
+    return null;
+  }
+}
 
 /// The colour the desktop lyrics draw in, derived from the current album.
 ///
@@ -54,32 +107,6 @@ final desktopLyricsColorNotifier = ValueNotifier<Color>(
 void setDesktopLyricsColor(int argb) {
   desktopLyricsColorNotifier.value = ContrastColorGenerator.onDarkBackdrop(
     Color(argb),
-  );
-}
-
-/// Top-left corner for a desktop lyrics window of [size] that has never been
-/// dragged: centred on the primary display, just above the taskbar.
-///
-/// `visiblePosition`/`visibleSize` describe the work area, which already
-/// excludes the taskbar, so its bottom edge is the line to sit above.
-Future<Offset> desktopLyricsDefaultPosition(Size size) async {
-  try {
-    final display = await screenRetriever.getPrimaryDisplay();
-    final workPosition = display.visiblePosition;
-    if (workPosition != null) {
-      final workSize = display.visibleSize ?? display.size;
-      return Offset(
-        workPosition.dx + (workSize.width - size.width) / 2,
-        workPosition.dy + workSize.height - size.height - _taskbarGap,
-      );
-    }
-  } catch (_) {
-    // screen_retriever is best effort; fall back to the window's own centre
-  }
-  final bounds = await windowManager.getBounds();
-  return Offset(
-    bounds.left + (bounds.width - size.width) / 2,
-    bounds.top + (bounds.height - size.height) / 2,
   );
 }
 
@@ -185,8 +212,9 @@ class _DesktopLyricsState extends State<DesktopLyrics> {
   /// which is what the window must be sized to.
   ///
   /// Only the size is set here. The window's position is decided once, when the
-  /// engine starts (see `_setupDesktopLyricsWindow`), and the bottom edge and
-  /// horizontal centre are preserved across resizes so the lyrics stay put.
+  /// Only the size is set here, plus the position on the very first fit (see
+  /// [desktopLyricsPosition]). Later fits preserve the bottom edge and
+  /// horizontal centre, so the lyrics stay put while lines come and go.
   Future<void> _syncWindowGeometry() async {
     if (_applyingGeometry) {
       return;
@@ -214,16 +242,27 @@ class _DesktopLyricsState extends State<DesktopLyrics> {
     _applyingGeometry = true;
     try {
       final bounds = await windowManager.getBounds();
-      final centreX = bounds.left + bounds.width / 2;
-      final bottom = bounds.top + bounds.height;
-      await windowManager.setBounds(
-        Rect.fromLTWH(
-          centreX - target.width / 2,
-          bottom - target.height,
-          target.width,
-          target.height,
-        ),
-      );
+      if (_windowSize == null) {
+        // First fit: this is where the window actually lands, so use the
+        // resolved position outright. Anchoring to the current box instead
+        // would offset the window by however much the initial size differs
+        // from the fitted one, so it would not reopen where it was left.
+        if (!desktopLyricsSetting.loaded) {
+          await desktopLyricsSetting.load();
+        }
+        final origin = await resolveDesktopLyricsPosition(target);
+        await windowManager.setBounds(
+          origin == null
+              // no display information: keep the current centre and bottom
+              ? _anchoredBounds(bounds, target)
+              : Rect.fromLTWH(origin.dx, origin.dy, target.width, target.height),
+        );
+      } else {
+        // Later fits only change the size as lyric lines come and go, so the
+        // bottom edge and horizontal centre are preserved and the lyrics stay
+        // put instead of creeping around the desktop.
+        await windowManager.setBounds(_anchoredBounds(bounds, target));
+      }
       _windowSize = target;
     } catch (_) {
       // Window geometry is cosmetic: failing to fit must never break lyrics.
@@ -232,11 +271,20 @@ class _DesktopLyricsState extends State<DesktopLyrics> {
     }
   }
 
+  /// [target]-sized bounds that keep [bounds]' bottom edge and centre.
+  Rect _anchoredBounds(Rect bounds, Size target) => Rect.fromLTWH(
+    bounds.left + bounds.width / 2 - target.width / 2,
+    bounds.top + bounds.height - target.height,
+    target.width,
+    target.height,
+  );
+
   /// Stores where the window was dragged to.
   ///
   /// `startDragging` hands the move to the OS and returns once the drag has
   /// finished, so the final position can be read here. The saved position is
-  /// restored on the next launch; it is never re-derived from the content size.
+  /// restored on the next launch, provided it still falls on a connected
+  /// display (see [desktopLyricsPosition]).
   Future<void> _rememberPosition() async {
     try {
       final position = await windowManager.getPosition();

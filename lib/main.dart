@@ -352,14 +352,17 @@ Future<void> _setupDesktopLyricsWindow(
   // unlocked even when the listener had locked it.
   await desktopLyricsSetting.load();
   // The window is created at a small size and then fitted to the lyric text by
-  // the lyrics view itself. `center` is only a fallback: a window the listener
-  // has dragged before reopens where they left it, and one that has never moved
-  // opens centred just above the taskbar.
-  final savedPosition = desktopLyricsSetting.positionNotifier.value;
+  // the lyrics view itself. It is also positioned here, before it is shown, so
+  // it never flashes at the centre of the screen first: a window the listener
+  // dragged before reopens where they left it, and one that never moved (or
+  // whose saved spot no longer exists, e.g. an unplugged monitor) opens centred
+  // just above the taskbar. The lyrics view re-resolves the position on its
+  // first fit, so both agree on the same answer.
+  final position = await resolveDesktopLyricsPosition(desktopLyricsInitialSize);
   WindowOptions windowOptions = WindowOptions(
     title: "Desktop Lyrics",
     size: desktopLyricsInitialSize,
-    center: savedPosition == null,
+    center: position == null,
     backgroundColor: Colors.transparent,
     titleBarStyle: TitleBarStyle.hidden,
     // prevent hiding the Dock on macOS
@@ -368,11 +371,9 @@ Future<void> _setupDesktopLyricsWindow(
   );
   await windowManager.waitUntilReadyToShow(windowOptions, () async {
     await windowManager.setAsFrameless();
-    // Position before the window is shown, so it never flashes at the centre of
-    // the screen before jumping to where it belongs.
-    await windowManager.setPosition(
-      savedPosition ?? await desktopLyricsDefaultPosition(desktopLyricsInitialSize),
-    );
+    if (position != null) {
+      await windowManager.setPosition(position);
+    }
   });
 }
 
