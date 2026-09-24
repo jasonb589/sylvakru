@@ -321,7 +321,7 @@ class _DesktopLyricsState extends State<DesktopLyrics> {
       valueListenable: updateDesktopLyricsNotifier,
       builder: (context, value, child) {
         if (currentLyricLine == null) {
-          return _plainText('Sylvakru', color, 30);
+          return const SizedBox.shrink();
         }
 
         return Column(

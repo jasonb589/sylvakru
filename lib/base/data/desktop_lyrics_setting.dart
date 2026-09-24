@@ -8,7 +8,7 @@ import 'package:sylvakru/base/app.dart';
 ///
 /// Increment this when the window's content geometry changes enough that old
 /// saved coordinates are no longer meaningful.
-const int desktopLyricsLayoutVersion = 3;
+const int desktopLyricsLayoutVersion = 4;
 
 /// Saved layout state of the desktop lyrics window.
 ///
