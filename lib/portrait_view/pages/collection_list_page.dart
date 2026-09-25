@@ -56,6 +56,18 @@ extension _CollectionListPage on CollectionListState {
       Column(
         children: [
           ListTile(title: Text(l10n.settings)),
+          if (label == 'playlists' && isNotStreamSource)
+            ListTile(
+              leading: const Icon(Icons.auto_awesome),
+              title: Text(l10n.createSmartPlaylist),
+              onTap: () async {
+                Navigator.pop(context);
+                await Future.delayed(const Duration(milliseconds: 200));
+                if (context.mounted) {
+                  await showCreateSmartPlaylistDialog(context);
+                }
+              },
+            ),
           MyDivider(thickness: 0.5, height: 1, color: dividerColor),
 
           Expanded(

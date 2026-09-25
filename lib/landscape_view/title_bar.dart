@@ -26,6 +26,7 @@ class TitleBar extends StatefulWidget {
   final Function()? findLocation;
   final Function()? onAdvancedSearch;
   final bool hasAdvancedSearch;
+  final bool createSmartPlaylistMode;
 
   const TitleBar({
     super.key,
@@ -37,6 +38,7 @@ class TitleBar extends StatefulWidget {
     this.findLocation,
     this.onAdvancedSearch,
     this.hasAdvancedSearch = false,
+    this.createSmartPlaylistMode = false,
   });
 
   @override
@@ -235,10 +237,14 @@ class _TitleBarState extends State<TitleBar> {
 
         if (widget.onAdvancedSearch != null)
           IconButton(
-            tooltip: AppLocalizations.of(context).advancedSearch,
+            tooltip: widget.createSmartPlaylistMode
+                ? AppLocalizations.of(context).createSmartPlaylist
+                : AppLocalizations.of(context).advancedSearch,
             onPressed: widget.onAdvancedSearch,
             icon: Icon(
-              Icons.tune_rounded,
+              widget.createSmartPlaylistMode
+                  ? Icons.playlist_add_rounded
+                  : Icons.tune_rounded,
               color: widget.hasAdvancedSearch ? iconColor.value : null,
             ),
           ),

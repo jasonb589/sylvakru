@@ -123,6 +123,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get createPlaylist => '创建歌单';
 
   @override
+  String get smartPlaylistName => '智能歌单名称';
+
+  @override
+  String get smartPlaylistQuery => '关键词筛选';
+
+  @override
+  String get smartPlaylistNameExists => '同名歌单已存在';
+
+  @override
+  String get createSmartPlaylist => '创建智能歌单';
+
+  @override
+  String get smartPlaylist => '智能歌单';
+
+  @override
   String get order => '顺序';
 
   @override

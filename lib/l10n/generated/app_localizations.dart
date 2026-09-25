@@ -326,6 +326,16 @@ abstract class AppLocalizations {
   /// **'Create Playlist'**
   String get createPlaylist;
 
+  String get smartPlaylistName;
+
+  String get smartPlaylistQuery;
+
+  String get smartPlaylistNameExists;
+
+  String get createSmartPlaylist;
+
+  String get smartPlaylist;
+
   /// No description provided for @order.
   ///
   /// In en, this message translates to:

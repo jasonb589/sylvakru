@@ -5,17 +5,21 @@ import 'package:sylvakru/l10n/generated/app_localizations.dart';
 
 class AdvancedSongSearchDialog extends StatefulWidget {
   final SongSearchCriteria criteria;
+  final bool editQuery;
 
-  const AdvancedSongSearchDialog({super.key, required this.criteria});
-
+  const AdvancedSongSearchDialog({
+    super.key,
+    required this.criteria,
+    this.editQuery = false,
+  });
   @override
   State<AdvancedSongSearchDialog> createState() =>
       _AdvancedSongSearchDialogState();
 }
-
 class _AdvancedSongSearchDialogState extends State<AdvancedSongSearchDialog> {
   final _formKey = GlobalKey<FormState>();
   final Set<SongSearchField> _fields = {};
+  late final TextEditingController _queryController;
   late bool _exactMatch;
   late final TextEditingController _minYearController;
   late final TextEditingController _maxYearController;
@@ -29,6 +33,7 @@ class _AdvancedSongSearchDialogState extends State<AdvancedSongSearchDialog> {
     super.initState();
     _fields.addAll(widget.criteria.fields);
     _exactMatch = widget.criteria.exactMatch;
+    _queryController = _controller(widget.criteria.query);
     _minYearController = _controller(widget.criteria.minYear);
     _maxYearController = _controller(widget.criteria.maxYear);
     _minDurationController =
@@ -44,6 +49,7 @@ class _AdvancedSongSearchDialogState extends State<AdvancedSongSearchDialog> {
 
   @override
   void dispose() {
+    _queryController.dispose();
     _minYearController.dispose();
     _maxYearController.dispose();
     _minDurationController.dispose();
@@ -78,6 +84,9 @@ class _AdvancedSongSearchDialogState extends State<AdvancedSongSearchDialog> {
     Navigator.pop(
       context,
       SongSearchCriteria(
+        query: widget.editQuery
+            ? _queryController.text.trim()
+            : widget.criteria.query,
         fields: _fields,
         exactMatch: _exactMatch,
         minYear: _value(_minYearController),
@@ -87,6 +96,16 @@ class _AdvancedSongSearchDialogState extends State<AdvancedSongSearchDialog> {
         minBitrateKbps: _value(_minBitrateController),
         maxBitrateKbps: _value(_maxBitrateController),
       ),
+    );
+  }
+
+  Widget _queryField(AppLocalizations l10n) {
+    if (!widget.editQuery) {
+      return const SizedBox.shrink();
+    }
+    return TextFormField(
+      controller: _queryController,
+      decoration: InputDecoration(labelText: l10n.smartPlaylistQuery),
     );
   }
 
@@ -169,6 +188,7 @@ class _AdvancedSongSearchDialogState extends State<AdvancedSongSearchDialog> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      _queryField(l10n),
                       Align(
                         alignment: Alignment.centerLeft,
                         child: Text(l10n.searchIn),

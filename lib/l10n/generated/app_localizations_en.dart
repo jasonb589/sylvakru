@@ -123,6 +123,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get createPlaylist => 'Create Playlist';
 
   @override
+  String get smartPlaylistName => 'Smart Playlist Name';
+
+  @override
+  String get smartPlaylistQuery => 'Keyword filter';
+
+  @override
+  String get smartPlaylistNameExists => 'A playlist with this name already exists';
+
+  @override
+  String get createSmartPlaylist => 'Create smart playlist';
+
+  @override
+  String get smartPlaylist => 'Smart playlist';
+
+  @override
   String get order => 'Order';
 
   @override

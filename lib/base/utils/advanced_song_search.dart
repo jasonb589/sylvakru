@@ -6,6 +6,7 @@ enum SongSearchField { title, artist, album, albumArtist, genre }
 /// Reusable keyword and metadata-range filters for song lists.
 class SongSearchCriteria {
   final Set<SongSearchField> fields;
+  final String query;
   final bool exactMatch;
   final int? minYear;
   final int? maxYear;
@@ -22,6 +23,7 @@ class SongSearchCriteria {
       SongSearchField.albumArtist,
       SongSearchField.genre,
     },
+    this.query = '',
     this.exactMatch = false,
     this.minYear,
     this.maxYear,
@@ -30,6 +32,55 @@ class SongSearchCriteria {
     this.minBitrateKbps,
     this.maxBitrateKbps,
   }) : fields = Set.unmodifiable(fields);
+
+  factory SongSearchCriteria.fromJson(Map<String, dynamic> json) {
+    final rawFields = json['fields'];
+    final fields = <SongSearchField>{};
+    if (rawFields is List) {
+      for (final name in rawFields.whereType<String>()) {
+        for (final field in SongSearchField.values) {
+          if (field.name == name) {
+            fields.add(field);
+            break;
+          }
+        }
+      }
+    } else {
+      fields.addAll(SongSearchCriteria().fields);
+    }
+
+    int? readInt(String key) {
+      final value = json[key];
+      return value is num ? value.toInt() : null;
+    }
+
+    final rawQuery = json['query'];
+    final rawExactMatch = json['exactMatch'];
+
+    return SongSearchCriteria(
+      fields: fields,
+      query: rawQuery is String ? rawQuery : '',
+      exactMatch: rawExactMatch is bool ? rawExactMatch : false,
+      minYear: readInt('minYear'),
+      maxYear: readInt('maxYear'),
+      minDurationSeconds: readInt('minDurationSeconds'),
+      maxDurationSeconds: readInt('maxDurationSeconds'),
+      minBitrateKbps: readInt('minBitrateKbps'),
+      maxBitrateKbps: readInt('maxBitrateKbps'),
+    );
+  }
+
+  Map<String, Object?> toJson() => {
+    'query': query,
+    'fields': fields.map((field) => field.name).toList(),
+    'exactMatch': exactMatch,
+    'minYear': minYear,
+    'maxYear': maxYear,
+    'minDurationSeconds': minDurationSeconds,
+    'maxDurationSeconds': maxDurationSeconds,
+    'minBitrateKbps': minBitrateKbps,
+    'maxBitrateKbps': maxBitrateKbps,
+  };
 
   bool get hasFilters =>
       minYear != null ||
@@ -40,13 +91,13 @@ class SongSearchCriteria {
       maxBitrateKbps != null;
 
   bool get isDefault =>
+      query.trim().isEmpty &&
       !exactMatch &&
       !hasFilters &&
       fields.length == SongSearchField.values.length &&
       fields.containsAll(SongSearchField.values);
 
-
-  bool matches(MyAudioMetadata song, String query) {
+  bool matches(MyAudioMetadata song, [String? queryOverride]) {
     if (!_matchesRange(song.year, minYear, maxYear)) {
       return false;
     }
@@ -61,7 +112,7 @@ class SongSearchCriteria {
       return false;
     }
 
-    final normalizedQuery = query.trim().toLowerCase();
+    final normalizedQuery = (queryOverride ?? query).trim().toLowerCase();
     if (normalizedQuery.isEmpty) {
       return true;
     }
@@ -101,4 +152,55 @@ List<MyAudioMetadata> filterSongListAdvanced(
   required SongSearchCriteria criteria,
 }) {
   return songs.where((song) => criteria.matches(song, query)).toList();
+}
+
+class SmartPlaylistDefinition {
+  final String name;
+  final SongSearchCriteria criteria;
+  final int sortType;
+
+  const SmartPlaylistDefinition({
+    required this.name,
+    required this.criteria,
+    this.sortType = 1,
+  });
+
+  factory SmartPlaylistDefinition.fromJson(Map<String, dynamic> json) {
+    final rawName = json['name'];
+    final rawCriteria = json['criteria'];
+    final rawSortType = json['sortType'];
+    return SmartPlaylistDefinition(
+      name: rawName is String ? rawName : '',
+      criteria: rawCriteria is Map
+          ? SongSearchCriteria.fromJson(Map<String, dynamic>.from(rawCriteria))
+          : SongSearchCriteria(),
+      sortType: rawSortType is num ? rawSortType.toInt() : 1,
+    );
+  }
+
+  Map<String, Object?> toJson() => {
+    'name': name,
+    'criteria': criteria.toJson(),
+    'sortType': sortType,
+  };
+
+  List<MyAudioMetadata> apply(List<MyAudioMetadata> songs) {
+    final result = filterSongListAdvanced(
+      songs,
+      query: criteria.query,
+      criteria: criteria,
+    );
+    result.sort((a, b) {
+      return switch (sortType) {
+        1 => a.compareTitle.compareTo(b.compareTitle),
+        2 => b.compareTitle.compareTo(a.compareTitle),
+        3 => a.compareArtist.compareTo(b.compareArtist),
+        4 => b.compareArtist.compareTo(a.compareArtist),
+        5 => a.compareAlbum.compareTo(b.compareAlbum),
+        6 => b.compareAlbum.compareTo(a.compareAlbum),
+        _ => 0,
+      };
+    });
+    return result;
+  }
 }

@@ -14,6 +14,10 @@ extension _CollectionListPanel on CollectionListState {
               curve: Curves.linear,
             );
           },
+          onAdvancedSearch: label == 'playlists' && isNotStreamSource
+              ? () => showCreateSmartPlaylistDialog(context)
+              : null,
+          createSmartPlaylistMode: label == 'playlists' && isNotStreamSource,
         ),
         Expanded(child: contentWidget(context)),
       ],
