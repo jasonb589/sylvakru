@@ -30,6 +30,8 @@ import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
 import 'base/audio_handler.dart';
 
+bool _statusBarStyleScheduled = false;
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -99,8 +101,10 @@ Future<void> main() async {
         lightHoverFocusColorNotifier,
       ]),
       builder: (context, child) {
-        if (!immersiveWideLayoutNotifier.value) {
-          WidgetsBinding.instance.addPersistentFrameCallback((_) {
+        if (!immersiveWideLayoutNotifier.value &&
+            !_statusBarStyleScheduled) {
+          _statusBarStyleScheduled = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
             SystemChrome.setSystemUIOverlayStyle(
               const SystemUiOverlayStyle(
                 statusBarIconBrightness: Brightness.light,

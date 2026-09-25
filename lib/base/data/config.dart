@@ -11,6 +11,7 @@ import 'package:sylvakru/base/services/logger.dart';
 import 'package:sylvakru/base/services/navidrome_client.dart';
 import 'package:sylvakru/base/services/stream_client.dart';
 import 'package:sylvakru/base/services/webdav_client.dart';
+import 'package:sylvakru/base/utils/path.dart';
 import 'package:sylvakru/layer/premium_layer.dart';
 
 final config = Config();
@@ -84,63 +85,84 @@ class Config {
       return;
     }
 
-    final content = await file.readAsString();
+    final map = await readJsonMapFile(file);
 
-    final Map<String, dynamic> map =
-        jsonDecode(content) as Map<String, dynamic>;
-
-    final webdavMap = map['webdav'] as Map<String, dynamic>?;
-    if (webdavMap != null) {
+    Map<String, dynamic>? asConfigMap(dynamic value) {
+      if (value is Map<String, dynamic>) {
+        return value;
+      }
+      if (value is Map) {
+        return value.map((key, value) => MapEntry(key.toString(), value));
+      }
+      return null;
+    }
+    final webdavMap = asConfigMap(map['webdav']);
+    if (webdavMap != null &&
+        webdavMap['baseUrl'] is String &&
+        webdavMap['username'] is String) {
       String? securePassword = await _trySecureRead('webdav_password');
-      securePassword ??= webdavMap['password'];
-      securePassword ??= '';
-
+      securePassword ??= webdavMap['password'] is String
+          ? webdavMap['password'] as String
+          : '';
       webdavClient = WebDavClient(
-        baseUrl: webdavMap['baseUrl'],
-        username: webdavMap['username'],
+        baseUrl: webdavMap['baseUrl'] as String,
+        username: webdavMap['username'] as String,
         password: securePassword,
       );
     }
 
-    final navidromeMap = map['navidrome'] as Map<String, dynamic>?;
-    if (navidromeMap != null) {
-      navidromeBaseUrl = navidromeMap['baseUrl'];
-      navidromeUsername = navidromeMap['username'];
-
+    final navidromeMap = asConfigMap(map['navidrome']);
+    if (navidromeMap != null &&
+        navidromeMap['baseUrl'] is String &&
+        navidromeMap['username'] is String) {
+      navidromeBaseUrl = navidromeMap['baseUrl'] as String;
+      navidromeUsername = navidromeMap['username'] as String;
       navidromePassword = await _trySecureRead('navidrome_password');
-      navidromePassword ??= navidromeMap['password'];
-      navidromePassword ??= '';
+      navidromePassword ??= navidromeMap['password'] is String
+          ? navidromeMap['password'] as String
+          : '';
     }
 
-    final embyMap = map['emby'] as Map<String, dynamic>?;
-    if (embyMap != null) {
-      embyBaseUrl = embyMap['baseUrl'];
-      embyUsername = embyMap['username'];
-
+    final embyMap = asConfigMap(map['emby']);
+    if (embyMap != null &&
+        embyMap['baseUrl'] is String &&
+        embyMap['username'] is String) {
+      embyBaseUrl = embyMap['baseUrl'] as String;
+      embyUsername = embyMap['username'] as String;
       embyPassword = await _trySecureRead('emby_password');
-      embyPassword ??= embyMap['password'];
-      embyPassword ??= '';
+      embyPassword ??= embyMap['password'] is String
+          ? embyMap['password'] as String
+          : '';
     }
 
-    final feiniuMap = map['feiniu'] as Map<String, dynamic>?;
-    if (feiniuMap != null) {
-      feiniuBaseUrl = feiniuMap['baseUrl'];
-      feiniuUsername = feiniuMap['username'];
-
+    final feiniuMap = asConfigMap(map['feiniu']);
+    if (feiniuMap != null &&
+        feiniuMap['baseUrl'] is String &&
+        feiniuMap['username'] is String) {
+      feiniuBaseUrl = feiniuMap['baseUrl'] as String;
+      feiniuUsername = feiniuMap['username'] as String;
       feiniuPassword = await _trySecureRead('feiniu_password');
-      feiniuPassword ??= feiniuMap['password'];
-      feiniuPassword ??= '';
+      feiniuPassword ??= feiniuMap['password'] is String
+          ? feiniuMap['password'] as String
+          : '';
 
       feiniuToken = null;
       if (feiniuMap['nasLogin'] == true) {
-        feiniuToken = feiniuMap['token'];
-        feiniuToken ??= await _trySecureRead('feiniu_token');
+        feiniuToken = feiniuMap['token'] is String
+            ? feiniuMap['token'] as String
+            : await _trySecureRead('feiniu_token');
       }
     }
 
-    final tmpSourceType = map['sourceType'] as String?;
+    final configuredSourceType = map['sourceType'];
+    final tmpSourceType = configuredSourceType is String
+        ? configuredSourceType
+        : null;
     if (tmpSourceType != null) {
-      sourceType = SourceType.values.firstWhere((e) => e.name == tmpSourceType);
+      sourceType = SourceType.values.firstWhere(
+        (e) => e.name == tmpSourceType,
+        orElse: () => .local,
+      );
     } else {
       if (webdavClient != null) {
         sourceType = .webdav;
@@ -151,6 +173,13 @@ class Config {
       } else if (feiniuMap != null) {
         sourceType = .feiniu;
       }
+    }
+
+    if ((sourceType == .webdav && webdavClient == null) ||
+        (sourceType == .navidrome && navidromeBaseUrl == null) ||
+        (sourceType == .emby && embyBaseUrl == null) ||
+        (sourceType == .feiniu && feiniuBaseUrl == null)) {
+      sourceType = .local;
     }
 
     isStreamSource =
@@ -294,10 +323,12 @@ class Config {
 
   bool _hasPlainTextCredential(Map<String, dynamic> map) {
     for (var key in ['webdav', 'navidrome', 'emby', 'feiniu']) {
-      if (map[key] != null && map[key]['password'] != null) {
+      final sourceConfig = map[key];
+      if (sourceConfig is Map && sourceConfig['password'] != null) {
         return true;
       }
     }
-    return map['feiniu']?['token'] != null;
+    final feiniuConfig = map['feiniu'];
+    return feiniuConfig is Map && feiniuConfig['token'] != null;
   }
 }

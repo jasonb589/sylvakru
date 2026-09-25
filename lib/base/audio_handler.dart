@@ -251,6 +251,9 @@ class MyAudioHandler extends BaseAudioHandler {
     final result = <MyAudioMetadata>[];
 
     for (final id in rawList ?? []) {
+      if (id is! String) {
+        continue;
+      }
       final song = library.id2Song[id];
       if (song != null) result.add(song);
     }
@@ -267,12 +270,31 @@ class MyAudioHandler extends BaseAudioHandler {
   }
 
   Future<void> _loadPlayQueueState() async {
-    final content = await _playQueueState!.readAsString();
+    final json = await readJsonMapFile(_playQueueState!);
 
-    final json = jsonDecode(content) as Map<String, dynamic>;
+    final rawPlayQueueTmp = json['playQueueTmp'];
+    final rawPlayQueue = json['playQueue'];
+    _playQueueTmp.addAll(
+      _restoreQueue(rawPlayQueueTmp is List ? rawPlayQueueTmp : null),
+    );
 
-    _playQueueTmp.addAll(_restoreQueue(json['playQueueTmp']));
-    playQueue.addAll(_restoreQueue(json['playQueue']));
+    final rawQueue = rawPlayQueue is List ? rawPlayQueue : <dynamic>[];
+    final savedIndex = currentIndex;
+    playQueue.addAll(_restoreQueue(rawQueue));
+    if (playQueue.isEmpty) {
+      currentIndex = -1;
+    } else if (savedIndex < 0 || savedIndex >= rawQueue.length) {
+      currentIndex = 0;
+    } else {
+      final validSongsBeforeIndex = rawQueue
+          .take(savedIndex)
+          .whereType<String>()
+          .where((id) => library.id2Song.containsKey(id))
+          .length;
+      currentIndex =
+          validSongsBeforeIndex.clamp(0, playQueue.length - 1).toInt();
+    }
+    await _savePlayQueueState();
   }
 
   Future<void> _savePlayQueueState() async {
@@ -298,13 +320,12 @@ class MyAudioHandler extends BaseAudioHandler {
     }
 
     if (playQueue.isNotEmpty) {
-      // reload may make some songs not in the library to be removed
-      if (currentIndex == -1 || currentIndex >= playQueue.length) {
+      // A removed queue item can leave a negative or now out-of-range index.
+      if (currentIndex < 0 || currentIndex >= playQueue.length) {
         currentIndex = 0;
       }
 
       final positionMs = await _positionState.readAsString();
-
       await load(start: Duration(milliseconds: int.tryParse(positionMs) ?? 0));
 
       if (isPlayingNotifier.value) {
@@ -331,15 +352,29 @@ class MyAudioHandler extends BaseAudioHandler {
   }
 
   Future<void> _loadPlayState() async {
-    final content = await _playState.readAsString();
-    final Map<String, dynamic> json =
-        jsonDecode(content) as Map<String, dynamic>;
+    final json = await readJsonMapFile(_playState);
 
-    currentIndex = json['currentIndex'] as int? ?? -1;
-    playModeNotifier.value = json['playMode'] as int? ?? 0;
-    _tmpPlayMode = json['tmpPlayMode'] as int? ?? 0;
+    final savedCurrentIndex = json['currentIndex'];
+    currentIndex = savedCurrentIndex is int ? savedCurrentIndex : -1;
 
-    volumeNotifier.value = json['volume'] as double? ?? 0.3;
+    final savedPlayMode = json['playMode'];
+    playModeNotifier.value =
+        savedPlayMode is int && savedPlayMode >= 0 && savedPlayMode <= 2
+        ? savedPlayMode
+        : 0;
+
+    final savedTmpPlayMode = json['tmpPlayMode'];
+    _tmpPlayMode =
+        savedTmpPlayMode is int &&
+            savedTmpPlayMode >= 0 &&
+            savedTmpPlayMode <= 1
+        ? savedTmpPlayMode
+        : 0;
+
+    final savedVolume = json['volume'];
+    volumeNotifier.value = savedVolume is num
+        ? savedVolume.toDouble().clamp(0.0, 1.0).toDouble()
+        : 0.3;
 
     if (!isMobile) {
       setVolume(volumeNotifier.value);
@@ -361,8 +396,13 @@ class MyAudioHandler extends BaseAudioHandler {
     if (!isPremiumNotifier.value) {
       return;
     }
-    final content = await _equalizerState.readAsString();
-    gains = (jsonDecode(content) as List<dynamic>).cast();
+    final decoded = await readJsonListFile(_equalizerState);
+    if (decoded.length == gains.length && decoded.every((value) => value is num)) {
+      gains = decoded.map((value) => (value as num).toDouble()).toList();
+    } else {
+      gains = List.filled(gains.length, 0.0);
+      saveEqualizerState();
+    }
     await applyEqualizer();
   }
 

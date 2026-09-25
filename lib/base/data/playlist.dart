@@ -35,11 +35,20 @@ class PlaylistManager {
     final contentList = await readJsonListFile(_playlistsFile);
     for (final content in contentList) {
       if (isNotStreamSource) {
-        final playlist = Playlist(name: content);
-        addPlaylist(playlist);
+        if (content is! String || content.isEmpty) {
+          continue;
+        }
+        addPlaylist(Playlist(name: content));
       } else {
-        final playlist = Playlist(name: content['name'], id: content['id']);
-        addPlaylist(playlist);
+        if (content is! Map) {
+          continue;
+        }
+        final name = content['name'];
+        final id = content['id'];
+        if (name is! String || name.isEmpty || id is! String || id.isEmpty) {
+          continue;
+        }
+        addPlaylist(Playlist(name: name, id: id as String?));
       }
     }
     updateNotifier.value++;
@@ -55,7 +64,12 @@ class PlaylistManager {
       final tmpPlaylist = await streamClient?.getPlaylists();
       for (final playlist in tmpPlaylist ?? <Playlist>[]) {
         if (playlist.name == '_sylvakru_play_queue_') {
-          streamClient?.deletePlaylist(playlist.id!);
+          if (playlist.id != null) {
+            await streamClient?.deletePlaylist(playlist.id!);
+          }
+          continue;
+        }
+        if (playlist.id == null || playlist.id!.isEmpty) {
           continue;
         }
         if (playlistMap[playlist.name] == null) {
@@ -192,19 +206,22 @@ class Playlist {
     changeNotifier.value++;
 
     final decoded = await readJsonListFile(songListFile);
-    for (String id in decoded) {
-      MyAudioMetadata? song = library.id2Song[id];
+    final validSongIds = <String>[];
+    for (final id in decoded) {
+      if (id is! String) {
+        continue;
+      }
+      final song = library.id2Song[id];
       if (song == null) {
         continue;
       }
       songList.add(song);
+      validSongIds.add(id);
       if (isFavorite) {
         song.isFavoriteNotifier.value = true;
       }
     }
-    await songListFile.writeAsString(
-      jsonEncode(songList.map((e) => e.id).toList()),
-    );
+    await songListFile.writeAsString(jsonEncode(validSongIds));
 
     canModify = true;
     changeNotifier.value++;

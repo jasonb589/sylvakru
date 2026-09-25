@@ -1054,7 +1054,7 @@ class _SettingsListState extends State<SettingsList> {
       title: Text(l10n.checkUpdate),
       onTap: () async {
         final url = Uri.parse(
-          'https://api.github.com/repos/AfalpHy/sylvakru/releases/latest',
+          'https://api.github.com/repos/$releaseRepository/releases/latest',
         );
 
         try {
@@ -1125,7 +1125,7 @@ class _SettingsListState extends State<SettingsList> {
                                 ElevatedButton(
                                   onPressed: () => launchUrl(
                                     Uri.parse(
-                                      "https://github.com/AfalpHy/sylvakru/releases/latest",
+                                      'https://github.com/$releaseRepository/releases/latest',
                                     ),
                                   ),
                                   style: ElevatedButton.styleFrom(

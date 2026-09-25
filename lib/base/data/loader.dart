@@ -66,7 +66,7 @@ class Loader {
 
     await library.load();
 
-    audioHandler.loadStates();
+    await audioHandler.loadStates();
 
     await history.load();
 
@@ -113,7 +113,7 @@ class Loader {
 
     await library.sync();
 
-    audioHandler.sync();
+    await audioHandler.sync();
 
     await history.load();
 
@@ -149,7 +149,7 @@ class Loader {
 
     await library.sync();
 
-    audioHandler.loadStates();
+    await audioHandler.loadStates();
 
     await history.load();
 
@@ -174,50 +174,45 @@ class Loader {
   }
 
   static void _handleLegacyVersionData() {
-    File tmp = File('${appSupportDir.path}/version.json');
-    if (tmp.existsSync()) {
+    final versionFile = File('${appSupportDir.path}/version.json');
+    if (versionFile.existsSync()) {
       firstLaunch = false;
-      if (compareVersion('4.0.1', jsonDecode(tmp.readAsStringSync())) > 0) {
-        File playlistsFile = File(
-          "${getPlaylistConfigPath(.local)}/sylvakru_playlists.json",
-        );
-        if (playlistsFile.existsSync()) {
-          final content = playlistsFile.readAsStringSync();
-          final list = jsonDecode(content) as List;
-          if (list.isNotEmpty && list[0] == 'Favorite') {
-            playlistsFile.writeAsStringSync(jsonEncode(list.skip(1).toList()));
-          }
+      String? previousVersion;
+      try {
+        final decoded = jsonDecode(versionFile.readAsStringSync());
+        if (decoded is String && RegExp(r'^\d+(\.\d+)*$').hasMatch(decoded)) {
+          previousVersion = decoded;
         }
+      } catch (e) {
+        logger.output('Ignoring corrupted version file: $e');
+      }
 
-        playlistsFile = File(
-          "${getPlaylistConfigPath(.webdav)}/sylvakru_playlists.json",
-        );
-        if (playlistsFile.existsSync()) {
-          final content = playlistsFile.readAsStringSync();
-          final list = jsonDecode(content) as List;
-          if (list.isNotEmpty && list[0] == 'Favorite') {
+      if (previousVersion != null &&
+          compareVersion('4.0.1', previousVersion) > 0) {
+        for (final source in [SourceType.local, SourceType.webdav]) {
+          final playlistsFile = File(
+            '${getPlaylistConfigPath(source)}/sylvakru_playlists.json',
+          );
+          if (!playlistsFile.existsSync()) {
+            continue;
+          }
+          final list = readJsonListFileSync(playlistsFile);
+          if (list.isNotEmpty && list.first == 'Favorite') {
             playlistsFile.writeAsStringSync(jsonEncode(list.skip(1).toList()));
           }
         }
       }
 
-      if (compareVersion('4.2.0', jsonDecode(tmp.readAsStringSync())) > 0) {
-        Directory tmpDir = Directory('${appSupportDir.path}/subsonic');
-        if (tmpDir.existsSync()) {
-          tmpDir.deleteSync(recursive: true);
-        }
-
-        tmpDir = Directory('${appSupportDir.path}/navidrome');
-        if (tmpDir.existsSync()) {
-          tmpDir.deleteSync(recursive: true);
-        }
-
-        tmpDir = Directory('${appSupportDir.path}/emby');
-        if (tmpDir.existsSync()) {
-          tmpDir.deleteSync(recursive: true);
+      if (previousVersion != null &&
+          compareVersion('4.2.0', previousVersion) > 0) {
+        for (final source in ['subsonic', 'navidrome', 'emby']) {
+          final legacyDir = Directory('${appSupportDir.path}/$source');
+          if (legacyDir.existsSync()) {
+            legacyDir.deleteSync(recursive: true);
+          }
         }
       }
     }
-    tmp.writeAsStringSync(jsonEncode(versionNumber));
+    versionFile.writeAsStringSync(jsonEncode(versionNumber));
   }
 }

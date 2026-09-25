@@ -110,9 +110,21 @@ class Library {
 
   Future<void> initFolders() async {
     // must execute before loading metadata(set ios path)
-    for (final id in await readJsonListFile(_folderIdListFile!)) {
+    final folderIds = await readJsonListFile(_folderIdListFile!);
+    final validFolderIds = <String>[];
+    for (final id in folderIds) {
+      if (id is! String || id.isEmpty) {
+        continue;
+      }
       final folder = await Folder.from(id, sourceType == .webdav);
+      if (folder.path.isEmpty) {
+        continue;
+      }
       folderList.add(folder);
+      validFolderIds.add(id);
+    }
+    if (validFolderIds.length != folderIds.length) {
+      await _folderIdListFile!.writeAsString(jsonEncode(validFolderIds));
     }
   }
 

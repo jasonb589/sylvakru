@@ -343,15 +343,41 @@ class _SongListState extends State<SongList> {
 
   @override
   void dispose() {
+    if (isFrequently) {
+      history.frequentlyChangeNotifier.removeListener(updateSongList);
+    }
+    if (isRecently) {
+      history.recentlyChangeNotifier.removeListener(updateSongList);
+    }
+    if (isLibrary) {
+      library.changeNotifier.removeListener(updateSongList);
+    }
     rootVisibleNotifier?.removeListener(updateHideOthers);
-
     sortTypeNotifier.removeListener(resetSelectedAndUpdateSongList);
     changeNotifier.removeListener(updateSongList);
+    if (widget.playlist == null &&
+        widget.artist == null &&
+        widget.folder == null) {
+      changeNotifier.dispose();
+    }
     textController.removeListener(startNewSearchIfNeed);
     scrollController.dispose();
+    textController.dispose();
+    currentSongListNotifier.dispose();
+    listIsScrollingNotifier.dispose();
+    if (sortTypeNotifier != widget.playlist?.sortTypeNotifier &&
+        sortTypeNotifier != widget.folder?.sortTypeNotifier) {
+      sortTypeNotifier.dispose();
+    }
     timer?.cancel();
     doubleClicktimer?.cancel();
     searchTimer?.cancel();
+    for (final notifier in isSelectedNotifierMap.values) {
+      notifier.dispose();
+    }
+    for (final notifier in showPlayButtonNotifierMap.values) {
+      notifier.dispose();
+    }
     super.dispose();
   }
 

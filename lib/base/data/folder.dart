@@ -135,13 +135,22 @@ class Folder {
   }
 
   Future<void> load() async {
-    final List<dynamic> songIdList = jsonDecode(
-      await _songIdListFile.readAsString(),
-    );
+    final songIdList = await readJsonListFile(_songIdListFile);
+    final validSongIds = <String>[];
     for (final id in songIdList) {
-      songList.add(library.id2Song[id]!);
+      if (id is! String) {
+        continue;
+      }
+      final song = library.id2Song[id];
+      if (song == null) {
+        continue;
+      }
+      songList.add(song);
+      validSongIds.add(id);
     }
-
+    if (validSongIds.length != songIdList.length) {
+      await _songIdListFile.writeAsString(jsonEncode(validSongIds));
+    }
     canModify = true;
     changeNotifier.value++;
     layersManager.updateBackground();
