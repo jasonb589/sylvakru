@@ -33,7 +33,7 @@ class _AdvancedSongSearchDialogState extends State<AdvancedSongSearchDialog> {
     super.initState();
     _fields.addAll(widget.criteria.fields);
     _exactMatch = widget.criteria.exactMatch;
-    _queryController = _controller(widget.criteria.query);
+    _queryController = TextEditingController(text: widget.criteria.query);
     _minYearController = _controller(widget.criteria.minYear);
     _maxYearController = _controller(widget.criteria.maxYear);
     _minDurationController =
