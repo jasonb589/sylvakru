@@ -740,6 +740,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get refreshRecommendations => '换一批';
+
   @override
   String get advancedSearch => '高级搜索';
 
@@ -769,4 +770,30 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get invalidRange => '请输入有效范围，最小值不能大于最大值';
+
+  @override
+  String get downloadForOffline => '下载到本地离线播放';
+
+  @override
+  String get removeDownload => '移除离线文件';
+
+  @override
+  String get downloading => '正在下载…';
+
+  @override
+  String get downloadFailed => '下载失败，请检查网络和存储空间';
+
+  @override
+  String get downloadInUse => '请先暂停播放，再移除此离线文件';
+
+  @override
+  String get offlineSongs => '已下载歌曲';
+
+  @override
+  String get noOfflineSongs => '暂无离线下载';
+
+  @override
+  String offlineDownloadCount(int count) {
+    return '已下载 $count 首歌曲';
+  }
 }

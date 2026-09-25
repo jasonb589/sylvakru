@@ -245,5 +245,20 @@
   "minimum": "最小值",
   "maximum": "最大值",
   "applyFilters": "应用筛选",
-  "invalidRange": "请输入有效范围，最小值不能大于最大值"
+  "invalidRange": "请输入有效范围，最小值不能大于最大值",
+  "downloadForOffline": "下载到本地离线播放",
+  "removeDownload": "移除离线文件",
+  "downloading": "正在下载…",
+  "downloadFailed": "下载失败，请检查网络和存储空间",
+  "downloadInUse": "请先暂停播放，再移除此离线文件",
+  "offlineSongs": "已下载歌曲",
+  "noOfflineSongs": "暂无离线下载",
+  "offlineDownloadCount": "已下载 {count} 首歌曲",
+  "@offlineDownloadCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

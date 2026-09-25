@@ -322,5 +322,20 @@
   "minimum": "Minimum",
   "maximum": "Maximum",
   "applyFilters": "Apply filters",
-  "invalidRange": "Enter valid values; minimum must not exceed maximum"
+  "invalidRange": "Enter valid values; minimum must not exceed maximum",
+  "downloadForOffline": "Download for offline",
+  "removeDownload": "Remove offline copy",
+  "downloading": "Downloading…",
+  "downloadFailed": "Download failed",
+  "downloadInUse": "Pause playback before removing this download",
+  "offlineSongs": "Offline songs",
+  "noOfflineSongs": "No offline songs downloaded",
+  "offlineDownloadCount": "{count} offline songs",
+  "@offlineDownloadCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

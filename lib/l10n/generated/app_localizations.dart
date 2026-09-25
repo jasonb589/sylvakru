@@ -326,14 +326,34 @@ abstract class AppLocalizations {
   /// **'Create Playlist'**
   String get createPlaylist;
 
+  /// No description provided for @smartPlaylistName.
+  ///
+  /// In en, this message translates to:
+  /// **'Smart Playlist Name'**
   String get smartPlaylistName;
 
+  /// No description provided for @smartPlaylistQuery.
+  ///
+  /// In en, this message translates to:
+  /// **'Keyword filter'**
   String get smartPlaylistQuery;
 
+  /// No description provided for @smartPlaylistNameExists.
+  ///
+  /// In en, this message translates to:
+  /// **'A playlist with this name already exists'**
   String get smartPlaylistNameExists;
 
+  /// No description provided for @createSmartPlaylist.
+  ///
+  /// In en, this message translates to:
+  /// **'Create smart playlist'**
   String get createSmartPlaylist;
 
+  /// No description provided for @smartPlaylist.
+  ///
+  /// In en, this message translates to:
+  /// **'Smart playlist'**
   String get smartPlaylist;
 
   /// No description provided for @order.
@@ -1499,27 +1519,115 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Refresh'**
   String get refreshRecommendations;
+
+  /// No description provided for @advancedSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced Search'**
   String get advancedSearch;
 
+  /// No description provided for @searchIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Search in'**
   String get searchIn;
 
+  /// No description provided for @exactMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Exact match'**
   String get exactMatch;
 
+  /// No description provided for @yearRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Year'**
   String get yearRange;
 
+  /// No description provided for @durationRangeSeconds.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration (seconds)'**
   String get durationRangeSeconds;
 
+  /// No description provided for @bitrateRangeKbps.
+  ///
+  /// In en, this message translates to:
+  /// **'Bitrate (kbps)'**
   String get bitrateRangeKbps;
 
+  /// No description provided for @minimum.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimum'**
   String get minimum;
 
+  /// No description provided for @maximum.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum'**
   String get maximum;
 
+  /// No description provided for @applyFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply filters'**
   String get applyFilters;
 
+  /// No description provided for @invalidRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter valid values; minimum must not exceed maximum'**
   String get invalidRange;
-}
 
+  /// No description provided for @downloadForOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Download for offline'**
+  String get downloadForOffline;
+
+  /// No description provided for @removeDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove offline copy'**
+  String get removeDownload;
+
+  /// No description provided for @downloading.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading…'**
+  String get downloading;
+
+  /// No description provided for @downloadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Download failed'**
+  String get downloadFailed;
+
+  /// No description provided for @downloadInUse.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause playback before removing this download'**
+  String get downloadInUse;
+
+  /// No description provided for @offlineSongs.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline songs'**
+  String get offlineSongs;
+
+  /// No description provided for @noOfflineSongs.
+  ///
+  /// In en, this message translates to:
+  /// **'No offline songs downloaded'**
+  String get noOfflineSongs;
+
+  /// No description provided for @offlineDownloadCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} offline songs'**
+  String offlineDownloadCount(int count);
+}
 
 class _AppLocalizationsDelegate
     extends LocalizationsDelegate<AppLocalizations> {

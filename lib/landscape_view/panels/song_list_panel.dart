@@ -924,6 +924,36 @@ extension _SongListPanel on _SongListState {
         ),
       );
 
+      if (sourceType != .local) {
+        menuItems.add(
+          MenuItem(
+            text: song.cacheExist
+                ? l10n.removeDownload
+                : l10n.downloadForOffline,
+            iconData: song.cacheExist
+                ? Icons.download_done_rounded
+                : Icons.download_rounded,
+            callback: () async {
+              if (song.cacheExist) {
+                final removed = await library.removeOfflineCopy(
+                  song,
+                  currentlyPlaying:
+                      currentSongNotifier.value?.id == song.id &&
+                      isPlayingNotifier.value,
+                  currentlyQueued: playQueue.any((item) => item.id == song.id),
+                );
+                if (!removed) showCenterMessage(l10n.downloadInUse);
+              } else {
+                final downloaded = await library.downloadForOffline(
+                  song,
+                  keepSongIds: playQueue.map((item) => item.id).toSet(),
+                );
+                if (!downloaded) showCenterMessage(l10n.downloadFailed);
+              }
+            },
+          ),
+        );
+      }
       if (sourceType == .local && artist == null && album == null) {
         menuItems.add(
           MenuItem(

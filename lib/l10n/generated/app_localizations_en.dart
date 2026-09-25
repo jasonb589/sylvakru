@@ -129,7 +129,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get smartPlaylistQuery => 'Keyword filter';
 
   @override
-  String get smartPlaylistNameExists => 'A playlist with this name already exists';
+  String get smartPlaylistNameExists =>
+      'A playlist with this name already exists';
 
   @override
   String get createSmartPlaylist => 'Create smart playlist';
@@ -750,6 +751,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get refreshRecommendations => 'Refresh';
+
   @override
   String get advancedSearch => 'Advanced Search';
 
@@ -780,4 +782,30 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get invalidRange =>
       'Enter valid values; minimum must not exceed maximum';
+
+  @override
+  String get downloadForOffline => 'Download for offline';
+
+  @override
+  String get removeDownload => 'Remove offline copy';
+
+  @override
+  String get downloading => 'Downloading…';
+
+  @override
+  String get downloadFailed => 'Download failed';
+
+  @override
+  String get downloadInUse => 'Pause playback before removing this download';
+
+  @override
+  String get offlineSongs => 'Offline songs';
+
+  @override
+  String get noOfflineSongs => 'No offline songs downloaded';
+
+  @override
+  String offlineDownloadCount(int count) {
+    return '$count offline songs';
+  }
 }

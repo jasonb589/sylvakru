@@ -15,6 +15,7 @@ import 'package:sylvakru/base/my_audio_metadata.dart';
 import 'package:sylvakru/base/services/color_manager.dart';
 import 'package:sylvakru/base/services/picture_service.dart';
 import 'package:sylvakru/base/utils/metadata_utils.dart';
+import 'package:sylvakru/base/data/library.dart';
 import 'package:sylvakru/base/utils/zoom_page_route.dart';
 import 'package:sylvakru/base/widgets/cover_art_widget.dart';
 import 'package:sylvakru/base/widgets/custom_text_field.dart';
@@ -877,6 +878,57 @@ void showSongOptions({
                     }
                   },
                 ),
+                if (sourceType != .local)
+                  ListenableBuilder(
+                    listenable: Listenable.merge([
+                      song.updateNotifier,
+                      downloadingSongIdsNotifier,
+                    ]),
+                    builder: (context, _) {
+                      final isDownloading = downloadingSongIdsNotifier.value
+                          .contains(song.id);
+                      return _optionItem(
+                        leading: Icon(
+                          song.cacheExist
+                              ? Icons.download_done_rounded
+                              : Icons.download_rounded,
+                        ),
+                        text: isDownloading
+                            ? l10n.downloading
+                            : song.cacheExist
+                            ? l10n.removeDownload
+                            : l10n.downloadForOffline,
+                        onTap: () async {
+                          Navigator.pop(context);
+                          if (isDownloading) return;
+                          if (song.cacheExist) {
+                            final removed = await library.removeOfflineCopy(
+                              song,
+                              currentlyPlaying:
+                                  currentSongNotifier.value?.id == song.id &&
+                                  isPlayingNotifier.value,
+                              currentlyQueued: playQueue.any(
+                                (item) => item.id == song.id,
+                              ),
+                            );
+                            if (!removed && context.mounted) {
+                              showCenterMessage(l10n.downloadInUse);
+                            }
+                          } else {
+                            final downloaded = await library.downloadForOffline(
+                              song,
+                              keepSongIds: {
+                                ...playQueue.map((item) => item.id),
+                              },
+                            );
+                            if (!downloaded && context.mounted) {
+                              showCenterMessage(l10n.downloadFailed);
+                            }
+                          }
+                        },
+                      );
+                    },
+                  ),
 
                 if (includeGoToArtist)
                   _optionItem(

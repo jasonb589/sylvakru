@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:material_ui/material_ui.dart';
@@ -20,6 +21,8 @@ import 'package:sylvakru/base/services/system_ui_service.dart';
 import 'package:sylvakru/base/utils/common_utils.dart';
 import 'package:sylvakru/base/utils/media_query.dart';
 import 'package:sylvakru/base/utils/source_type.dart';
+import 'package:sylvakru/base/widgets/cover_art_widget.dart';
+import 'package:sylvakru/base/utils/metadata_utils.dart';
 import 'package:sylvakru/base/widgets/connect_client_widget.dart';
 import 'package:sylvakru/base/widgets/equalizer.dart';
 import 'package:sylvakru/base/widgets/my_divider.dart';
@@ -36,9 +39,9 @@ import 'package:sylvakru/base/widgets/my_switch.dart';
 import 'package:smooth_corner/smooth_corner.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-
 /// Selectable cache bounds, in MB. 0 means "no limit".
 const List<int> cacheLimitOptionsMb = [0, 1024, 2048, 5120, 10240];
+
 class SettingsList extends StatefulWidget {
   final double? iconSize;
   const SettingsList({super.key, this.iconSize});
@@ -543,6 +546,28 @@ class _SettingsListState extends State<SettingsList> {
                     },
                   ),
 
+                  ListenableBuilder(
+                    listenable: Listenable.merge([
+                      library.changeNotifier,
+                      cacheSizeNotifier,
+                    ]),
+                    builder: (context, _) {
+                      return ListTile(
+                        leading: const Icon(Icons.download_for_offline_rounded),
+                        title: Text(l10n.offlineSongs),
+                        trailing: Text(
+                          l10n.offlineDownloadCount(
+                            library.offlineSongs.length,
+                          ),
+                        ),
+                        onTap: () {
+                          Navigator.pop(context);
+                          _showOfflineSongs(context, l10n);
+                        },
+                      );
+                    },
+                  ),
+
                   ValueListenableBuilder(
                     valueListenable: cacheLimitMbNotifier,
                     builder: (context, current, child) {
@@ -583,9 +608,7 @@ class _SettingsListState extends State<SettingsList> {
             valueListenable: cacheLimitMbNotifier,
             builder: (context, limit, child) {
               final usedText = '${used.toStringAsFixed(1)}MB';
-              return Text(
-                limit <= 0 ? usedText : '$usedText / $limit MB',
-              );
+              return Text(limit <= 0 ? usedText : '$usedText / $limit MB');
             },
           );
         },
@@ -622,9 +645,9 @@ class _SettingsListState extends State<SettingsList> {
                       onTap: () {
                         cacheLimitMbNotifier.value = option;
                         setting.save();
-                        // apply immediately, so picking a smaller bound frees
-                        // the space now rather than on the next play
-                        library.enforceCacheLimit();
+                        library.enforceCacheLimit(
+                          keepSongIds: playQueue.map((song) => song.id).toSet(),
+                        );
                       },
                     ),
                 ],
@@ -636,12 +659,92 @@ class _SettingsListState extends State<SettingsList> {
     );
   }
 
-  Future<void> _clearCache(
-    BuildContext context,
-    AppLocalizations l10n,
-  ) async {
+  void _showOfflineSongs(BuildContext context, AppLocalizations l10n) {
+    showAnimationDialog(
+      context: context,
+      child: SizedBox(
+        width: 420,
+        height: min(MediaQuery.sizeOf(context).height * 0.7, 560),
+        child: ListenableBuilder(
+          listenable: Listenable.merge([
+            cacheSizeNotifier,
+            downloadingSongIdsNotifier,
+          ]),
+          builder: (context, _) {
+            final songs = library.offlineSongs;
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(15),
+                  child: Text(
+                    l10n.offlineSongs,
+                    style: .new(fontSize: 18, fontWeight: .bold),
+                  ),
+                ),
+                Expanded(
+                  child: songs.isEmpty
+                      ? Center(child: Text(l10n.noOfflineSongs))
+                      : ListView.builder(
+                          itemCount: songs.length,
+                          itemBuilder: (context, index) {
+                            final song = songs[index];
+                            return ListTile(
+                              leading: CoverArtWidget(
+                                size: 42,
+                                borderRadius: 4,
+                                picture: song.picture,
+                              ),
+                              title: Text(
+                                getTitle(song),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              subtitle: Text(
+                                getArtist(song),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              trailing: IconButton(
+                                icon: const Icon(Icons.delete_outline),
+                                tooltip: l10n.removeDownload,
+                                onPressed: () async {
+                                  final removed = await library
+                                      .removeOfflineCopy(
+                                        song,
+                                        currentlyPlaying:
+                                            currentSongNotifier.value?.id ==
+                                                song.id &&
+                                            isPlayingNotifier.value,
+                                        currentlyQueued: playQueue.any(
+                                          (item) => item.id == song.id,
+                                        ),
+                                      );
+                                  if (!removed && context.mounted) {
+                                    showCenterMessage(l10n.downloadInUse);
+                                  }
+                                },
+                              ),
+                              onTap: () {
+                                audioHandler.singlePlay(song);
+                                audioHandler.saveAllStates();
+                              },
+                            );
+                          },
+                        ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<void> _clearCache(BuildContext context, AppLocalizations l10n) async {
     if (Loader.busy) {
       showCenterMessage(l10n.syncLibrary);
+      return;
+    }
+    if (downloadingSongIdsNotifier.value.isNotEmpty) {
+      showCenterMessage(l10n.downloading);
       return;
     }
     if (await showConfirmDialog(context, l10n.clear)) {
@@ -657,6 +760,7 @@ class _SettingsListState extends State<SettingsList> {
   String cacheLimitLabel(AppLocalizations l10n, int mb) {
     return mb <= 0 ? l10n.cacheLimitUnlimited : '$mb MB';
   }
+
   Widget languageListTile(BuildContext context, AppLocalizations l10n) {
     return ListTile(
       leading: ImageIcon(languageImage, size: iconSize),

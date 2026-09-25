@@ -291,8 +291,9 @@ class MyAudioHandler extends BaseAudioHandler {
           .whereType<String>()
           .where((id) => library.id2Song.containsKey(id))
           .length;
-      currentIndex =
-          validSongsBeforeIndex.clamp(0, playQueue.length - 1).toInt();
+      currentIndex = validSongsBeforeIndex
+          .clamp(0, playQueue.length - 1)
+          .toInt();
     }
     await _savePlayQueueState();
   }
@@ -397,7 +398,8 @@ class MyAudioHandler extends BaseAudioHandler {
       return;
     }
     final decoded = await readJsonListFile(_equalizerState);
-    if (decoded.length == gains.length && decoded.every((value) => value is num)) {
+    if (decoded.length == gains.length &&
+        decoded.every((value) => value is num)) {
       gains = decoded.map((value) => (value as num).toDouble()).toList();
     } else {
       gains = List.filled(gains.length, 0.0);
@@ -647,7 +649,10 @@ class MyAudioHandler extends BaseAudioHandler {
       if (durationSeconds > 0) {
         double times = _playedDuration.inSeconds / durationSeconds;
         if (times > 0.5) {
-          library.tryAddCache(currentSongNotifier.value!);
+          library.tryAddCache(
+            currentSongNotifier.value!,
+            keepSongIds: playQueue.map((item) => item.id).toSet(),
+          );
           history.addSongTimes(currentSongNotifier.value!, times.round());
         }
       }
