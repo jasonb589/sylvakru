@@ -230,5 +230,15 @@
   "reasonRediscover": "好久没听了",
   "reasonExplore": "换个口味",
   "reasonUnexplored": "还有 {count} 首没听过",
-  "refreshRecommendations": "换一批"
+  "refreshRecommendations": "换一批",
+  "advancedSearch": "高级搜索",
+  "searchIn": "搜索范围",
+  "exactMatch": "精确匹配",
+  "yearRange": "年份",
+  "durationRangeSeconds": "时长（秒）",
+  "bitrateRangeKbps": "比特率（kbps）",
+  "minimum": "最小值",
+  "maximum": "最大值",
+  "applyFilters": "应用筛选",
+  "invalidRange": "请输入有效范围，最小值不能大于最大值"
 }

@@ -307,5 +307,15 @@
       }
     }
   },
-  "refreshRecommendations": "Refresh"
+  "refreshRecommendations": "Refresh",
+  "advancedSearch": "Advanced Search",
+  "searchIn": "Search in",
+  "exactMatch": "Exact match",
+  "yearRange": "Year",
+  "durationRangeSeconds": "Duration (seconds)",
+  "bitrateRangeKbps": "Bitrate (kbps)",
+  "minimum": "Minimum",
+  "maximum": "Maximum",
+  "applyFilters": "Apply filters",
+  "invalidRange": "Enter valid values; minimum must not exceed maximum"
 }

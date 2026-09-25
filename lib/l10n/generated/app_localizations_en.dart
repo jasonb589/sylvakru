@@ -735,4 +735,34 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get refreshRecommendations => 'Refresh';
+  @override
+  String get advancedSearch => 'Advanced Search';
+
+  @override
+  String get searchIn => 'Search in';
+
+  @override
+  String get exactMatch => 'Exact match';
+
+  @override
+  String get yearRange => 'Year';
+
+  @override
+  String get durationRangeSeconds => 'Duration (seconds)';
+
+  @override
+  String get bitrateRangeKbps => 'Bitrate (kbps)';
+
+  @override
+  String get minimum => 'Minimum';
+
+  @override
+  String get maximum => 'Maximum';
+
+  @override
+  String get applyFilters => 'Apply filters';
+
+  @override
+  String get invalidRange =>
+      'Enter valid values; minimum must not exceed maximum';
 }

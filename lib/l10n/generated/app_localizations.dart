@@ -1489,7 +1489,27 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Refresh'**
   String get refreshRecommendations;
+  String get advancedSearch;
+
+  String get searchIn;
+
+  String get exactMatch;
+
+  String get yearRange;
+
+  String get durationRangeSeconds;
+
+  String get bitrateRangeKbps;
+
+  String get minimum;
+
+  String get maximum;
+
+  String get applyFilters;
+
+  String get invalidRange;
 }
+
 
 class _AppLocalizationsDelegate
     extends LocalizationsDelegate<AppLocalizations> {

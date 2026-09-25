@@ -11,6 +11,8 @@ extension _SongListPanel on _SongListState {
             hintText: l10n.searchSongs,
             textController: textController,
             backToRoot: backToRoot,
+            hasAdvancedSearch: hasAdvancedSearch,
+            onAdvancedSearch: showAdvancedSearch,
             scrollToTop: () {
               scrollController.animateTo(
                 0,
@@ -65,7 +67,7 @@ extension _SongListPanel on _SongListState {
           child: ValueListenableBuilder(
             valueListenable: currentSongListNotifier,
             builder: (context, _, _) {
-              if (!isLibrary || searchValue.isNotEmpty) {
+              if (!isLibrary || searchValue.isNotEmpty || hasAdvancedSearch) {
                 return const SizedBox.shrink();
               }
               return RecentlyAdded(padding: padding);

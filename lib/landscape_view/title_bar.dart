@@ -24,6 +24,8 @@ class TitleBar extends StatefulWidget {
   final Function()? backToRoot;
   final Function()? scrollToTop;
   final Function()? findLocation;
+  final Function()? onAdvancedSearch;
+  final bool hasAdvancedSearch;
 
   const TitleBar({
     super.key,
@@ -33,6 +35,8 @@ class TitleBar extends StatefulWidget {
     this.backToRoot,
     this.scrollToTop,
     this.findLocation,
+    this.onAdvancedSearch,
+    this.hasAdvancedSearch = false,
   });
 
   @override
@@ -228,6 +232,16 @@ class _TitleBarState extends State<TitleBar> {
           ),
 
         if (!isMobile) windowControls(),
+
+        if (widget.onAdvancedSearch != null)
+          IconButton(
+            tooltip: AppLocalizations.of(context).advancedSearch,
+            onPressed: widget.onAdvancedSearch,
+            icon: Icon(
+              Icons.tune_rounded,
+              color: widget.hasAdvancedSearch ? iconColor.value : null,
+            ),
+          ),
 
         SizedBox(width: isMobile ? 10 : 30),
       ],

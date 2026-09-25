@@ -14,6 +14,9 @@ extension _SongListPage on _SongListState {
               key: ValueKey(getFirstSong(songList)),
               hintText: AppLocalizations.of(context).searchSongs,
               textController: textController,
+              onSearchTextChanged: startNewSearchIfNeed,
+              onAdvancedSearch: showAdvancedSearch,
+              hasAdvancedSearch: hasAdvancedSearch,
               useCurrentSong: false,
             );
           },
@@ -342,7 +345,7 @@ extension _SongListPage on _SongListState {
           child: ValueListenableBuilder(
             valueListenable: currentSongListNotifier,
             builder: (context, _, _) {
-              if (!isLibrary || searchValue.isNotEmpty) {
+              if (!isLibrary || searchValue.isNotEmpty || hasAdvancedSearch) {
                 return const SizedBox.shrink();
               }
               return RecentlyAdded(

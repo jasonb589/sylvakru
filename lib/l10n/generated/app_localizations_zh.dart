@@ -725,4 +725,33 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get refreshRecommendations => '换一批';
+  @override
+  String get advancedSearch => '高级搜索';
+
+  @override
+  String get searchIn => '搜索范围';
+
+  @override
+  String get exactMatch => '精确匹配';
+
+  @override
+  String get yearRange => '年份';
+
+  @override
+  String get durationRangeSeconds => '时长（秒）';
+
+  @override
+  String get bitrateRangeKbps => '比特率（kbps）';
+
+  @override
+  String get minimum => '最小值';
+
+  @override
+  String get maximum => '最大值';
+
+  @override
+  String get applyFilters => '应用筛选';
+
+  @override
+  String get invalidRange => '请输入有效范围，最小值不能大于最大值';
 }
