@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sylvakru/base/design/app_tokens.dart';
 
 class ScaleWidget extends StatefulWidget {
   final Widget child;
@@ -27,8 +28,13 @@ class _ScaleWidgetState extends State<ScaleWidget> {
     return ValueListenableBuilder(
       valueListenable: focusNotifier,
       builder: (context, value, child) {
-        return Transform.scale(
+        // Animated rather than an instant jump: in big picture mode this is the
+        // primary focus affordance, and a keyboard or remote user has no
+        // cursor telling them where focus just moved to.
+        return AnimatedScale(
           scale: value ? 1.1 : 1,
+          duration: AppDuration.quick,
+          curve: AppCurve.standard,
           child: InkWell(
             autofocus: widget.autoFocus,
             mouseCursor: SystemMouseCursors.click,

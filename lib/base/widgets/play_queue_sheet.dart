@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sylvakru/base/audio_handler.dart';
 import 'package:sylvakru/base/services/color_manager.dart';
+import 'package:sylvakru/base/design/app_tokens.dart';
 import 'package:sylvakru/base/asset_images.dart';
 import 'package:sylvakru/base/services/interaction.dart';
 import 'package:sylvakru/base/widgets/buttons.dart';
@@ -162,8 +163,28 @@ class PlayQueueSheetState extends State<PlayQueueSheet> {
                   },
                   proxyDecorator:
                       (Widget child, int index, Animation<double> animation) {
-                        return Material(
-                          color: Colors.transparent,
+                        // A dragged row has to look lifted off the list,
+                        // otherwise it is indistinguishable from a resting one
+                        // and the drag reads as nothing happening.
+                        return AnimatedBuilder(
+                          animation: animation,
+                          builder: (context, innerChild) {
+                            final lift = Curves.easeOut.transform(
+                              animation.value,
+                            );
+                            return Container(
+                              decoration: BoxDecoration(
+                                color: colorManager.getSpecificBgColor(),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.row,
+                                ),
+                                boxShadow: AppShadow.lifted(
+                                  Colors.black.withValues(alpha: 0.5 * lift),
+                                ),
+                              ),
+                              child: innerChild,
+                            );
+                          },
                           child: child,
                         );
                       },

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 import 'dart:ui';
@@ -24,6 +25,7 @@ import 'package:sylvakru/base/widgets/my_sheet.dart';
 import 'package:sylvakru/base/widgets/playlist_widgets.dart';
 import 'package:sylvakru/base/widgets/selectable_song_list_page.dart';
 import 'package:sylvakru/base/widgets/song_info.dart';
+import 'package:sylvakru/base/design/app_tokens.dart';
 import 'package:sylvakru/big_picture_view/panels/big_single_album_panel.dart';
 import 'package:sylvakru/big_picture_view/panels/big_single_artist_panel.dart';
 import 'package:sylvakru/l10n/generated/app_localizations.dart';
@@ -42,33 +44,95 @@ void showCenterMessage(String message, {int duration = 2000}) {
 
   final overlay = globalNavigatorKey.currentState?.overlay;
   if (overlay == null) return;
-  final overlayEntry = OverlayEntry(
-    builder: (context) => Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 300),
-        child: Material(
-          color: Colors.black,
-          shape: SmoothRectangleBorder(
-            smoothness: 1,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Padding(
-            padding: EdgeInsets.all(16),
-            child: Text(
-              message,
-              style: TextStyle(color: Colors.white, fontSize: 16),
-            ),
-          ),
-        ),
-      ),
+  late final OverlayEntry overlayEntry;
+  overlayEntry = OverlayEntry(
+    builder: (context) => _CenterMessage(
+      message: message,
+      duration: duration,
+      onDone: () {
+        if (overlayEntry.mounted) {
+          overlayEntry.remove();
+        }
+      },
     ),
   );
 
   overlay.insert(overlayEntry);
+}
 
-  Future.delayed(Duration(milliseconds: duration), () {
-    overlayEntry.remove();
+/// A transient centre message that fades in and out.
+///
+/// It used to appear and vanish between two frames, which read as a glitch
+/// rather than a message - especially over the blurred backdrop, where the eye
+/// has no other cue that something appeared.
+class _CenterMessage extends StatefulWidget {
+  const _CenterMessage({
+    required this.message,
+    required this.duration,
+    required this.onDone,
   });
+
+  final String message;
+  final int duration;
+  final VoidCallback onDone;
+
+  @override
+  State<_CenterMessage> createState() => _CenterMessageState();
+}
+
+class _CenterMessageState extends State<_CenterMessage>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: AppDuration.normal,
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_run());
+  }
+
+  Future<void> _run() async {
+    await _controller.forward();
+    await Future.delayed(Duration(milliseconds: widget.duration));
+    if (!mounted) return;
+    await _controller.reverse();
+    if (!mounted) return;
+    widget.onDone();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: FadeTransition(
+        opacity: _controller,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 300),
+          child: Material(
+            color: Colors.black,
+            shape: SmoothRectangleBorder(
+              smoothness: 1,
+              borderRadius: BorderRadius.circular(AppRadius.row),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                widget.message,
+                style: const TextStyle(color: Colors.white, fontSize: 16),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 OverlayEntry? _centerOverlayEntry;
@@ -451,8 +515,13 @@ void showContextMenu(
       opaque: false,
       barrierDismissible: true,
       barrierColor: Colors.transparent,
-      transitionDuration: Duration.zero,
-      reverseTransitionDuration: Duration.zero,
+      transitionDuration: AppDuration.quick,
+      reverseTransitionDuration: AppDuration.quick,
+      // Everything else in the app animates; a menu that appeared and vanished
+      // between two frames read as a rendering glitch.
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        return FadeTransition(opacity: animation, child: child);
+      },
       pageBuilder: (context, _, _) {
         bool first = true;
 
