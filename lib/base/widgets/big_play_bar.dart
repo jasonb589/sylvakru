@@ -1,3 +1,4 @@
+import 'package:sylvakru/base/design/marquee_text.dart';
 import 'package:sylvakru/base/design/app_tokens.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
@@ -89,9 +90,8 @@ class BigPlayBar extends StatelessWidget {
                                       mainAxisAlignment: .center,
                                       crossAxisAlignment: .start,
                                       children: [
-                                        Text(
-                                          getTitle(currentSong),
-                                          overflow: TextOverflow.ellipsis,
+                                        MarqueeText(
+                                          text: getTitle(currentSong),
                                         ),
                                         LyricsLineBar(
                                           fontSize: 13,

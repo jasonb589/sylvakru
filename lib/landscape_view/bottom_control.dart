@@ -1,3 +1,4 @@
+import 'package:sylvakru/base/design/marquee_text.dart';
 import 'package:sylvakru/base/design/app_tokens.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sylvakru/base/audio_handler.dart';
@@ -99,10 +100,7 @@ class BottomControl extends StatelessWidget {
                       useResize: false,
                     ),
                   ),
-                  title: Text(
-                    getTitle(currentSong),
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  title: MarqueeText(text: getTitle(currentSong)),
                   subtitle: currentSong != null
                       ? LyricsLineBar(
                           fontSize: 13,
