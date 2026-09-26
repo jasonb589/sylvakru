@@ -73,7 +73,7 @@ void main() {
     );
   });
 
-  test('cache eviction preserves every queued cached song', () async {
+  test('keeps queued copies while the limit can still be met', () async {
     final playing = _song('playing');
     final queued = _song('queued');
     final disposable = _song('disposable');
@@ -92,16 +92,55 @@ void main() {
         ),
       );
     }
-    cacheLimitMbNotifier.value = 3;
+    // Six megabytes against a five megabyte cap: dropping the unqueued copy
+    // alone is enough, so the queued ones must be left alone.
+    cacheLimitMbNotifier.value = 5;
 
-    await library.enforceCacheLimit(
-      keepSongIds: {'playing', 'queued', 'disposable'},
-    );
+    await library.enforceCacheLimit(keepSongIds: {'playing', 'queued'});
 
     expect(File(playing.cachePath!).existsSync(), isTrue);
     expect(File(queued.cachePath!).existsSync(), isTrue);
-    expect(File(disposable.cachePath!).existsSync(), isTrue);
-    expect(disposable.cacheExist, isTrue);
+    expect(File(disposable.cachePath!).existsSync(), isFalse);
+    expect(disposable.cacheExist, isFalse);
+  });
+
+  test('evicts queued copies when the queue alone exceeds the limit', () async {
+    final playing = _song('playing');
+    final queued = _song('queued');
+    final olderQueued = _song('olderQueued');
+    for (final song in [playing, queued, olderQueued]) {
+      library.id2Song[song.id] = song;
+    }
+    for (final song in [playing, queued, olderQueued]) {
+      final file = File(song.cachePath!)..createSync(recursive: true);
+      file.writeAsBytesSync(List.filled(2 * 1024 * 1024, 0));
+      song.cacheExist = true;
+    }
+    File(
+      playing.cachePath!,
+    ).setLastModifiedSync(DateTime.now().subtract(const Duration(days: 1)));
+    File(
+      queued.cachePath!,
+    ).setLastModifiedSync(DateTime.now().subtract(const Duration(days: 2)));
+    File(
+      olderQueued.cachePath!,
+    ).setLastModifiedSync(DateTime.now().subtract(const Duration(days: 3)));
+    // Every file is queued and the queue alone is over the cap. Before this
+    // was handled the loop skipped all of them and the folder stayed over its
+    // own limit with nothing evicted.
+    cacheLimitMbNotifier.value = 3;
+
+    await library.enforceCacheLimit(
+      keepSongId: 'playing',
+      keepSongIds: {'playing', 'queued', 'olderQueued'},
+    );
+
+    // The song playing right now never loses its file.
+    expect(File(playing.cachePath!).existsSync(), isTrue);
+    expect(playing.cacheExist, isTrue);
+    // The oldest queued copies go, oldest first, until the cap holds.
+    expect(File(olderQueued.cachePath!).existsSync(), isFalse);
+    expect(File(queued.cachePath!).existsSync(), isFalse);
   });
 
   test('evicts the oldest unqueued offline copy first', () async {

@@ -390,6 +390,39 @@ class Library {
       }
     }
 
+    // Second pass. Protecting every queued song means a queue holding more
+    // than the limit makes the limit unreachable: the loop above skips every
+    // entry and the folder silently stays over its own cap. A queued song only
+    // loses a cached copy that can be fetched again, so once the unprotected
+    // files are gone the oldest queued ones go too. The song playing right now
+    // is never touched, because deleting that one interrupts playback.
+    if (totalBytes - removedBytes > limitBytes) {
+      final playingName = switch (keepSongId) {
+        final String id => switch (id2Song[id]?.cachePath) {
+          final String path => _fileNameOf(path),
+          _ => null,
+        },
+        _ => null,
+      };
+
+      for (final entry in entries) {
+        if (totalBytes - removedBytes <= limitBytes) {
+          break;
+        }
+        final name = _fileNameOf(entry.file.path);
+        if (name == playingName) {
+          continue;
+        }
+        try {
+          await entry.file.delete();
+          removedBytes += entry.size;
+          _markCacheMissing(entry.file.path);
+        } catch (e) {
+          logger.output('Failed to evict ${entry.file.path}: $e');
+        }
+      }
+    }
+
     if (removedBytes > 0) {
       logger.output(
         'Cache limit ${limitMb}MB: evicted '

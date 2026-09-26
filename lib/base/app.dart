@@ -6,7 +6,7 @@ import 'package:material_ui/material_ui.dart';
 // Kept in step with `version:` in pubspec.yaml, without the build suffix:
 // compareVersion() parses each dot-separated part with int.parse, so a value
 // like '4.5.0+31' would throw. Used for the About page and the update check.
-const String versionNumber = '4.6.4';
+const String versionNumber = '4.6.5';
 
 /// GitHub repository that publishes the installed client and its releases.
 const String releaseRepository = 'jasonb589/sylvakru';
