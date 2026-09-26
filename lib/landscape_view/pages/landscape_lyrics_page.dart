@@ -357,7 +357,7 @@ class _LandscapeLyricsPageState extends State<LandscapeLyricsPage> {
 
                     SizedBox(width: 40, child: Speaker(color: value)),
                     SizedBox(
-                      height: 10,
+                      height: 20,
                       width: width * 0.5,
                       child: VolumeBar(activeColor: value),
                     ),

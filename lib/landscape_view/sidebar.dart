@@ -299,10 +299,10 @@ class Sidebar extends StatelessWidget {
                       child: sidebarItem(
                         label: 'download',
 
-                        leading: const Icon(
-                          Icons.download_for_offline_rounded,
-                          size: 30,
-                        ),
+                        // The sidebar's own icon family: a Material glyph here
+                        // was the only filled, heavy shape in a column of thin
+                        // outlines.
+                        leading: ImageIcon(cacheImage, size: 30),
                         content: l10n.offlineSongs,
 
                         onTap: () {

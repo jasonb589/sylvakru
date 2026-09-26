@@ -388,7 +388,7 @@ Widget downloadButton(double size) {
               }
             },
             icon: Icon(
-              exists ? Icons.download_done_rounded : Icons.download_rounded,
+              exists ? Icons.download_done_outlined : Icons.download_outlined,
               size: size,
             ),
           );
