@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sylvakru/base/design/app_tokens.dart';
+import 'package:sylvakru/base/design/interaction_overlay.dart';
 
 class ScaleWidget extends StatefulWidget {
   final Widget child;
@@ -38,10 +39,10 @@ class _ScaleWidgetState extends State<ScaleWidget> {
           child: InkWell(
             autofocus: widget.autoFocus,
             mouseCursor: SystemMouseCursors.click,
-            hoverColor: Colors.transparent,
-            focusColor: widget.needFocusColor ? null : Colors.transparent,
-            splashColor: Colors.transparent,
-            highlightColor: Colors.transparent,
+            hoverColor: AppOverlay.off,
+            focusColor: widget.needFocusColor ? null : AppOverlay.off,
+            splashColor: AppOverlay.off,
+            highlightColor: AppOverlay.off,
             onFocusChange: (value) {
               focusNotifier.value = !focusNotifier.value;
               if (value) {

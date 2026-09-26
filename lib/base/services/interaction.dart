@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'dart:ui' as ui;
 
 import 'package:material_ui/material_ui.dart';
+import 'package:rive_animated_icon/rive_animated_icon.dart';
 import 'package:flutter/services.dart';
 import 'package:sylvakru/base/app.dart';
 import 'package:sylvakru/base/asset_images.dart';
@@ -836,7 +837,7 @@ Future<void> showPremiumDialog(BuildContext context) async {
 
 Widget _optionItem({
   required String text,
-  required Icon leading,
+  required Widget leading,
   required Function() onTap,
 }) {
   return ListTile(
@@ -957,11 +958,22 @@ void showSongOptions({
                       final isDownloading = downloadingSongIdsNotifier.value
                           .contains(song.id);
                       return _optionItem(
-                        leading: Icon(
-                          song.cacheExist
-                              ? Icons.download_done_rounded
-                              : Icons.download_rounded,
-                        ),
+                        leading: isDownloading
+                            ? RiveAnimatedIcon(
+                                key: const ValueKey('downloading'),
+                                riveIcon: .cloud,
+                                width: 24,
+                                height: 24,
+                                loopAnimation: true,
+                                color:
+                                    IconTheme.of(context).color ??
+                                    iconColor.value,
+                              )
+                            : Icon(
+                                song.cacheExist
+                                    ? Icons.download_done_rounded
+                                    : Icons.download_rounded,
+                              ),
                         text: isDownloading
                             ? l10n.downloading
                             : song.cacheExist

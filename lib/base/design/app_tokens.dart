@@ -51,6 +51,10 @@ abstract final class AppDuration {
   /// The cover backdrop. Slow enough that a track change reads as the whole
   /// surface shifting colour rather than a flicker.
   static const Duration backdrop = Duration(milliseconds: 500);
+
+  /// The loading skeleton pulse. Slow and low contrast: it should read as
+  /// "content is coming" without competing with the content itself.
+  static const Duration pulse = Duration(milliseconds: 1200);
 }
 
 /// Curves, paired with the intent of the animation.

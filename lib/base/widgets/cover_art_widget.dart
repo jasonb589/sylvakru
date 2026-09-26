@@ -5,6 +5,7 @@ import 'package:sylvakru/base/asset_images.dart';
 import 'package:smooth_corner/smooth_corner.dart';
 import 'package:sylvakru/base/services/picture_load_scheduler.dart';
 import 'package:sylvakru/base/services/picture_service.dart';
+import 'package:sylvakru/base/design/loading_skeleton.dart';
 
 class CoverArtWidget extends StatelessWidget {
   final double? size;
@@ -120,7 +121,9 @@ class _FuturePictureState extends State<_FuturePicture> {
       future: loadPictureSafe(widget.picture, widgetId: widgetId),
       builder: (context, asyncSnapshot) {
         if (asyncSnapshot.connectionState == ConnectionState.waiting) {
-          return SizedBox(width: widget.size, height: widget.size);
+          return widget.size == null
+              ? const SkeletonBox()
+              : SkeletonBox.square(widget.size!);
         }
 
         if (asyncSnapshot.hasError) {

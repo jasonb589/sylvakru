@@ -1,6 +1,6 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sylvakru/base/design/loading_skeleton.dart';
 import 'package:flutter/rendering.dart';
-import 'package:sylvakru/base/services/color_manager.dart';
 import 'package:sylvakru/base/services/picture_service.dart';
 import 'package:sylvakru/base/utils/media_query.dart';
 import 'package:sylvakru/base/utils/my_gird_delegate.dart';
@@ -40,7 +40,7 @@ abstract class BigCollectionListPanelState
   @override
   Widget build(BuildContext context) {
     if (preparing) {
-      return Center(child: CircularProgressIndicator(color: iconColor.value));
+      return const SkeletonGrid();
     }
     return GridView.builder(
       controller: scrollController,

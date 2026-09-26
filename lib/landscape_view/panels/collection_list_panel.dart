@@ -135,11 +135,9 @@ extension _CollectionListPanel on CollectionListState {
       listenable: Listenable.merge([changeNotifier]),
       builder: (context, child) {
         if (preparing) {
-          return SliverFillRemaining(
+          return const SliverFillRemaining(
             hasScrollBody: false,
-            child: Center(
-              child: CircularProgressIndicator(color: iconColor.value),
-            ),
+            child: SkeletonGrid(),
           );
         }
         return SliverPadding(
@@ -166,10 +164,10 @@ extension _CollectionListPanel on CollectionListState {
                         children: [
                           InkWell(
                             mouseCursor: SystemMouseCursors.click,
-                            focusColor: Colors.transparent,
-                            splashColor: Colors.transparent,
-                            hoverColor: Colors.transparent,
-                            highlightColor: Colors.transparent,
+                            focusColor: AppOverlay.off,
+                            splashColor: AppOverlay.off,
+                            hoverColor: AppOverlay.off,
+                            highlightColor: AppOverlay.off,
 
                             child: Hero(
                               tag: (picture?.id ?? '') + label + text,

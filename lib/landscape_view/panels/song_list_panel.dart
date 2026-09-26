@@ -88,11 +88,9 @@ extension _SongListPanel on _SongListState {
             valueListenable: currentSongListNotifier,
             builder: (context, currentSongList, child) {
               if (prepareing) {
-                return SliverFillRemaining(
+                return const SliverFillRemaining(
                   hasScrollBody: false,
-                  child: Center(
-                    child: CircularProgressIndicator(color: iconColor.value),
-                  ),
+                  child: SkeletonList(),
                 );
               }
               return SliverReorderableList(

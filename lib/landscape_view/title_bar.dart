@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:material_ui/material_ui.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import 'package:sylvakru/base/audio_handler.dart';
 import 'package:sylvakru/base/services/color_manager.dart';
 import 'package:sylvakru/base/app.dart';
@@ -78,37 +79,44 @@ class _TitleBarState extends State<TitleBar> {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 75,
-      child: Stack(
-        children: [
-          GestureDetector(
-            behavior: HitTestBehavior.translucent,
-            onPanStart: (details) {
-              if (isMobile) {
-                return;
-              }
-              windowManager.startDragging();
-            },
-            // prevent system alert sounds on desktop when clicking non-interactive areas
-            onTap: () {},
-            onDoubleTap: () async {
-              if (isMobile) {
-                return;
-              }
-              if (isFullScreenNotifier.value) {
-                return;
-              }
-              isMaximizedNotifier.value
-                  ? windowManager.unmaximize()
-                  : windowManager.maximize();
-            },
-            child: Container(),
-          ),
+    return ValueListenableBuilder(
+      valueListenable: glassColor.valueNotifier,
+      builder: (context, glass, child) {
+        return GlassContainer(
+          height: 75,
+          settings: LiquidGlassSettings(glassColor: glass),
+          shape: const LiquidRoundedSuperellipse(borderRadius: 0),
+          child: Stack(
+            children: [
+              GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onPanStart: (details) {
+                  if (isMobile) {
+                    return;
+                  }
+                  windowManager.startDragging();
+                },
+                // prevent system alert sounds on desktop when clicking non-interactive areas
+                onTap: () {},
+                onDoubleTap: () async {
+                  if (isMobile) {
+                    return;
+                  }
+                  if (isFullScreenNotifier.value) {
+                    return;
+                  }
+                  isMaximizedNotifier.value
+                      ? windowManager.unmaximize()
+                      : windowManager.maximize();
+                },
+                child: Container(),
+              ),
 
-          Center(child: content()),
-        ],
-      ),
+              Center(child: content()),
+            ],
+          ),
+        );
+      },
     );
   }
 

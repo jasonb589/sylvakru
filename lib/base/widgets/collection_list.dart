@@ -1,4 +1,6 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sylvakru/base/design/loading_skeleton.dart';
+import 'package:sylvakru/base/design/interaction_overlay.dart';
 import 'package:sylvakru/base/app.dart';
 import 'package:sylvakru/base/services/interaction.dart';
 import 'package:sylvakru/base/services/picture_service.dart';
@@ -60,7 +62,6 @@ abstract class CollectionListState extends State<CollectionList> {
 
   void updateCurrentList();
 
-
   /// Loads the next page. Called when the list is scrolled to the bottom.
   Future<void> fetchCollectionList() async {}
 
@@ -77,6 +78,7 @@ abstract class CollectionListState extends State<CollectionList> {
       await fetchCollectionList();
     }
   }
+
   void onSearch() {
     if (preparing) {
       return;

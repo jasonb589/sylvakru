@@ -1,6 +1,8 @@
 import 'package:sylvakru/base/design/marquee_text.dart';
 import 'package:sylvakru/base/design/app_tokens.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:sylvakru/base/design/interaction_overlay.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import 'package:sylvakru/base/audio_handler.dart';
 import 'package:sylvakru/base/services/color_manager.dart';
 import 'package:sylvakru/base/app.dart';
@@ -24,12 +26,14 @@ class BottomControl extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder(
-      valueListenable: bottomColor.valueNotifier,
+      valueListenable: glassColor.valueNotifier,
       builder: (context, value, child) {
-        return Material(
-          color: value,
-          child: SizedBox(
-            height: 75,
+        return GlassContainer(
+          height: 75,
+          settings: LiquidGlassSettings(glassColor: value),
+          shape: const LiquidRoundedSuperellipse(borderRadius: 0),
+          child: Material(
+            color: Colors.transparent,
             child: Row(
               children: [
                 Expanded(flex: 2, child: currentSongTile(context)),
@@ -74,11 +78,7 @@ class BottomControl extends StatelessWidget {
       valueListenable: currentSongNotifier,
       builder: (_, currentSong, _) {
         return Theme(
-          data: Theme.of(context).copyWith(
-            highlightColor: Colors.transparent,
-            splashColor: Colors.transparent,
-            hoverColor: Colors.transparent,
-          ),
+          data: AppOverlay.none(context, keepFocus: true),
           child: Material(
             color: Colors.transparent,
             shape: SmoothRectangleBorder(

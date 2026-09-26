@@ -1,10 +1,10 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sylvakru/base/design/loading_skeleton.dart';
 import 'package:flutter/rendering.dart';
 import 'package:smooth_corner/smooth_corner.dart';
 import 'package:sylvakru/base/app.dart';
 import 'package:sylvakru/base/asset_images.dart';
 import 'package:sylvakru/base/my_audio_metadata.dart';
-import 'package:sylvakru/base/services/color_manager.dart';
 import 'package:sylvakru/base/services/interaction.dart';
 import 'package:sylvakru/base/utils/common_utils.dart';
 import 'package:sylvakru/base/utils/media_query.dart';
@@ -30,7 +30,7 @@ abstract class BigSongListBasePanelState extends State<BigSongListBasePanel> {
   @override
   Widget build(BuildContext context) {
     if (firstLoading) {
-      return Center(child: CircularProgressIndicator(color: iconColor.value));
+      return const SkeletonList(rows: 10, rowHeight: 80);
     }
     final itemExtent = isTooNarrow(context) ? 60.0 : 80.0;
 
