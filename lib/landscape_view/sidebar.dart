@@ -219,7 +219,6 @@ class Sidebar extends StatelessWidget {
                       },
                     ),
 
-
                     SliverToBoxAdapter(
                       child: sidebarItem(
                         label: 'songs',
@@ -229,6 +228,19 @@ class Sidebar extends StatelessWidget {
 
                         onTap: () {
                           layersManager.switchRootLayer('songs');
+                        },
+                      ),
+                    ),
+
+                    SliverToBoxAdapter(
+                      child: sidebarItem(
+                        label: 'forYou',
+
+                        leading: ImageIcon(forYouImage, size: 30),
+                        content: l10n.forYou,
+
+                        onTap: () {
+                          layersManager.switchRootLayer('forYou');
                         },
                       ),
                     ),

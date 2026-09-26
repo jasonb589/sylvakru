@@ -29,12 +29,20 @@ class SeekBarState extends State<SeekBar> {
   bool isDragging = false; // track if user is touching the thumb
   double horizontalPadding = 0;
 
+  /// Smallest vertical touch target the seekbar accepts.
+  static const double _minTouchTarget = 24;
+
   @override
   Widget build(BuildContext context) {
     horizontalPadding = 0;
     if (!isTooNarrow(context) && !widget.isMiniMode) {
       horizontalPadding = 45;
     }
+
+    // Never let the touch target collapse to the visual track height.
+    final touchHeight = widget.widgetHeight < _minTouchTarget
+        ? widget.widgetHeight
+        : _minTouchTarget;
 
     return StreamBuilder(
       stream: audioHandler.getDurationStream(),
@@ -103,12 +111,18 @@ class SeekBarState extends State<SeekBar> {
                         thumbColor: widget.color ?? seekBarColor.value,
                         trackHeight: isDragging ? 4 : 2,
                         trackShape: const FullWidthTrackShape(),
+                        // A visible thumb only while dragging: it shows what is
+                        // being grabbed without adding a knob to the resting
+                        // bar, which is meant to read as a thin line.
                         thumbShape: RoundSliderThumbShape(
-                          enabledThumbRadius: 0,
+                          enabledThumbRadius: isDragging ? 6 : 0,
                         ),
                         overlayShape: SliderComponentShape.noOverlay,
                         activeTrackColor: widget.color ?? seekBarColor.value,
-                        inactiveTrackColor: Colors.black12,
+                        // Derived from the track colour instead of a fixed
+                        // black tint, which disappeared on a dark theme.
+                        inactiveTrackColor: (widget.color ?? seekBarColor.value)
+                            .withValues(alpha: 0.25),
                       ),
                       child: Padding(
                         padding: EdgeInsets.symmetric(
@@ -128,8 +142,8 @@ class SeekBarState extends State<SeekBar> {
 
                   // Full-track GestureDetector to capture touches anywhere on the track
                   Positioned.fill(
-                    top: (widget.widgetHeight - widget.seekBarHeight) / 2,
-                    bottom: (widget.widgetHeight - widget.seekBarHeight) / 2,
+                    top: (widget.widgetHeight - touchHeight) / 2,
+                    bottom: (widget.widgetHeight - touchHeight) / 2,
                     child: GestureDetector(
                       behavior: HitTestBehavior.translucent,
                       onVerticalDragStart: (_) {
