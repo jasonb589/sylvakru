@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:ui';
+import 'package:sylvakru/base/design/cover_backdrop.dart';
 
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
@@ -172,16 +172,7 @@ class _PortraitLyricsPageState extends State<PortraitLyricsPage> {
                     color: colorManager
                         .getSpecificLyricsPageCoverArtBaseColor(),
                   ),
-                  RepaintBoundary(
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-                      child: AnimatedContainer(
-                        duration: Duration(milliseconds: 300),
-                        curve: Curves.easeInOutCubic,
-                        color: currentCoverArtColor.withAlpha(180),
-                      ),
-                    ),
-                  ),
+                  CoverBackdrop(colour: currentCoverArtColor),
                 ],
                 Container(
                   color: lyricsPageBackgroundColor.value,

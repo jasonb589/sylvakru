@@ -1,5 +1,6 @@
 import 'dart:async';
-import 'dart:ui';
+
+import 'package:sylvakru/base/design/cover_backdrop.dart';
 
 import 'package:material_ui/material_ui.dart';
 import 'package:sylvakru/base/audio_handler.dart';
@@ -98,19 +99,11 @@ class LayersManager {
               return SizedBox.shrink();
             }
 
-            // ClipRect is important
-            return ClipRect(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-                child: ValueListenableBuilder(
-                  valueListenable: layerInfo.changeNotifier,
-                  builder: (context, value, child) {
-                    return Container(
-                      color: layerInfo.backgroundCoverArtColor.withAlpha(180),
-                    );
-                  },
-                ),
-              ),
+            return ValueListenableBuilder(
+              valueListenable: layerInfo.changeNotifier,
+              builder: (context, value, child) {
+                return CoverBackdrop(colour: layerInfo.backgroundCoverArtColor);
+              },
             );
           },
         ),

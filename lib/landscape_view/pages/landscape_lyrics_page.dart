@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:math';
-import 'dart:ui';
+import 'package:sylvakru/base/design/cover_backdrop.dart';
 
 import 'package:material_ui/material_ui.dart';
 import 'package:sylvakru/base/audio_handler.dart';
@@ -90,19 +90,7 @@ class _LandscapeLyricsPageState extends State<LandscapeLyricsPage> {
                   picture: currentSong?.picture,
                   color: colorManager.getSpecificLyricsPageCoverArtBaseColor(),
                 ),
-                RepaintBoundary(
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(
-                      sigmaX: pageWidth * 0.03,
-                      sigmaY: pageHight * 0.03,
-                    ),
-                    child: AnimatedContainer(
-                      duration: Duration(milliseconds: 300),
-                      curve: Curves.easeInOutCubic,
-                      color: currentCoverArtColor.withAlpha(180),
-                    ),
-                  ),
-                ),
+                CoverBackdrop(colour: currentCoverArtColor),
               ],
 
               ValueListenableBuilder(

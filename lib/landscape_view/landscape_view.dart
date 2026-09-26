@@ -1,4 +1,4 @@
-import 'dart:ui';
+import 'package:sylvakru/base/design/cover_backdrop.dart';
 
 import 'package:material_ui/material_ui.dart';
 import 'package:sylvakru/base/app.dart';
@@ -40,31 +40,11 @@ class LandscapeView extends StatelessWidget {
             if (value != .vivid) {
               return SizedBox.shrink();
             }
-            final pageWidth = MediaQuery.widthOf(context);
-            final pageHight = MediaQuery.heightOf(context);
-
-            // Without this, this always-visible background blur has no
-            // layer of its own, so every resize (e.g. un-maximizing) forces
-            // the whole tree behind it to repaint in the same frame as the
-            // blur recompute - unlike the identical effect on the lyrics
-            // pages, which already isolates it this way.
-            return RepaintBoundary(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(
-                  sigmaX: pageWidth * 0.03,
-                  sigmaY: pageHight * 0.03,
-                ),
-                child: ValueListenableBuilder(
-                  valueListenable: layersManager.backgroundChangeNotifier,
-                  builder: (context, value, child) {
-                    return AnimatedContainer(
-                      duration: Duration(milliseconds: 500),
-                      curve: Curves.easeInOutCubic,
-                      color: backgroundCoverArtColor.withAlpha(180),
-                    );
-                  },
-                ),
-              ),
+            return ValueListenableBuilder(
+              valueListenable: layersManager.backgroundChangeNotifier,
+              builder: (context, value, child) {
+                return CoverBackdrop(colour: backgroundCoverArtColor);
+              },
             );
           },
         ),
