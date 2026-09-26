@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:ui';
+import 'package:sylvakru/base/design/cover_backdrop.dart';
 
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
@@ -96,22 +96,8 @@ class _BigPictureViewState extends State<BigPictureView> {
                 if (mainPageThemeNotifier.value != .vivid) {
                   return SizedBox.shrink();
                 }
-                final pageWidth = MediaQuery.widthOf(context);
-                final pageHight = MediaQuery.heightOf(context);
 
-                return RepaintBoundary(
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(
-                      sigmaX: pageWidth * 0.03,
-                      sigmaY: pageHight * 0.03,
-                    ),
-                    child: AnimatedContainer(
-                      duration: Duration(milliseconds: 500),
-                      curve: Curves.easeInOutCubic,
-                      color: currentCoverArtColor.withAlpha(180),
-                    ),
-                  ),
-                );
+                return CoverBackdrop(colour: currentCoverArtColor);
               },
             ),
 

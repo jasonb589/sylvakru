@@ -1,4 +1,4 @@
-import 'dart:ui';
+import 'package:sylvakru/base/design/cover_backdrop.dart';
 
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/rendering.dart';
@@ -96,7 +96,6 @@ abstract class BigSongListWithCoverBasePanelState<
   @override
   Widget build(BuildContext context) {
     final panelWidth = MediaQuery.widthOf(context);
-    final panelHeight = MediaQuery.heightOf(context);
     final l10n = AppLocalizations.of(context);
     final horizontalPadding = isTooNarrow(context) ? 20.0 : 40.0;
     return Stack(
@@ -107,19 +106,7 @@ abstract class BigSongListWithCoverBasePanelState<
             picture: getFirstSong(songList)?.picture,
             color: baseColor,
           ),
-          RepaintBoundary(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(
-                sigmaX: panelWidth * 0.03,
-                sigmaY: panelHeight * 0.03,
-              ),
-              child: AnimatedContainer(
-                duration: Duration(milliseconds: 500),
-                curve: Curves.easeInOutCubic,
-                color: baseColor.withAlpha(180),
-              ),
-            ),
-          ),
+          CoverBackdrop(colour: baseColor),
         ],
 
         Scaffold(

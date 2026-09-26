@@ -1,4 +1,4 @@
-import 'dart:ui';
+import 'package:sylvakru/base/design/cover_backdrop.dart';
 
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/rendering.dart';
@@ -25,6 +25,7 @@ import 'package:sylvakru/base/widgets/selectable_song_list_page.dart';
 import 'package:sylvakru/l10n/generated/app_localizations.dart';
 
 import 'package:sylvakru/base/widgets/artist_metadata.dart';
+
 class BigSingleArtistPanel extends StatefulWidget {
   final Artist artist;
   const BigSingleArtistPanel({super.key, required this.artist});
@@ -79,7 +80,6 @@ class _BigSingleArtistPanelState extends State<BigSingleArtistPanel> {
   @override
   Widget build(BuildContext context) {
     final panelWidth = MediaQuery.widthOf(context);
-    final panelHeight = MediaQuery.heightOf(context);
     final l10n = AppLocalizations.of(context);
     return Stack(
       fit: .expand,
@@ -97,19 +97,7 @@ class _BigSingleArtistPanelState extends State<BigSingleArtistPanel> {
           ValueListenableBuilder(
             valueListenable: currentSongNotifier,
             builder: (context, value, child) {
-              return RepaintBoundary(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(
-                    sigmaX: panelWidth * 0.03,
-                    sigmaY: panelHeight * 0.03,
-                  ),
-                  child: AnimatedContainer(
-                    duration: Duration(milliseconds: 500),
-                    curve: Curves.easeInOutCubic,
-                    color: currentCoverArtColor.withAlpha(180),
-                  ),
-                ),
-              );
+              return CoverBackdrop(colour: currentCoverArtColor);
             },
           ),
         ],

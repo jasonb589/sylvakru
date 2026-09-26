@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:math';
+import 'package:sylvakru/base/design/app_tokens.dart';
 
 import 'package:material_ui/material_ui.dart';
 import 'package:sylvakru/base/app.dart';
@@ -83,7 +84,7 @@ class _ConnectClientWidgetState extends State<ConnectClientWidget> {
               SizedBox(
                 child: Text(
                   getSourceTypeDisplayName(l10n, widget.sourceType),
-                  style: .new(fontWeight: .bold, fontSize: 18),
+                  style: AppText.sheetTitle,
                 ),
               ),
 

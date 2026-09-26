@@ -187,7 +187,8 @@ extension _CollectionListPanel on CollectionListState {
                             width: constraints.maxWidth - 10,
                             child: Text(
                               text,
-                              style: TextStyle(overflow: TextOverflow.ellipsis),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],

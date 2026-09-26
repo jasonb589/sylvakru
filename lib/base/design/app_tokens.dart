@@ -72,6 +72,18 @@ abstract final class AppCurve {
   static const Curve colour = Curves.easeInOut;
 }
 
+/// Text styles, by the role the text plays.
+abstract final class AppText {
+  /// The title of a dialog, sheet or popup.
+  ///
+  /// One tier for all of them. They used to range from 16 to 25 bold, so a
+  /// "delete" confirmation shouted louder than the page title behind it.
+  static const TextStyle sheetTitle = TextStyle(
+    fontSize: 20,
+    fontWeight: FontWeight.bold,
+  );
+}
+
 /// Blur radii.
 abstract final class AppBlur {
   /// Sigma for the full-screen cover backdrop.

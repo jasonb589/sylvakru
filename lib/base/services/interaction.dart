@@ -184,9 +184,7 @@ Future<bool> showConfirmDialog(BuildContext context, String action) async {
                       alignment: .centerLeft,
                       child: Text(
                         action,
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: .bold,
+                        style: AppText.sheetTitle.copyWith(
                           color: colorManager.getSpecificTextColor(),
                           overflow: .ellipsis,
                         ),
@@ -268,7 +266,9 @@ Future<String> getInputTextDialog(
                 Center(
                   child: Text(
                     title,
-                    style: TextStyle(fontSize: 25, color: specificTextcolor),
+                    style: AppText.sheetTitle.copyWith(
+                      color: specificTextcolor,
+                    ),
                   ),
                 ),
                 SizedBox(height: 20),
@@ -783,9 +783,7 @@ Future<void> showPremiumDialog(BuildContext context) async {
                   children: [
                     Text(
                       l10n.premiumFeatures,
-                      style: TextStyle(
-                        fontSize: 25,
-                        fontWeight: FontWeight.bold,
+                      style: AppText.sheetTitle.copyWith(
                         color: colorManager.getSpecificTextColor(),
                       ),
                     ),

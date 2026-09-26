@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:sylvakru/base/design/app_tokens.dart';
 import 'dart:math';
 
 import 'package:file_picker/file_picker.dart';
@@ -302,7 +303,7 @@ class _SettingsListState extends State<SettingsList> {
                         height: 35,
                         child: Text(
                           l10n.switchSource,
-                          style: .new(fontSize: 18, fontWeight: .bold),
+                          style: AppText.sheetTitle,
                         ),
                       ),
                       for (final tmp in SourceType.values)
@@ -403,7 +404,7 @@ class _SettingsListState extends State<SettingsList> {
                         height: 35,
                         child: Text(
                           l10n.manageServers,
-                          style: .new(fontSize: 18, fontWeight: .bold),
+                          style: AppText.sheetTitle,
                         ),
                       ),
                       webdavListTile(context, l10n),
@@ -519,10 +520,7 @@ class _SettingsListState extends State<SettingsList> {
                 children: [
                   SizedBox(
                     height: 35,
-                    child: Text(
-                      l10n.cache,
-                      style: .new(fontSize: 18, fontWeight: .bold),
-                    ),
+                    child: Text(l10n.cache, style: AppText.sheetTitle),
                   ),
 
                   // used / limit
@@ -631,10 +629,7 @@ class _SettingsListState extends State<SettingsList> {
                 children: [
                   SizedBox(
                     height: 35,
-                    child: Text(
-                      l10n.cacheLimit,
-                      style: .new(fontSize: 18, fontWeight: .bold),
-                    ),
+                    child: Text(l10n.cacheLimit, style: AppText.sheetTitle),
                   ),
                   for (final option in cacheLimitOptionsMb)
                     ListTile(
@@ -676,10 +671,7 @@ class _SettingsListState extends State<SettingsList> {
               children: [
                 Padding(
                   padding: const EdgeInsets.all(15),
-                  child: Text(
-                    l10n.offlineSongs,
-                    style: .new(fontSize: 18, fontWeight: .bold),
-                  ),
+                  child: Text(l10n.offlineSongs, style: AppText.sheetTitle),
                 ),
                 Expanded(
                   child: songs.isEmpty
@@ -929,7 +921,7 @@ class _SettingsListState extends State<SettingsList> {
                               children: [
                                 Text(
                                   l10n.mainPageTheme,
-                                  style: .new(fontSize: 18, fontWeight: .bold),
+                                  style: AppText.sheetTitle,
                                 ),
                                 ListTile(
                                   title: Text(l10n.vividMode),
@@ -987,7 +979,7 @@ class _SettingsListState extends State<SettingsList> {
                               children: [
                                 Text(
                                   l10n.lyricsPageTheme,
-                                  style: .new(fontSize: 18, fontWeight: .bold),
+                                  style: AppText.sheetTitle,
                                 ),
                                 ListTile(
                                   title: Text(l10n.vividMode),

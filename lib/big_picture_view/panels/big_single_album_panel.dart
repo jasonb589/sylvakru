@@ -1,4 +1,4 @@
-import 'dart:ui';
+import 'package:sylvakru/base/design/cover_backdrop.dart';
 
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/rendering.dart';
@@ -87,27 +87,12 @@ class _BigSingleAlbumPanelState extends State<BigSingleAlbumPanel> {
 
   @override
   Widget build(BuildContext context) {
-    final appWidth = MediaQuery.widthOf(context);
-    final appHeight = MediaQuery.heightOf(context);
-
     return Stack(
       fit: .expand,
       children: [
         if (mainPageThemeNotifier.value == .vivid) ...[
           CoverArtWidget(picture: widget.album.picture, color: baseColor),
-          RepaintBoundary(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(
-                sigmaX: appWidth * 0.03,
-                sigmaY: appHeight * 0.03,
-              ),
-              child: AnimatedContainer(
-                duration: Duration(milliseconds: 500),
-                curve: Curves.easeInOutCubic,
-                color: baseColor.withAlpha(180),
-              ),
-            ),
-          ),
+          CoverBackdrop(colour: baseColor),
         ],
 
         Scaffold(

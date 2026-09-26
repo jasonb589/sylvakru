@@ -188,6 +188,11 @@ class _LandscapeLyricsPageState extends State<LandscapeLyricsPage> {
                       ),
                     ),
                     SizedBox(width: pageWidth * 0.05),
+
+                    // Splits the leftover width with the Spacer on the left:
+                    // a single leading Spacer pushed the whole block 15% right
+                    // of centre, and further off as the cover column narrows.
+                    Spacer(),
                   ],
                 ),
               ),
