@@ -325,6 +325,7 @@ class _LandscapeLyricsPageState extends State<LandscapeLyricsPage> {
               child: Row(
                 children: [
                   playModeButton(25, iconColor: value),
+                  favoriteButton(25, color: value),
                   Spacer(),
 
                   if (isTV) rewindButton(25, iconColor: value),

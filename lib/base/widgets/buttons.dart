@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:sylvakru/base/design/app_tokens.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sylvakru/base/audio_handler.dart';
 import 'package:sylvakru/base/services/color_manager.dart';
@@ -139,9 +140,23 @@ Widget playOrPauseButton(double size, {Color? iconColor}) {
     icon: ValueListenableBuilder(
       valueListenable: isPlayingNotifier,
       builder: (_, isPlaying, _) {
-        return Icon(
-          isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
-          size: size,
+        // The most used control in the app; a hard swap between two glyphs
+        // reads as a flicker, so the two states cross fade and scale.
+        return AnimatedSwitcher(
+          duration: AppDuration.quick,
+          switchInCurve: AppCurve.enter,
+          switchOutCurve: AppCurve.exit,
+          transitionBuilder: (child, animation) {
+            return ScaleTransition(
+              scale: animation,
+              child: FadeTransition(opacity: animation, child: child),
+            );
+          },
+          child: Icon(
+            isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+            key: ValueKey(isPlaying),
+            size: size,
+          ),
         );
       },
     ),
@@ -287,9 +302,7 @@ Widget favoriteButton(double size, {Color? color}) {
                   toggleFavoriteState(currentSong);
                 },
                 icon: Icon(
-                  isFavorite
-                      ? Icons.star_rounded
-                      : Icons.star_outline_rounded,
+                  isFavorite ? Icons.star_rounded : Icons.star_outline_rounded,
                   color: isFavorite ? Colors.red : null,
                   size: size,
                 ),
