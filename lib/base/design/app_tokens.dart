@@ -100,3 +100,19 @@ abstract final class AppShadow {
     ),
   ];
 }
+
+/// Material elevation, for surfaces that should read as lifted.
+///
+/// This is Material's own dp scale rather than a pixel radius, so the numbers
+/// sit at the low end: a thumbnail in a control bar only needs to separate
+/// itself from the bar, while a full-size cover can carry a real shadow.
+abstract final class AppElevation {
+  /// Flush with its surface.
+  static const double flat = 0;
+
+  /// A cover sitting in a control bar or list tile.
+  static const double control = 3;
+
+  /// The large cover on a lyrics page or player hero area.
+  static const double hero = 15;
+}

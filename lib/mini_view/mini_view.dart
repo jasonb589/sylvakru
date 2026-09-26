@@ -1,3 +1,4 @@
+import 'package:sylvakru/base/design/app_tokens.dart';
 import 'dart:async';
 import 'dart:io';
 import 'dart:math';
@@ -373,6 +374,7 @@ class _MiniViewState extends State<MiniView> {
               picture: currentSong?.picture,
               size: 50,
               borderRadius: 5,
+              elevation: AppElevation.control,
             ),
             title: Text(
               getTitle(currentSong),

@@ -1,3 +1,4 @@
+import 'package:sylvakru/base/design/app_tokens.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sylvakru/base/audio_handler.dart';
 import 'package:sylvakru/base/services/color_manager.dart';
@@ -93,6 +94,7 @@ class BottomControl extends StatelessWidget {
                     child: CoverArtWidget(
                       size: 50,
                       borderRadius: 5,
+                      elevation: AppElevation.control,
                       picture: currentSong?.picture,
                       useResize: false,
                     ),
@@ -191,7 +193,6 @@ class BottomControl extends StatelessWidget {
           icon: const ImageIcon(desktopLyricsImage, size: 25),
         ),
         favoriteButton(25),
-
 
         ValueListenableBuilder(
           valueListenable: iconColor.valueNotifier,

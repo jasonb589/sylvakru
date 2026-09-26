@@ -1,3 +1,4 @@
+import 'package:sylvakru/base/design/app_tokens.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import 'package:sylvakru/base/audio_handler.dart';
@@ -62,6 +63,7 @@ class PlayBar extends StatelessWidget {
                   child: CoverArtWidget(
                     size: 35,
                     borderRadius: 3,
+                    elevation: AppElevation.control,
                     picture: currentSong.picture,
                     useResize: false,
                   ),

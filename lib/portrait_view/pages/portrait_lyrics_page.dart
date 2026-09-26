@@ -1,3 +1,4 @@
+import 'package:sylvakru/base/design/app_tokens.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:sylvakru/base/design/cover_backdrop.dart';
@@ -403,7 +404,7 @@ class _PortraitLyricsPageState extends State<PortraitLyricsPage> {
               size: mobileWidth * 0.84,
               borderRadius: mobileWidth * 0.04,
               picture: currentSong?.picture,
-              elevation: 15,
+              elevation: AppElevation.hero,
               color: colorManager.getSpecificLyricsPageCoverArtBaseColor(),
               useResize: false,
             ),

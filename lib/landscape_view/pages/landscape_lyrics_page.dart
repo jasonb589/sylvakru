@@ -1,3 +1,4 @@
+import 'package:sylvakru/base/design/app_tokens.dart';
 import 'dart:async';
 import 'dart:math';
 import 'package:sylvakru/base/design/cover_backdrop.dart';
@@ -126,7 +127,7 @@ class _LandscapeLyricsPageState extends State<LandscapeLyricsPage> {
                               size: coverArtSize,
                               borderRadius: coverArtSize * 0.05,
                               picture: currentSong?.picture,
-                              elevation: 15,
+                              elevation: AppElevation.hero,
                               color: colorManager
                                   .getSpecificLyricsPageCoverArtBaseColor(),
                               useResize: false,
