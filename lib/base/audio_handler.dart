@@ -777,6 +777,37 @@ class MyAudioHandler extends BaseAudioHandler {
     _positionState.writeAsString(Duration.zero.inMilliseconds.toString());
   }
 
+  /// Stops the engine cleanly and lets the audio device drain before the
+  /// process goes away.
+  ///
+  /// Quitting while audio is still streaming tears the output down mid buffer,
+  /// which the listener hears as a click on the way out. mpv closes its audio
+  /// output asynchronously, so the short wait is what gives it time to finish
+  /// instead of being cut off by the process ending.
+  Future<void> shutdownAudio() async {
+    _positionTimer?.cancel();
+    _positionTimer = null;
+
+    // The periodic save stops here, so this is the last chance to remember
+    // where the listener was.
+    try {
+      await _positionState.writeAsString(
+        getPosition().inMilliseconds.toString(),
+      );
+    } catch (error) {
+      logger.output('Failed to save the position on exit: $error');
+    }
+
+    try {
+      await _player.pause();
+      await _player.stop();
+    } catch (error) {
+      logger.output('Failed to stop the player on exit: $error');
+    }
+
+    await Future.delayed(const Duration(milliseconds: 150));
+  }
+
   @override
   Future<void> seek(Duration position) async {
     updatePlaybackState(postion: position);
