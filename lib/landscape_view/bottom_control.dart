@@ -2,7 +2,6 @@ import 'package:sylvakru/base/design/marquee_text.dart';
 import 'package:sylvakru/base/design/app_tokens.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sylvakru/base/design/interaction_overlay.dart';
-import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import 'package:sylvakru/base/audio_handler.dart';
 import 'package:sylvakru/base/services/color_manager.dart';
 import 'package:sylvakru/base/app.dart';
@@ -26,14 +25,12 @@ class BottomControl extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder(
-      valueListenable: glassColor.valueNotifier,
+      valueListenable: bottomColor.valueNotifier,
       builder: (context, value, child) {
-        return GlassContainer(
-          height: 75,
-          settings: LiquidGlassSettings(glassColor: value),
-          shape: const LiquidRoundedSuperellipse(borderRadius: 0),
-          child: Material(
-            color: Colors.transparent,
+        return Material(
+          color: value,
+          child: SizedBox(
+            height: 75,
             child: Row(
               children: [
                 Expanded(flex: 2, child: currentSongTile(context)),
