@@ -23,7 +23,7 @@ final globalNavigatorKey = GlobalKey<NavigatorState>();
 
 late final CornerRadius screenRadius;
 
-enum ThemeType { vivid, light, dark, custom }
+enum ThemeType { vivid, light, dark }
 
 final mainPageThemeNotifier = ValueNotifier(ThemeType.vivid);
 final lyricsPageThemeNotifier = ValueNotifier(ThemeType.vivid);

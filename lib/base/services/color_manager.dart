@@ -451,6 +451,10 @@ class MyColor {
   });
 
   void updateColor() {
+    // The mini view always sits on cover derived artwork, so its controls have
+    // to contrast with that artwork rather than follow the page theme. Its
+    // colours define no light or dark value, so falling through to them left
+    // every mini view control with a null colour under those themes.
     if (pageType == 2) {
       valueNotifier.value = vividModeValue ?? getVividValue!.call();
       return;
