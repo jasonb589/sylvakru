@@ -156,6 +156,7 @@
   "randomizePermanent": "随机(永久)",
   "modifiedTimeAscending": "修改时间升序",
   "modifiedTimedescending": "修改时间降序",
+  "playQueueEmpty": "播放队列是空的",
   "cannotBeUndone": "不可撤销",
   "clearCache": "清除缓存",
   "cacheLimit": "缓存上限",

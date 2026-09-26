@@ -1,3 +1,4 @@
+import 'package:sylvakru/base/design/empty_state.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sylvakru/base/audio_handler.dart';
 import 'package:sylvakru/base/services/color_manager.dart';
@@ -138,133 +139,145 @@ class PlayQueueSheetState extends State<PlayQueueSheet> {
               ),
 
               Expanded(
-                child: ReorderableListView.builder(
-                  scrollController: scrollController,
-                  itemExtent: 54,
-                  onReorderItem: (oldIndex, newIndex) {
-                    if (oldIndex == audioHandler.currentIndex) {
-                      audioHandler.currentIndex = newIndex;
-                    } else if (oldIndex < audioHandler.currentIndex &&
-                        newIndex >= audioHandler.currentIndex) {
-                      audioHandler.currentIndex -= 1;
-                    } else if (oldIndex > audioHandler.currentIndex &&
-                        newIndex <= audioHandler.currentIndex) {
-                      audioHandler.currentIndex += 1;
-                    }
-                    final item = playQueue.removeAt(oldIndex);
-                    playQueue.insert(newIndex, item);
-                    audioHandler.saveAllStates();
-                  },
-                  onReorderStart: (_) {
-                    tryVibrate();
-                  },
-                  onReorderEnd: (_) {
-                    tryVibrate();
-                  },
-                  proxyDecorator:
-                      (Widget child, int index, Animation<double> animation) {
-                        // A dragged row has to look lifted off the list,
-                        // otherwise it is indistinguishable from a resting one
-                        // and the drag reads as nothing happening.
-                        return AnimatedBuilder(
-                          animation: animation,
-                          builder: (context, innerChild) {
-                            final lift = Curves.easeOut.transform(
-                              animation.value,
-                            );
-                            return Container(
-                              decoration: BoxDecoration(
-                                color: colorManager.getSpecificBgColor(),
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.row,
-                                ),
-                                boxShadow: AppShadow.lifted(
-                                  Colors.black.withValues(alpha: 0.5 * lift),
-                                ),
-                              ),
-                              child: innerChild,
-                            );
-                          },
-                          child: child,
-                        );
-                      },
-                  itemCount: playQueue.length,
-                  itemBuilder: (_, index) {
-                    final song = playQueue[index];
-
-                    return MediaQuery.removePadding(
-                      key: ValueKey(song),
-                      context: context,
-                      removeLeft: true, // for mobile
-                      removeRight: true,
-                      child: ListTile(
-                        contentPadding: EdgeInsets.fromLTRB(15, 0, 0, 0),
-                        leading: CoverArtWidget(
-                          size: 40,
-                          borderRadius: 4,
-                          picture: song.picture,
-                        ),
-                        title: ValueListenableBuilder(
-                          valueListenable: currentSongNotifier,
-                          builder: (_, currentSong, _) {
-                            return Text(
-                              getTitle(song),
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontWeight: song == currentSong
-                                    ? FontWeight.bold
-                                    : null,
-                                color: song == currentSong
-                                    ? specificHighlightText
-                                    : specificTextColor,
-                              ),
-                            );
-                          },
-                        ),
-                        subtitle: Text(
-                          "${getArtist(song)} - ${getAlbum(song)}",
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: specificTextColor,
-                          ),
-                        ),
-                        visualDensity: VisualDensity(vertical: -4),
-                        onTap: () async {
-                          audioHandler.currentIndex = index;
-                          await audioHandler.load();
-                          audioHandler.play();
+                child: playQueue.isEmpty
+                    ? EmptyState(
+                        icon: Icons.queue_music_rounded,
+                        title: l10n.playQueueEmpty,
+                      )
+                    : ReorderableListView.builder(
+                        scrollController: scrollController,
+                        itemExtent: 54,
+                        onReorderItem: (oldIndex, newIndex) {
+                          if (oldIndex == audioHandler.currentIndex) {
+                            audioHandler.currentIndex = newIndex;
+                          } else if (oldIndex < audioHandler.currentIndex &&
+                              newIndex >= audioHandler.currentIndex) {
+                            audioHandler.currentIndex -= 1;
+                          } else if (oldIndex > audioHandler.currentIndex &&
+                              newIndex <= audioHandler.currentIndex) {
+                            audioHandler.currentIndex += 1;
+                          }
+                          final item = playQueue.removeAt(oldIndex);
+                          playQueue.insert(newIndex, item);
+                          audioHandler.saveAllStates();
                         },
+                        onReorderStart: (_) {
+                          tryVibrate();
+                        },
+                        onReorderEnd: (_) {
+                          tryVibrate();
+                        },
+                        proxyDecorator:
+                            (
+                              Widget child,
+                              int index,
+                              Animation<double> animation,
+                            ) {
+                              // A dragged row has to look lifted off the list,
+                              // otherwise it is indistinguishable from a resting one
+                              // and the drag reads as nothing happening.
+                              return AnimatedBuilder(
+                                animation: animation,
+                                builder: (context, innerChild) {
+                                  final lift = Curves.easeOut.transform(
+                                    animation.value,
+                                  );
+                                  return Container(
+                                    decoration: BoxDecoration(
+                                      color: colorManager.getSpecificBgColor(),
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.row,
+                                      ),
+                                      boxShadow: AppShadow.lifted(
+                                        Colors.black.withValues(
+                                          alpha: 0.5 * lift,
+                                        ),
+                                      ),
+                                    ),
+                                    child: innerChild,
+                                  );
+                                },
+                                child: child,
+                              );
+                            },
+                        itemCount: playQueue.length,
+                        itemBuilder: (_, index) {
+                          final song = playQueue[index];
 
-                        trailing: IconButton(
-                          color: specificIconColor,
-
-                          onPressed: () async {
-                            audioHandler.delete(index);
-                            setState(() {});
-                            if (index < audioHandler.currentIndex) {
-                              audioHandler.currentIndex -= 1;
-                            } else if (index == audioHandler.currentIndex) {
-                              if (playQueue.isEmpty) {
-                                while (Navigator.canPop(context)) {
-                                  Navigator.pop(context);
-                                }
-                                await audioHandler.clear();
-                              } else {
-                                if (index == playQueue.length) {
-                                  audioHandler.currentIndex = 0;
-                                }
+                          return MediaQuery.removePadding(
+                            key: ValueKey(song),
+                            context: context,
+                            removeLeft: true, // for mobile
+                            removeRight: true,
+                            child: ListTile(
+                              contentPadding: EdgeInsets.fromLTRB(15, 0, 0, 0),
+                              leading: CoverArtWidget(
+                                size: 40,
+                                borderRadius: 4,
+                                picture: song.picture,
+                              ),
+                              title: ValueListenableBuilder(
+                                valueListenable: currentSongNotifier,
+                                builder: (_, currentSong, _) {
+                                  return Text(
+                                    getTitle(song),
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontWeight: song == currentSong
+                                          ? FontWeight.bold
+                                          : null,
+                                      color: song == currentSong
+                                          ? specificHighlightText
+                                          : specificTextColor,
+                                    ),
+                                  );
+                                },
+                              ),
+                              subtitle: Text(
+                                "${getArtist(song)} - ${getAlbum(song)}",
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: specificTextColor,
+                                ),
+                              ),
+                              visualDensity: VisualDensity(vertical: -4),
+                              onTap: () async {
+                                audioHandler.currentIndex = index;
                                 await audioHandler.load();
-                              }
-                            }
-                            audioHandler.saveAllStates();
-                          },
-                          icon: Icon(Icons.clear_rounded, size: 20),
-                        ),
+                                audioHandler.play();
+                              },
+
+                              trailing: IconButton(
+                                color: specificIconColor,
+
+                                onPressed: () async {
+                                  audioHandler.delete(index);
+                                  setState(() {});
+                                  if (index < audioHandler.currentIndex) {
+                                    audioHandler.currentIndex -= 1;
+                                  } else if (index ==
+                                      audioHandler.currentIndex) {
+                                    if (playQueue.isEmpty) {
+                                      while (Navigator.canPop(context)) {
+                                        Navigator.pop(context);
+                                      }
+                                      await audioHandler.clear();
+                                    } else {
+                                      if (index == playQueue.length) {
+                                        audioHandler.currentIndex = 0;
+                                      }
+                                      await audioHandler.load();
+                                    }
+                                  }
+                                  audioHandler.saveAllStates();
+                                },
+                                icon: Icon(Icons.clear_rounded, size: 20),
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                    );
-                  },
-                ),
               ),
             ],
           ),

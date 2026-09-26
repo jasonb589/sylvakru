@@ -205,6 +205,7 @@
   "randomizePermanent": "Randomize(Permanent)",
   "modifiedTimeAscending": "Modified Time Ascending",
   "modifiedTimedescending": "Modified Time Descending",
+  "playQueueEmpty": "The play queue is empty",
   "cannotBeUndone": "Cannot be Undone",
   "clearCache": "Clear Cache",
   "cacheLimit": "Cache Limit",

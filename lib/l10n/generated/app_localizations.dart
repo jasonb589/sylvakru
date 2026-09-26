@@ -1040,6 +1040,12 @@ abstract class AppLocalizations {
   /// **'Modified Time Descending'**
   String get modifiedTimedescending;
 
+  /// No description provided for @playQueueEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'The play queue is empty'**
+  String get playQueueEmpty;
+
   /// No description provided for @cannotBeUndone.
   ///
   /// In en, this message translates to:

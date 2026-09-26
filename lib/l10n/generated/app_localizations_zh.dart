@@ -494,6 +494,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get modifiedTimedescending => '修改时间降序';
 
   @override
+  String get playQueueEmpty => '播放队列是空的';
+
+  @override
   String get cannotBeUndone => '不可撤销';
 
   @override

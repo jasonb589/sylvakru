@@ -1,3 +1,4 @@
+import 'package:sylvakru/base/design/empty_state.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sylvakru/base/app.dart';
 import 'package:sylvakru/base/audio_handler.dart';
@@ -96,35 +97,44 @@ class PlayQueuePageState extends State<PlayQueuePage> {
           child: CustomScrollView(
             controller: scrollController,
             slivers: [
-              SliverReorderableList(
-                itemExtent: itemExtend,
-                onReorderItem: (oldIndex, newIndex) {
-                  if (oldIndex == audioHandler.currentIndex) {
-                    audioHandler.currentIndex = newIndex;
-                  } else if (oldIndex < audioHandler.currentIndex &&
-                      newIndex >= audioHandler.currentIndex) {
-                    audioHandler.currentIndex -= 1;
-                  } else if (oldIndex > audioHandler.currentIndex &&
-                      newIndex <= audioHandler.currentIndex) {
-                    audioHandler.currentIndex += 1;
-                  }
-                  final item = playQueue.removeAt(oldIndex);
-                  playQueue.insert(newIndex, item);
+              if (playQueue.isEmpty)
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: EmptyState(
+                    icon: Icons.queue_music_rounded,
+                    title: AppLocalizations.of(context).playQueueEmpty,
+                  ),
+                )
+              else
+                SliverReorderableList(
+                  itemExtent: itemExtend,
+                  onReorderItem: (oldIndex, newIndex) {
+                    if (oldIndex == audioHandler.currentIndex) {
+                      audioHandler.currentIndex = newIndex;
+                    } else if (oldIndex < audioHandler.currentIndex &&
+                        newIndex >= audioHandler.currentIndex) {
+                      audioHandler.currentIndex -= 1;
+                    } else if (oldIndex > audioHandler.currentIndex &&
+                        newIndex <= audioHandler.currentIndex) {
+                      audioHandler.currentIndex += 1;
+                    }
+                    final item = playQueue.removeAt(oldIndex);
+                    playQueue.insert(newIndex, item);
 
-                  audioHandler.saveAllStates();
+                    audioHandler.saveAllStates();
 
-                  // clearing selected after reordering
-                  for (var tmp in isSelectedList) {
-                    tmp.value = false;
-                  }
-                  continuousSelectBeginIndex = 0;
-                },
+                    // clearing selected after reordering
+                    for (var tmp in isSelectedList) {
+                      tmp.value = false;
+                    }
+                    continuousSelectBeginIndex = 0;
+                  },
 
-                itemCount: playQueue.length,
-                itemBuilder: (context, index) {
-                  return playQueueItem(index);
-                },
-              ),
+                  itemCount: playQueue.length,
+                  itemBuilder: (context, index) {
+                    return playQueueItem(index);
+                  },
+                ),
             ],
           ),
         ),

@@ -495,6 +495,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get modifiedTimedescending => 'Modified Time Descending';
 
   @override
+  String get playQueueEmpty => 'The play queue is empty';
+
+  @override
   String get cannotBeUndone => 'Cannot be Undone';
 
   @override
