@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:sylvakru/base/design/app_tokens.dart';
-import 'dart:math';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:material_ui/material_ui.dart';
@@ -22,8 +21,6 @@ import 'package:sylvakru/base/services/system_ui_service.dart';
 import 'package:sylvakru/base/utils/common_utils.dart';
 import 'package:sylvakru/base/utils/media_query.dart';
 import 'package:sylvakru/base/utils/source_type.dart';
-import 'package:sylvakru/base/widgets/cover_art_widget.dart';
-import 'package:sylvakru/base/utils/metadata_utils.dart';
 import 'package:sylvakru/base/widgets/connect_client_widget.dart';
 import 'package:sylvakru/base/widgets/equalizer.dart';
 import 'package:sylvakru/base/widgets/my_divider.dart';
@@ -544,28 +541,6 @@ class _SettingsListState extends State<SettingsList> {
                     },
                   ),
 
-                  ListenableBuilder(
-                    listenable: Listenable.merge([
-                      library.changeNotifier,
-                      cacheSizeNotifier,
-                    ]),
-                    builder: (context, _) {
-                      return ListTile(
-                        leading: const Icon(Icons.download_for_offline_rounded),
-                        title: Text(l10n.offlineSongs),
-                        trailing: Text(
-                          l10n.offlineDownloadCount(
-                            library.offlineSongs.length,
-                          ),
-                        ),
-                        onTap: () {
-                          Navigator.pop(context);
-                          _showOfflineSongs(context, l10n);
-                        },
-                      );
-                    },
-                  ),
-
                   ValueListenableBuilder(
                     valueListenable: cacheLimitMbNotifier,
                     builder: (context, current, child) {
@@ -649,82 +624,6 @@ class _SettingsListState extends State<SettingsList> {
               );
             },
           ),
-        ),
-      ),
-    );
-  }
-
-  void _showOfflineSongs(BuildContext context, AppLocalizations l10n) {
-    showAnimationDialog(
-      context: context,
-      child: SizedBox(
-        width: 420,
-        height: min(MediaQuery.sizeOf(context).height * 0.7, 560),
-        child: ListenableBuilder(
-          listenable: Listenable.merge([
-            cacheSizeNotifier,
-            downloadingSongIdsNotifier,
-          ]),
-          builder: (context, _) {
-            final songs = library.offlineSongs;
-            return Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(15),
-                  child: Text(l10n.offlineSongs, style: AppText.sheetTitle),
-                ),
-                Expanded(
-                  child: songs.isEmpty
-                      ? Center(child: Text(l10n.noOfflineSongs))
-                      : ListView.builder(
-                          itemCount: songs.length,
-                          itemBuilder: (context, index) {
-                            final song = songs[index];
-                            return ListTile(
-                              leading: CoverArtWidget(
-                                size: 42,
-                                borderRadius: 4,
-                                picture: song.picture,
-                              ),
-                              title: Text(
-                                getTitle(song),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              subtitle: Text(
-                                getArtist(song),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              trailing: IconButton(
-                                icon: const Icon(Icons.delete_outline),
-                                tooltip: l10n.removeDownload,
-                                onPressed: () async {
-                                  final removed = await library
-                                      .removeOfflineCopy(
-                                        song,
-                                        currentlyPlaying:
-                                            currentSongNotifier.value?.id ==
-                                                song.id &&
-                                            isPlayingNotifier.value,
-                                        currentlyQueued: playQueue.any(
-                                          (item) => item.id == song.id,
-                                        ),
-                                      );
-                                  if (!removed && context.mounted) {
-                                    showCenterMessage(l10n.downloadInUse);
-                                  }
-                                },
-                              ),
-                              onTap: () {
-                                audioHandler.singlePlay(song);
-                                audioHandler.saveAllStates();
-                              },
-                            );
-                          },
-                        ),
-                ),
-              ],
-            );
-          },
         ),
       ),
     );

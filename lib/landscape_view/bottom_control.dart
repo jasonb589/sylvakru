@@ -188,6 +188,7 @@ class BottomControl extends StatelessWidget {
           icon: const ImageIcon(desktopLyricsImage, size: 25),
         ),
         favoriteButton(25),
+        downloadButton(25),
 
         ValueListenableBuilder(
           valueListenable: iconColor.valueNotifier,

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:sylvakru/base/design/cover_backdrop.dart';
+import 'package:sylvakru/layer/download_layer.dart';
 
 import 'package:material_ui/material_ui.dart';
 import 'package:sylvakru/base/audio_handler.dart';
@@ -133,6 +134,8 @@ class LayersManager {
         return FrequentlyLayer(key: GlobalKey());
       } else if (label == 'forYou') {
         return ForYouLayer(key: GlobalKey());
+      } else if (label == 'download') {
+        return DownloadLayer(key: GlobalKey());
       } else if (label == 'recently') {
         return RecentlyLayer(key: GlobalKey());
       } else if (label == 'recentlyAdded') {
@@ -338,6 +341,9 @@ class LayersManager {
     } else if (label == 'recentlyAdded') {
       rootKey = recentlyAddedKey;
       visibleNotifier = recentlyAddedVisibleNotifier;
+    } else if (label == 'download') {
+      // DownloadLayer has no detail pages to pop, so there is nothing to
+      // resolve here for it.
     } else if (label == 'recently') {
       // RecentlyLayer/FrequentlyLayer are stateless and have no key of their own,
       // so there is nothing to resolve here for them.

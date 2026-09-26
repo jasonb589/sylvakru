@@ -1,4 +1,6 @@
 import 'dart:math';
+import 'package:rive_animated_icon/rive_animated_icon.dart';
+import 'package:sylvakru/base/data/library.dart';
 
 import 'package:sylvakru/base/design/app_tokens.dart';
 import 'package:material_ui/material_ui.dart';
@@ -308,6 +310,87 @@ Widget favoriteButton(double size, {Color? color}) {
                 ),
               );
             },
+          );
+        },
+      );
+    },
+  );
+}
+
+/// Download the current song for offline playback, or remove its copy.
+///
+/// The states are kept distinct on purpose: a finished copy offers to remove
+/// itself, an in-flight one animates so the button does not look idle, and the
+/// rest offer to download. A local library has nothing to download, so the
+/// button is not shown there at all.
+Widget downloadButton(double size) {
+  if (sourceType == .local) {
+    return const SizedBox.shrink();
+  }
+
+  return ValueListenableBuilder(
+    valueListenable: currentSongNotifier,
+    builder: (context, currentSong, child) {
+      if (currentSong == null) {
+        return const SizedBox.shrink();
+      }
+
+      return ListenableBuilder(
+        listenable: Listenable.merge([
+          currentSong.updateNotifier,
+          downloadingSongIdsNotifier,
+          isPlayingNotifier,
+        ]),
+        builder: (context, child) {
+          final l10n = AppLocalizations.of(context);
+
+          if (downloadingSongIdsNotifier.value.contains(currentSong.id)) {
+            return Tooltip(
+              message: l10n.downloading,
+              child: RiveAnimatedIcon(
+                key: const ValueKey('downloading'),
+                riveIcon: .cloud,
+                width: size,
+                height: size,
+                loopAnimation: true,
+                color: IconTheme.of(context).color ?? iconColor.value,
+              ),
+            );
+          }
+
+          final exists = currentSong.cacheExist;
+
+          return IconButton(
+            tooltip: exists ? l10n.removeDownload : l10n.downloadForOffline,
+            onPressed: () async {
+              if (exists) {
+                final removed = await library.removeOfflineCopy(
+                  currentSong,
+                  currentlyPlaying:
+                      currentSongNotifier.value?.id == currentSong.id &&
+                      isPlayingNotifier.value,
+                  currentlyQueued: playQueue.any(
+                    (item) => item.id == currentSong.id,
+                  ),
+                );
+                if (!removed && context.mounted) {
+                  showCenterMessage(l10n.downloadInUse);
+                }
+                return;
+              }
+
+              final downloaded = await library.downloadForOffline(
+                currentSong,
+                keepSongIds: {...playQueue.map((item) => item.id)},
+              );
+              if (!downloaded && context.mounted) {
+                showCenterMessage(l10n.downloadFailed);
+              }
+            },
+            icon: Icon(
+              exists ? Icons.download_done_rounded : Icons.download_rounded,
+              size: size,
+            ),
           );
         },
       );
