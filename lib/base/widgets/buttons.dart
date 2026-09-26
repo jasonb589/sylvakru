@@ -387,10 +387,9 @@ Widget downloadButton(double size) {
                 showCenterMessage(l10n.downloadFailed);
               }
             },
-            icon: Icon(
-              exists ? Icons.download_done_outlined : Icons.download_outlined,
-              size: size,
-            ),
+            icon: exists
+                ? Icon(Icons.download_done_outlined, size: size)
+                : ImageIcon(downloadImage, size: size),
           );
         },
       );

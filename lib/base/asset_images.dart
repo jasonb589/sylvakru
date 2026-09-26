@@ -16,6 +16,7 @@ const AssetImage deleteImage = AssetImage('assets/images/delete.png');
 const AssetImage desktopLyricsImage = AssetImage(
   'assets/images/desktop_lyrics.png',
 );
+const AssetImage downloadImage = AssetImage('assets/images/download.png');
 const AssetImage embyImage = AssetImage('assets/images/emby.png');
 const AssetImage equalizerImage = AssetImage('assets/images/equalizer.png');
 const AssetImage exportLogImage = AssetImage('assets/images/export_log.png');

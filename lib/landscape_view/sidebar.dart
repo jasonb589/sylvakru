@@ -302,7 +302,7 @@ class Sidebar extends StatelessWidget {
                         // The sidebar's own icon family: a Material glyph here
                         // was the only filled, heavy shape in a column of thin
                         // outlines.
-                        leading: ImageIcon(cacheImage, size: 30),
+                        leading: ImageIcon(downloadImage, size: 30),
                         content: l10n.offlineSongs,
 
                         onTap: () {

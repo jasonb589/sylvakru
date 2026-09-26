@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sylvakru/base/asset_images.dart';
 import 'package:sylvakru/base/audio_handler.dart';
 import 'package:sylvakru/base/data/library.dart';
 import 'package:sylvakru/base/data/setting.dart';
@@ -97,7 +98,7 @@ class _DownloadLayerState extends State<DownloadLayer> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.download_for_offline_rounded, size: 34),
+                    const ImageIcon(downloadImage, size: 34),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
@@ -123,7 +124,7 @@ class _DownloadLayerState extends State<DownloadLayer> {
               SliverFillRemaining(
                 hasScrollBody: false,
                 child: EmptyState(
-                  icon: Icons.download_for_offline_rounded,
+                  icon: Icons.download_outlined,
                   title: l10n.noOfflineSongs,
                 ),
               )
