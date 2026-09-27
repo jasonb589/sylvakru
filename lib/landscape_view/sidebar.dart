@@ -6,6 +6,7 @@ import 'package:sylvakru/base/data/loader.dart';
 import 'package:sylvakru/base/services/color_manager.dart';
 import 'package:sylvakru/base/app.dart';
 import 'package:sylvakru/base/asset_images.dart';
+import 'package:sylvakru/base/design/app_tokens.dart';
 import 'package:sylvakru/base/services/interaction.dart';
 import 'package:sylvakru/base/utils/media_query.dart';
 import 'package:sylvakru/base/widgets/cover_art_widget.dart';
@@ -32,58 +33,83 @@ class Sidebar extends StatelessWidget {
     EdgeInsetsGeometry? contentPadding,
     required Function() onTap,
   }) {
+    // Row insets are fixed unless a caller asks for tighter ones: the playlists
+    // row carries a trailing button and wants the room back on both sides.
+    final rowPadding =
+        contentPadding ?? const EdgeInsets.fromLTRB(20, 0, 10, 0);
+
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 10),
       child: ValueListenableBuilder(
         valueListenable: sidebarHighlighLabel,
-        builder: (context, highlightLabel, child) {
+        builder: (context, highlightLabel, _) {
+          final selected = highlightLabel == label;
+
           return ValueListenableBuilder(
             valueListenable: selectedItemColor.valueNotifier,
             builder: (context, value, _) {
-              return Material(
-                color: highlightLabel == label ? value : Colors.transparent,
-                shape: SmoothRectangleBorder(
-                  smoothness: 1,
-                  borderRadius: BorderRadius.circular(10),
+              // Fading the highlight keeps a page switch from blinking from one
+              // row to the next.
+              return TweenAnimationBuilder<Color?>(
+                tween: ColorTween(end: selected ? value : Colors.transparent),
+                duration: AppDuration.quick,
+                curve: AppCurve.colour,
+                builder: (context, color, child) {
+                  return Material(
+                    color: color,
+                    shape: SmoothRectangleBorder(
+                      smoothness: 1,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    clipBehavior: .antiAlias,
+                    child: child,
+                  );
+                },
+                child: InkWell(
+                  mouseCursor: SystemMouseCursors.click,
+                  child: SizedBox(
+                    height: 40,
+                    child: Padding(
+                      padding: rowPadding,
+                      child: Row(
+                        children: [
+                          leading,
+                          SizedBox(width: 10),
+
+                          Expanded(
+                            child: Text(
+                              content,
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: selected
+                                    ? FontWeight.w600
+                                    : FontWeight.normal,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+
+                          if (trailing != null) ...[
+                            SizedBox(width: 5),
+                            trailing,
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  onTap: () async {
+                    if (closeDrawer != null) {
+                      closeDrawer!.call();
+                      await Future.delayed(Duration(milliseconds: 250));
+                    }
+                    onTap();
+                  },
                 ),
-                clipBehavior: .antiAlias,
-                child: child,
               );
             },
           );
         },
-        child: InkWell(
-          mouseCursor: SystemMouseCursors.click,
-          child: SizedBox(
-            height: 40,
-            child: Row(
-              children: [
-                SizedBox(width: 20),
-                leading,
-                SizedBox(width: 10),
-
-                Text(
-                  content,
-                  style: TextStyle(
-                    fontSize: 15,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-
-                Spacer(),
-                if (trailing != null) ...[trailing, SizedBox(width: 5)],
-              ],
-            ),
-          ),
-
-          onTap: () async {
-            if (closeDrawer != null) {
-              closeDrawer!.call();
-              await Future.delayed(Duration(milliseconds: 250));
-            }
-            onTap();
-          },
-        ),
       ),
     );
   }
