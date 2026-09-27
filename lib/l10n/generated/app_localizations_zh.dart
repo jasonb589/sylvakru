@@ -817,4 +817,16 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get playQueueEmptyHint => '在歌曲菜单里选择「添加到播放列表」，歌曲会出现在这里';
+
+  @override
+  String get musicSource => '音乐来源';
+
+  @override
+  String get appearance => '外观';
+
+  @override
+  String get playback => '播放';
+
+  @override
+  String get system => '系统';
 }

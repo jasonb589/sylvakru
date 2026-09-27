@@ -1669,6 +1669,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Pick Add to Queue in a song menu and it shows up here'**
   String get playQueueEmptyHint;
+
+  /// No description provided for @musicSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Music Source'**
+  String get musicSource;
+
+  /// No description provided for @appearance.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get appearance;
+
+  /// No description provided for @playback.
+  ///
+  /// In en, this message translates to:
+  /// **'Playback'**
+  String get playback;
+
+  /// No description provided for @system.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get system;
 }
 
 class _AppLocalizationsDelegate

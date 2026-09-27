@@ -110,6 +110,9 @@ class _SettingsListState extends State<SettingsList> {
             paddingIfNeed(isLandscape, premiumFeaturesListTile(context, l10n)),
           ),
 
+        // Music source: where the library comes from and how to reach it.
+        sliverBox(groupHeader(l10n.musicSource, isLandscape)),
+
         sliverBox(
           paddingIfNeed(isLandscape, switchSourceTypeListTile(context, l10n)),
         ),
@@ -126,9 +129,15 @@ class _SettingsListState extends State<SettingsList> {
             ),
           ),
 
+        // Library: keeping the local copy in step.
+        sliverBox(groupHeader(l10n.library, isLandscape)),
+
         sliverBox(paddingIfNeed(isLandscape, syncListTile(context, l10n))),
 
         sliverBox(paddingIfNeed(isLandscape, cacheListTile(context, l10n))),
+
+        // Appearance: how the client looks and speaks.
+        sliverBox(groupHeader(l10n.appearance, isLandscape)),
 
         sliverBox(paddingIfNeed(isLandscape, themeListTile(context, l10n))),
 
@@ -142,8 +151,15 @@ class _SettingsListState extends State<SettingsList> {
             viewModeNotifier.value != .bigPicture)
           sliverBox(paddingIfNeed(isLandscape, drawerListTile(l10n))),
 
-        if (isMobile && !isTV)
-          sliverBox(paddingIfNeed(isLandscape, vibrationListTile(l10n))),
+        if (Platform.isAndroid && !isTV)
+          sliverBox(
+            paddingIfNeed(isLandscape, immersiveWideLayoutListTile(l10n)),
+          ),
+
+        // Playback: how the music itself behaves.
+        sliverBox(groupHeader(l10n.playback, isLandscape)),
+
+        sliverBox(paddingIfNeed(isLandscape, equalizerListTile(context, l10n))),
 
         if (isMobile)
           sliverBox(
@@ -153,14 +169,13 @@ class _SettingsListState extends State<SettingsList> {
             ),
           ),
 
-        sliverBox(paddingIfNeed(isLandscape, equalizerListTile(context, l10n))),
-
-        if (Platform.isAndroid && !isTV)
-          sliverBox(
-            paddingIfNeed(isLandscape, immersiveWideLayoutListTile(l10n)),
-          ),
+        if (isMobile && !isTV)
+          sliverBox(paddingIfNeed(isLandscape, vibrationListTile(l10n))),
 
         sliverBox(paddingIfNeed(isLandscape, autoPlayOnStartupListTile(l10n))),
+
+        // System: the client around the music.
+        sliverBox(groupHeader(l10n.system, isLandscape)),
 
         if (!isMobile)
           sliverBox(
@@ -199,6 +214,26 @@ class _SettingsListState extends State<SettingsList> {
   }
 
   Widget sliverBox(Widget child) => SliverToBoxAdapter(child: child);
+
+  /// A quiet heading that turns the flat settings list into labelled groups, so
+  /// a row is found by what it is about instead of by counting rows.
+  Widget groupHeader(String title, bool isLandscape) {
+    final horizontal = !isLandscape
+        ? 16.0
+        : (viewModeNotifier.value == .bigPicture ? 50.0 : 30.0);
+    return Padding(
+      padding: EdgeInsets.fromLTRB(horizontal + 4, 16, horizontal + 4, 2),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.4,
+          color: iconColor.value,
+        ),
+      ),
+    );
+  }
 
   Widget paddingForLandscape(Widget child) {
     return Padding(

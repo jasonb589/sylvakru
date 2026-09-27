@@ -835,4 +835,16 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get playQueueEmptyHint =>
       'Pick Add to Queue in a song menu and it shows up here';
+
+  @override
+  String get musicSource => 'Music Source';
+
+  @override
+  String get appearance => 'Appearance';
+
+  @override
+  String get playback => 'Playback';
+
+  @override
+  String get system => 'System';
 }
