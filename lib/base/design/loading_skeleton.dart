@@ -111,7 +111,7 @@ class SkeletonList extends StatelessWidget {
     super.key,
     this.rows = 8,
     this.rowHeight = 60,
-    this.coverSize = 45,
+    this.coverSize = 40,
   });
 
   @override

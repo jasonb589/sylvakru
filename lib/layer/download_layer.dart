@@ -81,6 +81,13 @@ class _DownloadLayerState extends State<DownloadLayer> {
       ]),
       builder: (context, _) {
         final songs = library.offlineMusicSongs;
+        // Downloads still running are listed too, so a download that has not
+        // finished is visible instead of the list only filling in later.
+        final downloading = downloadingSongIdsNotifier.value
+            .map((id) => library.id2Song[id])
+            .whereType<MyAudioMetadata>()
+            .where((song) => !song.downloadExist)
+            .toList();
 
         return CustomScrollView(
           controller: scrollController,
@@ -136,7 +143,7 @@ class _DownloadLayerState extends State<DownloadLayer> {
 
             SliverToBoxAdapter(child: const SizedBox(height: 10)),
 
-            if (songs.isEmpty)
+            if (songs.isEmpty && downloading.isEmpty)
               SliverFillRemaining(
                 hasScrollBody: false,
                 child: EmptyState(
@@ -146,11 +153,18 @@ class _DownloadLayerState extends State<DownloadLayer> {
               )
             else
               SliverList.builder(
-                itemCount: songs.length,
+                itemCount: downloading.length + songs.length,
                 itemBuilder: (context, index) {
+                  if (index < downloading.length) {
+                    return downloadingRow(
+                      context,
+                      downloading[index],
+                      horizontalPadding,
+                    );
+                  }
                   return offlineRow(
                     context,
-                    songs[index],
+                    songs[index - downloading.length],
                     songs,
                     horizontalPadding,
                   );
@@ -229,6 +243,11 @@ class _DownloadLayerState extends State<DownloadLayer> {
 
     return ListTile(
       contentPadding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+      // The row that is playing right now, so tapping through the list gives
+      // the same "you are here" cue the song lists use.
+      selected: currentSongNotifier.value?.id == song.id,
+      selectedColor: highlightTextColor.value,
+      selectedTileColor: selectedItemColor.value,
       leading: CoverArtWidget(
         size: 42,
         borderRadius: AppRadius.coverTiny,
@@ -261,6 +280,32 @@ class _DownloadLayerState extends State<DownloadLayer> {
       onTap: () {
         audioHandler.setPlayQueue(songs, 0, targetIndex: songs.indexOf(song));
       },
+    );
+  }
+
+  /// A song whose offline copy is still being written.
+  Widget downloadingRow(
+    BuildContext context,
+    MyAudioMetadata song,
+    double horizontalPadding,
+  ) {
+    final l10n = AppLocalizations.of(context);
+
+    return ListTile(
+      contentPadding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+      leading: CoverArtWidget(
+        size: 42,
+        borderRadius: AppRadius.coverTiny,
+        picture: song.picture,
+      ),
+      title: Text(getTitle(song), maxLines: 1, overflow: TextOverflow.ellipsis),
+      subtitle: Text(l10n.downloading),
+      trailing: const SizedBox(
+        width: 20,
+        height: 20,
+        child: CircularProgressIndicator(strokeWidth: 2),
+      ),
+      enabled: false,
     );
   }
 }

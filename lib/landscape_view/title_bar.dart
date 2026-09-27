@@ -325,6 +325,7 @@ class _TitleBarState extends State<TitleBar> {
         }
         return ListenableBuilder(
           listenable: Listenable.merge([
+            isMaximizedNotifier,
             iconColor.valueNotifier,
             lyricsPageForegroundColor.valueNotifier,
           ]),

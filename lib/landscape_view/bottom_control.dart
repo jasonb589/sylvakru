@@ -154,14 +154,23 @@ class BottomControl extends StatelessWidget {
   }
 
   Widget bottomSeekBar() {
-    return SizedBox(
-      width: isMobile ? 300 : 400,
-      child: ValueListenableBuilder(
-        valueListenable: currentSongNotifier,
-        builder: (_, _, _) {
-          return SeekBar(widgetHeight: 20, seekBarHeight: 10);
-        },
-      ),
+    // Shrink with the window instead of holding a fixed width: on a narrow
+    // desktop window a 400px bar squeezed the song tile and the controls.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth.isFinite
+            ? constraints.maxWidth.clamp(0.0, isMobile ? 300.0 : 400.0)
+            : (isMobile ? 300.0 : 400.0);
+        return SizedBox(
+          width: width,
+          child: ValueListenableBuilder(
+            valueListenable: currentSongNotifier,
+            builder: (_, _, _) {
+              return SeekBar(widgetHeight: 20, seekBarHeight: 10);
+            },
+          ),
+        );
+      },
     );
   }
 
