@@ -44,7 +44,10 @@ class LandscapeView extends StatelessWidget {
             return ValueListenableBuilder(
               valueListenable: layersManager.backgroundChangeNotifier,
               builder: (context, value, child) {
-                return CoverBackdrop(colour: backgroundCoverArtColor);
+                return CoverBackdrop(
+                  colour: backgroundCoverArtColor,
+                  palette: backgroundCoverPalette,
+                );
               },
             );
           },

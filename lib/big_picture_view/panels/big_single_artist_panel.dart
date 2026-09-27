@@ -97,7 +97,10 @@ class _BigSingleArtistPanelState extends State<BigSingleArtistPanel> {
           ValueListenableBuilder(
             valueListenable: currentSongNotifier,
             builder: (context, value, child) {
-              return CoverBackdrop(colour: currentCoverArtColor);
+              return CoverBackdrop(
+                colour: currentCoverArtColor,
+                palette: currentCoverPalette,
+              );
             },
           ),
         ],

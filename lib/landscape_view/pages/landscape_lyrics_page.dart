@@ -103,7 +103,10 @@ class _LandscapeLyricsPageState extends State<LandscapeLyricsPage> {
                   picture: currentSong?.picture,
                   color: colorManager.getSpecificLyricsPageCoverArtBaseColor(),
                 ),
-                CoverBackdrop(colour: currentCoverArtColor),
+                CoverBackdrop(
+                  colour: currentCoverArtColor,
+                  palette: currentCoverPalette,
+                ),
               ],
 
               ValueListenableBuilder(

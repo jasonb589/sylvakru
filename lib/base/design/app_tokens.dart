@@ -55,6 +55,15 @@ abstract final class AppDuration {
   /// The loading skeleton pulse. Slow and low contrast: it should read as
   /// "content is coming" without competing with the content itself.
   static const Duration pulse = Duration(milliseconds: 1200);
+
+  /// One lap of the backdrop's drifting gradient. Long enough that neither end
+  /// of the journey is visible: the colours are always somewhere in the middle
+  /// of it, which is what stops a still cover from looking like a still screen.
+  static const Duration drift = Duration(seconds: 36);
+
+  /// One breath of the backdrop. Tied to whether the player is running rather
+  /// than to the track's tempo, which the player cannot report.
+  static const Duration breath = Duration(milliseconds: 4200);
 }
 
 /// Curves, paired with the intent of the animation.
@@ -94,6 +103,15 @@ abstract final class AppBlur {
 
   /// Alpha applied to the cover colour on top of the backdrop blur.
   static const int backdropAlpha = 180;
+
+  /// Alpha for each colour the backdrop drifts over the base tint. High enough
+  /// that the movement is visible, low enough that the base colour still sets
+  /// the contrast the text was chosen for.
+  static const int driftAlpha = 115;
+
+  /// How far one breath pushes the drifting colours outwards, as a fraction of
+  /// their radius.
+  static const double breathScale = 0.07;
 }
 
 /// Elevation, expressed as the shadow a surface casts.

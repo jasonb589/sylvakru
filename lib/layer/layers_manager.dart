@@ -103,7 +103,10 @@ class LayersManager {
             return ValueListenableBuilder(
               valueListenable: layerInfo.changeNotifier,
               builder: (context, value, child) {
-                return CoverBackdrop(colour: layerInfo.backgroundCoverArtColor);
+                return CoverBackdrop(
+                  colour: layerInfo.backgroundCoverArtColor,
+                  palette: backgroundCoverPalette,
+                );
               },
             );
           },
@@ -543,6 +546,7 @@ class LayersManager {
 
     backgroundPicture = _getBackgroundPicture(displayLayer);
     backgroundCoverArtColor = await computeColor(backgroundPicture);
+    backgroundCoverPalette = await computePalette(backgroundPicture);
     if (revision != _backgroundRevision) {
       return;
     }

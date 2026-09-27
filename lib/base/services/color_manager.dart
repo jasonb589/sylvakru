@@ -10,6 +10,12 @@ MyPicture? backgroundPicture;
 Color backgroundCoverArtColor = Colors.grey;
 Color currentCoverArtColor = Colors.grey;
 
+/// The colours the backdrop drifts between, alongside the tints above. Empty
+/// until a palette has been extracted for the artwork on screen; the backdrop
+/// then falls back to drifting around the single tint.
+List<Color> backgroundCoverPalette = const [];
+List<Color> currentCoverPalette = const [];
+
 bool useCurrentSongForBg = true;
 
 ContrastColorTextTheme contrastColorTheme = ContrastColorGenerator.generate(
@@ -311,6 +317,7 @@ class ColorManager {
   void updateBigPictureRelatedColors(MyPicture? picture) {
     backgroundPicture = picture;
     backgroundCoverArtColor = backgroundPicture?.color ?? Colors.grey;
+    backgroundCoverPalette = backgroundPicture?.palette ?? const [];
     searchFieldColor.updateColor();
     buttonColor.updateColor();
     dividerColor.updateColor();

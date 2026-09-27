@@ -173,7 +173,10 @@ class _PortraitLyricsPageState extends State<PortraitLyricsPage> {
                     color: colorManager
                         .getSpecificLyricsPageCoverArtBaseColor(),
                   ),
-                  CoverBackdrop(colour: currentCoverArtColor),
+                  CoverBackdrop(
+                    colour: currentCoverArtColor,
+                    palette: currentCoverPalette,
+                  ),
                 ],
                 Container(
                   color: lyricsPageBackgroundColor.value,

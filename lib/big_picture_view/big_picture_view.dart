@@ -97,7 +97,10 @@ class _BigPictureViewState extends State<BigPictureView> {
                   return SizedBox.shrink();
                 }
 
-                return CoverBackdrop(colour: currentCoverArtColor);
+                return CoverBackdrop(
+                  colour: currentCoverArtColor,
+                  palette: currentCoverPalette,
+                );
               },
             ),
 
