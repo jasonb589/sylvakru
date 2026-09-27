@@ -33,7 +33,7 @@ class _ScaleWidgetState extends State<ScaleWidget> {
         // primary focus affordance, and a keyboard or remote user has no
         // cursor telling them where focus just moved to.
         return AnimatedScale(
-          scale: value ? 1.1 : 1,
+          scale: value ? 1.05 : 1,
           duration: AppDuration.quick,
           curve: AppCurve.standard,
           child: InkWell(

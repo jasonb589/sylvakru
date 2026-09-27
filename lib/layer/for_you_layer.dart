@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sylvakru/base/design/app_tokens.dart';
 import 'package:sylvakru/base/app.dart';
 import 'package:sylvakru/base/asset_images.dart';
 import 'package:sylvakru/base/audio_handler.dart';
@@ -82,10 +83,7 @@ class _ForYouLayerState extends State<ForYouLayer> {
 
   void _rebuild() {
     setState(() {
-      _songs = Recommender.randomSongs(
-        songs: library.songList,
-        seed: _seed,
-      );
+      _songs = Recommender.randomSongs(songs: library.songList, seed: _seed);
       _artists = Recommender.randomArtists(
         artists: artistAlbumManager.artistList,
         seed: _seed,
@@ -125,17 +123,14 @@ class _ForYouLayerState extends State<ForYouLayer> {
   }
 
   Widget panelView(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     return Column(
       children: [
         TitleBar(
-          hintText: l10n.searchSongs,
-          textController: TextEditingController(),
           scrollToTop: () {
             scrollController.animateTo(
               0,
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.linear,
+              duration: AppDuration.normal,
+              curve: AppCurve.standard,
             );
           },
         ),
@@ -145,9 +140,7 @@ class _ForYouLayerState extends State<ForYouLayer> {
   }
 
   Widget pageView(BuildContext context) {
-    return SafeArea(
-      child: content(context, horizontalPadding: 20),
-    );
+    return SafeArea(child: content(context, horizontalPadding: 20));
   }
 
   Widget content(BuildContext context, {required double horizontalPadding}) {
@@ -183,9 +176,7 @@ class _ForYouLayerState extends State<ForYouLayer> {
                 // TextButton is the purple accent, which stands out badly here
                 TextButton.icon(
                   onPressed: _refresh,
-                  style: TextButton.styleFrom(
-                    foregroundColor: iconColor.value,
-                  ),
+                  style: TextButton.styleFrom(foregroundColor: iconColor.value),
                   icon: const Icon(Icons.refresh_rounded, size: 18),
                   label: Text(l10n.refreshRecommendations),
                 ),
@@ -218,9 +209,7 @@ class _ForYouLayerState extends State<ForYouLayer> {
                 horizontalPadding,
               ),
             ),
-            SliverToBoxAdapter(
-              child: artistRow(horizontalPadding),
-            ),
+            SliverToBoxAdapter(child: artistRow(horizontalPadding)),
           ],
           if (_songs.isNotEmpty) ...[
             SliverToBoxAdapter(
@@ -352,6 +341,7 @@ class _ForYouLayerState extends State<ForYouLayer> {
       ),
     );
   }
+
   /// The muted second line of an artist card: how many songs are still
   /// unheard, or the artist's name when everything is known.
   String _artistSubtitle(ArtistRecommendation recommendation) {

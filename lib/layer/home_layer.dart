@@ -469,7 +469,7 @@ class HomeLayerState extends State<HomeLayer> {
           ),
           scrollController: recentlySC,
           displayIconNotifier: recentlyDisplayIconNotifier,
-          changeNotifier: frequentlyChangeNotifier,
+          changeNotifier: recentlyChangeNotifier,
           iconTop: 67,
         ),
 
@@ -702,6 +702,7 @@ class HomeLayerState extends State<HomeLayer> {
             builder: (context, child) {
               if (isMobile ||
                   !displayIconNotifier.value ||
+                  !scrollController.hasClients ||
                   scrollController.position.pixels == 0) {
                 return SizedBox.shrink();
               }
@@ -808,8 +809,7 @@ class HomeLayerState extends State<HomeLayer> {
   /// still unheard, or an invitation to explore when everything is known.
   String _artistSubtitle(ArtistRecommendation recommendation) {
     final l10n = AppLocalizations.of(context);
-    final unexplored =
-        recommendation.totalSongs - recommendation.playedSongs;
+    final unexplored = recommendation.totalSongs - recommendation.playedSongs;
     if (unexplored > 0) {
       return l10n.reasonUnexplored(unexplored);
     }

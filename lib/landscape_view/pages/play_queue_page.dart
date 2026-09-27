@@ -1,3 +1,4 @@
+import 'package:sylvakru/base/design/app_tokens.dart';
 import 'package:sylvakru/base/design/empty_state.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sylvakru/base/app.dart';
@@ -183,8 +184,8 @@ class PlayQueuePageState extends State<PlayQueuePage> {
                 minScrollExtent,
                 maxScrollExtent,
               ),
-              duration: Duration(milliseconds: 300),
-              curve: Curves.linear,
+              duration: AppDuration.calm,
+              curve: AppCurve.standard,
             );
           },
           icon: ImageIcon(locationImage),

@@ -1,4 +1,4 @@
-import 'package:sylvakru/base/design/app_tokens.dart';
+﻿import 'package:sylvakru/base/design/app_tokens.dart';
 import 'dart:async';
 import 'dart:math';
 import 'package:sylvakru/base/design/cover_backdrop.dart';
@@ -33,6 +33,24 @@ class _LandscapeLyricsPageState extends State<LandscapeLyricsPage> {
   final ValueNotifier<bool> immersiveModeNotifier = ValueNotifier(false);
 
   @override
+  void initState() {
+    super.initState();
+    _scheduleImmersiveMode();
+  }
+
+  void _scheduleImmersiveMode() {
+    immersiveModeTimer?.cancel();
+    immersiveModeTimer = Timer(const Duration(seconds: 5), () {
+      if (mounted) immersiveModeNotifier.value = true;
+    });
+  }
+
+  void _showControls() {
+    immersiveModeNotifier.value = false;
+    _scheduleImmersiveMode();
+  }
+
+  @override
   void dispose() {
     immersiveModeTimer?.cancel();
     immersiveModeNotifier.dispose();
@@ -41,10 +59,8 @@ class _LandscapeLyricsPageState extends State<LandscapeLyricsPage> {
 
   @override
   Widget build(BuildContext context) {
-    immersiveModeTimer?.cancel();
-    immersiveModeTimer = Timer(const Duration(milliseconds: 5000), () {
-      immersiveModeNotifier.value = true;
-    });
+    // Immersive mode is scheduled from initState, dispose and mouse activity:
+    // doing it here restarted the 5 second wait on every rebuild.
     final mediaQueryData = MediaQuery.of(context);
     final pageWidth = mediaQueryData.size.width;
     final pageHight =
@@ -57,11 +73,7 @@ class _LandscapeLyricsPageState extends State<LandscapeLyricsPage> {
         return MouseRegion(
           cursor: value ? SystemMouseCursors.none : MouseCursor.defer,
           onHover: (event) {
-            immersiveModeNotifier.value = false;
-            immersiveModeTimer?.cancel();
-            immersiveModeTimer = Timer(const Duration(milliseconds: 5000), () {
-              immersiveModeNotifier.value = true;
-            });
+            _showControls();
           },
           child: child,
         );

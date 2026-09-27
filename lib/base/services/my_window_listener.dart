@@ -159,6 +159,7 @@ class MyWindowListener extends WindowListener {
         }
         await windowManager.setSize(miniSize);
       }
+      miniModeHideOverlayTimer?.cancel();
       miniModeHideOverlayTimer = Timer(const Duration(milliseconds: 1000), () {
         miniModeDisplayOverlayNotifier.value = false;
       });

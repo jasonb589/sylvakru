@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:sylvakru/base/audio_handler.dart';
+import 'package:sylvakru/base/design/app_tokens.dart';
 import 'package:sylvakru/base/services/color_manager.dart';
 import 'package:sylvakru/base/app.dart';
 import 'package:sylvakru/base/services/lyric.dart';
@@ -261,10 +262,14 @@ class LyricLineWidget extends StatelessWidget {
               final textColor = viewModeNotifier.value == .mini
                   ? miniViewForegroundColor.value
                   : lyricsPageForegroundColor.value;
+              final highlightTextColor = viewModeNotifier.value == .mini
+                  ? miniViewHighlightTextColor.value
+                  : lyricsPageHighlightTextColor.value;
 
               return AnimatedScale(
-                scale: isCurrent ? 1.05 : 0.95,
-                duration: Duration(milliseconds: 300),
+                scale: isCurrent ? 1.06 : 1.0,
+                duration: AppDuration.calm,
+                curve: AppCurve.standard,
                 alignment: expanded ? .centerLeft : .center,
                 child: Column(
                   crossAxisAlignment: expanded ? .start : .center,
@@ -290,7 +295,7 @@ class LyricLineWidget extends StatelessWidget {
                           fontSize: fontSize,
                           fontWeight: lyricsFontWeightNotifier.value,
                           color: isCurrent
-                              ? textColor
+                              ? highlightTextColor
                               : textColor.withAlpha(128),
                         ),
                       ),
@@ -301,7 +306,7 @@ class LyricLineWidget extends StatelessWidget {
                         style: TextStyle(
                           fontSize: fontSize - (expanded ? 8 : 4),
                           fontWeight: lyricsFontWeightNotifier.value,
-                          color: textColor.withAlpha(128),
+                          color: textColor.withAlpha(isCurrent ? 192 : 128),
                         ),
                       ),
                   ],

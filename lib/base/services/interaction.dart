@@ -26,6 +26,7 @@ import 'package:sylvakru/base/widgets/my_sheet.dart';
 import 'package:sylvakru/base/widgets/playlist_widgets.dart';
 import 'package:sylvakru/base/widgets/selectable_song_list_page.dart';
 import 'package:sylvakru/base/widgets/song_info.dart';
+import 'package:sylvakru/base/widgets/edit_metadata.dart';
 import 'package:sylvakru/base/design/app_tokens.dart';
 import 'package:sylvakru/big_picture_view/panels/big_single_album_panel.dart';
 import 'package:sylvakru/big_picture_view/panels/big_single_artist_panel.dart';
@@ -563,55 +564,57 @@ void showContextMenu(
                         child: IntrinsicWidth(
                           child: Padding(
                             padding: const EdgeInsets.all(6.0),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: items.map((item) {
-                                if (item.isDivider) {
-                                  return Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 4,
-                                      vertical: 4,
-                                    ),
-                                    child: MyDivider(
-                                      color: dividerColor,
-                                      height: 1,
+                            child: SingleChildScrollView(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: items.map((item) {
+                                  if (item.isDivider) {
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 4,
+                                        vertical: 4,
+                                      ),
+                                      child: MyDivider(
+                                        color: dividerColor,
+                                        height: 1,
+                                      ),
+                                    );
+                                  }
+                                  return InkWell(
+                                    mouseCursor: SystemMouseCursors.click,
+                                    onTap: () {
+                                      Navigator.of(context).pop();
+                                      item.callback?.call();
+                                    },
+                                    child: Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: Platform.isAndroid ? 8 : 5,
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          if (item.iconData != null) ...[
+                                            Icon(
+                                              item.iconData,
+                                              size: 18,
+                                              color: colorManager
+                                                  .getSpecificIconColor(),
+                                            ),
+                                            const SizedBox(width: 10),
+                                          ],
+                                          Text(
+                                            item.text!,
+                                            style: .new(
+                                              color: colorManager
+                                                  .getSpecificTextColor(),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   );
-                                }
-                                return InkWell(
-                                  mouseCursor: SystemMouseCursors.click,
-                                  onTap: () {
-                                    Navigator.of(context).pop();
-                                    item.callback?.call();
-                                  },
-                                  child: Padding(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: Platform.isAndroid ? 8 : 5,
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        if (item.iconData != null) ...[
-                                          Icon(
-                                            item.iconData,
-                                            size: 18,
-                                            color: colorManager
-                                                .getSpecificIconColor(),
-                                          ),
-                                          const SizedBox(width: 10),
-                                        ],
-                                        Text(
-                                          item.text!,
-                                          style: .new(
-                                            color: colorManager
-                                                .getSpecificTextColor(),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
+                                }).toList(),
+                              ),
                             ),
                           ),
                         ),
@@ -1049,7 +1052,7 @@ void showSongOptions({
                       Navigator.pop(context);
                       showAnimationDialog(
                         context: context,
-                        child: SongInfo(song: song),
+                        child: EditMetadata(song: song),
                       );
                     },
                   ),
