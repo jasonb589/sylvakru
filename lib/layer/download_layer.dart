@@ -14,6 +14,7 @@ import 'package:sylvakru/base/widgets/cover_art_widget.dart';
 import 'package:sylvakru/base/widgets/my_navigator.dart';
 import 'package:sylvakru/l10n/generated/app_localizations.dart';
 import 'package:sylvakru/landscape_view/title_bar.dart';
+import 'package:sylvakru/layer/layers_manager.dart';
 
 final GlobalKey<NavigatorState> downloadKey = GlobalKey();
 final downloadVisibleNotifier = ValueNotifier(true);
@@ -149,6 +150,12 @@ class _DownloadLayerState extends State<DownloadLayer> {
                 child: EmptyState(
                   icon: Icons.music_note_outlined,
                   title: l10n.noOfflineMusic,
+                  subtitle: l10n.noOfflineMusicHint,
+                  action: TextButton.icon(
+                    onPressed: () => layersManager.switchRootLayer('songs'),
+                    icon: const Icon(Icons.library_music_outlined, size: 18),
+                    label: Text(l10n.browseSongs),
+                  ),
                 ),
               )
             else

@@ -143,6 +143,7 @@ class PlayQueueSheetState extends State<PlayQueueSheet> {
                     ? EmptyState(
                         icon: Icons.queue_music_rounded,
                         title: l10n.playQueueEmpty,
+                        subtitle: l10n.playQueueEmptyHint,
                       )
                     : ReorderableListView.builder(
                         scrollController: scrollController,

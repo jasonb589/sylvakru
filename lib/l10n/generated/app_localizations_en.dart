@@ -824,4 +824,15 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get downloadInUse =>
       'Pause playback before removing this offline music';
+
+  @override
+  String get noOfflineMusicHint =>
+      'Pick Download to Offline Music in a song menu and it plays here even without a network';
+
+  @override
+  String get browseSongs => 'Browse music';
+
+  @override
+  String get playQueueEmptyHint =>
+      'Pick Add to Queue in a song menu and it shows up here';
 }

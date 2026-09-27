@@ -104,6 +104,7 @@ class PlayQueuePageState extends State<PlayQueuePage> {
                   child: EmptyState(
                     icon: Icons.queue_music_rounded,
                     title: AppLocalizations.of(context).playQueueEmpty,
+                    subtitle: AppLocalizations.of(context).playQueueEmptyHint,
                   ),
                 )
               else

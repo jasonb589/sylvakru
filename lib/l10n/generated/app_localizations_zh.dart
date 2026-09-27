@@ -808,4 +808,13 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get downloadInUse => '请先暂停播放，再移除此离线音乐';
+
+  @override
+  String get noOfflineMusicHint => '在歌曲菜单里选择「下载到离线音乐」，之后无网络也能播放';
+
+  @override
+  String get browseSongs => '去浏览音乐';
+
+  @override
+  String get playQueueEmptyHint => '在歌曲菜单里选择「添加到播放列表」，歌曲会出现在这里';
 }

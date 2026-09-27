@@ -1651,6 +1651,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Pause playback before removing this offline music'**
   String get downloadInUse;
+
+  /// No description provided for @noOfflineMusicHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick Download to Offline Music in a song menu and it plays here even without a network'**
+  String get noOfflineMusicHint;
+
+  /// No description provided for @browseSongs.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse music'**
+  String get browseSongs;
+
+  /// No description provided for @playQueueEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick Add to Queue in a song menu and it shows up here'**
+  String get playQueueEmptyHint;
 }
 
 class _AppLocalizationsDelegate

@@ -341,5 +341,8 @@
   "removeDownload": "Remove from Offline Music",
   "downloading": "Downloading to Offline Music…",
   "downloadFailed": "Download failed; check the network and available storage",
-  "downloadInUse": "Pause playback before removing this offline music"
+  "downloadInUse": "Pause playback before removing this offline music",
+  "noOfflineMusicHint": "Pick Download to Offline Music in a song menu and it plays here even without a network",
+  "browseSongs": "Browse music",
+  "playQueueEmptyHint": "Pick Add to Queue in a song menu and it shows up here"
 }

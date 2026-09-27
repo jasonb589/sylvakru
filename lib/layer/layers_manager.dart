@@ -516,11 +516,17 @@ class LayersManager {
     }
   }
 
+  /// Guards [updateBackground] against its own awaits: computing a cover colour
+  /// can take a while, and a page switch in the meantime must not let the older
+  /// run write its colours over the newer one's.
+  int _backgroundRevision = 0;
+
   Future<void> updateBackground() async {
     if (topRootLayer == null || viewModeNotifier.value == .bigPicture) {
       return;
     }
 
+    final revision = ++_backgroundRevision;
     Widget displayLayer = topRootLayer!;
     Widget? tmpLayer = detailWidgetMap[topRootLayer];
     if (tmpLayer != null) {
@@ -528,12 +534,18 @@ class LayersManager {
       while ((tmpLayer = parentWidgetMap[tmpLayer]) != null) {
         final tmpBgPicture = _getBackgroundPicture(tmpLayer!);
         final tmpBgCoverArtColor = await computeColor(tmpBgPicture);
+        if (revision != _backgroundRevision) {
+          return;
+        }
         _updateLayerInfo(tmpLayer, tmpBgPicture, tmpBgCoverArtColor);
       }
     }
 
     backgroundPicture = _getBackgroundPicture(displayLayer);
     backgroundCoverArtColor = await computeColor(backgroundPicture);
+    if (revision != _backgroundRevision) {
+      return;
+    }
     _updateLayerInfo(displayLayer, backgroundPicture, backgroundCoverArtColor);
 
     if (mainPageThemeNotifier.value == .vivid) {
@@ -546,6 +558,8 @@ class LayersManager {
   }
 
   void clearAll() async {
+    // An in-flight run must not repopulate the map once the layers are gone.
+    _backgroundRevision++;
     popDetail('artists', executePop: false);
     popDetail('albums', executePop: false);
     popDetail('folders', executePop: false);
