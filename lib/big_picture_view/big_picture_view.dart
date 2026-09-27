@@ -99,7 +99,7 @@ class _BigPictureViewState extends State<BigPictureView> {
 
                 return CoverBackdrop(
                   colour: currentCoverArtColor,
-                  palette: currentCoverPalette,
+                  picture: currentSongNotifier.value?.picture,
                 );
               },
             ),

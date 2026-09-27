@@ -105,7 +105,7 @@ class LayersManager {
               builder: (context, value, child) {
                 return CoverBackdrop(
                   colour: layerInfo.backgroundCoverArtColor,
-                  palette: backgroundCoverPalette,
+                  picture: layerInfo.backgroundPicture,
                 );
               },
             );
@@ -546,7 +546,6 @@ class LayersManager {
 
     backgroundPicture = _getBackgroundPicture(displayLayer);
     backgroundCoverArtColor = await computeColor(backgroundPicture);
-    backgroundCoverPalette = await computePalette(backgroundPicture);
     if (revision != _backgroundRevision) {
       return;
     }

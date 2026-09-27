@@ -50,20 +50,13 @@ abstract final class AppDuration {
 
   /// The cover backdrop. Slow enough that a track change reads as the whole
   /// surface shifting colour rather than a flicker.
-  static const Duration backdrop = Duration(milliseconds: 500);
+  /// The cover backdrop's colour change. Duration and curve are the web
+  /// player's own: 0.8s `cubic-bezier(.04,.04,.12,.96)`.
+  static const Duration backdrop = Duration(milliseconds: 800);
 
   /// The loading skeleton pulse. Slow and low contrast: it should read as
   /// "content is coming" without competing with the content itself.
   static const Duration pulse = Duration(milliseconds: 1200);
-
-  /// One lap of the backdrop's drifting gradient. Long enough that neither end
-  /// of the journey is visible: the colours are always somewhere in the middle
-  /// of it, which is what stops a still cover from looking like a still screen.
-  static const Duration drift = Duration(seconds: 36);
-
-  /// One breath of the backdrop. Tied to whether the player is running rather
-  /// than to the track's tempo, which the player cannot report.
-  static const Duration breath = Duration(milliseconds: 4200);
 }
 
 /// Curves, paired with the intent of the animation.
@@ -79,6 +72,10 @@ abstract final class AppCurve {
 
   /// Attention without motion, e.g. a colour change.
   static const Curve colour = Curves.easeInOut;
+
+  /// A track change on the backdrop. The web player uses this exact curve for
+  /// its own crossfade: slow to leave, slow to arrive, nothing sudden.
+  static const Curve crossfade = Cubic(0.04, 0.04, 0.12, 0.96);
 }
 
 /// Text styles, by the role the text plays.
@@ -104,14 +101,16 @@ abstract final class AppBlur {
   /// Alpha applied to the cover colour on top of the backdrop blur.
   static const int backdropAlpha = 180;
 
-  /// Alpha for each colour the backdrop drifts over the base tint. High enough
-  /// that the movement is visible, low enough that the base colour still sets
-  /// the contrast the text was chosen for.
-  static const int driftAlpha = 115;
-
-  /// How far one breath pushes the drifting colours outwards, as a fraction of
-  /// their radius.
-  static const double breathScale = 0.07;
+  /// The bloom: a copy of the artwork, blurred and pushed past its own
+  /// saturation, laid over the tint. This is what makes a cover-derived surface
+  /// read as the artwork rather than as the artwork's average colour.
+  ///
+  /// The numbers are the web player's own rule for the same effect:
+  /// `filter: blur(20px) saturate(2); opacity: .4; transform: scale(.88)`.
+  static double bloomSigma(double side) => backdropSigma(side);
+  static const double bloomSaturation = 2;
+  static const double bloomAlpha = 0.4;
+  static const double bloomScale = 1.1;
 }
 
 /// Elevation, expressed as the shadow a surface casts.

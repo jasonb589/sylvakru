@@ -99,7 +99,7 @@ class _BigSingleArtistPanelState extends State<BigSingleArtistPanel> {
             builder: (context, value, child) {
               return CoverBackdrop(
                 colour: currentCoverArtColor,
-                palette: currentCoverPalette,
+                picture: currentSongNotifier.value?.picture,
               );
             },
           ),

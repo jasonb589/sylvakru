@@ -552,7 +552,6 @@ class MyAudioHandler extends BaseAudioHandler {
     currentIndex = -1;
     currentSongNotifier.value = null;
     currentCoverArtColor = Colors.grey;
-    currentCoverPalette = const [];
     saveAllStates();
   }
 
@@ -569,7 +568,6 @@ class MyAudioHandler extends BaseAudioHandler {
     currentIndex = -1;
     currentSongNotifier.value = null;
     currentCoverArtColor = Colors.grey;
-    currentCoverPalette = const [];
   }
 
   List<MyAudioMetadata> getNewQueue(List<MyAudioMetadata> oldQueue) {
@@ -614,7 +612,6 @@ class MyAudioHandler extends BaseAudioHandler {
   Future<void> _setLyricsAndUpdateColors(MyAudioMetadata song) async {
     await setParsedLyrics(song);
     currentCoverArtColor = await computeColor(song.picture);
-    currentCoverPalette = await computePalette(song.picture);
     updateHoverFocusColor();
     contrastColorTheme = ContrastColorGenerator.generate(currentCoverArtColor);
     if (lyricsPageThemeNotifier.value == .vivid) {

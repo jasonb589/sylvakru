@@ -105,7 +105,7 @@ class _LandscapeLyricsPageState extends State<LandscapeLyricsPage> {
                 ),
                 CoverBackdrop(
                   colour: currentCoverArtColor,
-                  palette: currentCoverPalette,
+                  picture: currentSong?.picture,
                 ),
               ],
 

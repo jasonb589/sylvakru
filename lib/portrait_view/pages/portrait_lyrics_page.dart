@@ -175,7 +175,7 @@ class _PortraitLyricsPageState extends State<PortraitLyricsPage> {
                   ),
                   CoverBackdrop(
                     colour: currentCoverArtColor,
-                    palette: currentCoverPalette,
+                    picture: currentSong?.picture,
                   ),
                 ],
                 Container(

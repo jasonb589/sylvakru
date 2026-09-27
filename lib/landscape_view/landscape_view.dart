@@ -46,7 +46,7 @@ class LandscapeView extends StatelessWidget {
               builder: (context, value, child) {
                 return CoverBackdrop(
                   colour: backgroundCoverArtColor,
-                  palette: backgroundCoverPalette,
+                  picture: backgroundPicture,
                 );
               },
             );
