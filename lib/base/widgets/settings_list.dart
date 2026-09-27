@@ -37,9 +37,6 @@ import 'package:sylvakru/base/widgets/my_switch.dart';
 import 'package:smooth_corner/smooth_corner.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-/// Selectable cache bounds, in MB. 0 means "no limit".
-const List<int> cacheLimitOptionsMb = [0, 1024, 2048, 5120, 10240];
-
 class SettingsList extends StatefulWidget {
   final double? iconSize;
   const SettingsList({super.key, this.iconSize});
@@ -494,14 +491,17 @@ class _SettingsListState extends State<SettingsList> {
     );
   }
 
-  /// The cache row: shows how much is cached and, on tap, offers both the
-  /// upper bound and a way to clear it.
-  ///
-  /// These used to be two rows with the same icon, which read as duplicates.
+  /// The temporary playback cache. Explicit offline music is stored and
+  /// managed separately by the Offline Music page.
   Widget cacheListTile(BuildContext context, AppLocalizations l10n) {
     return ListTile(
       leading: ImageIcon(cacheImage, size: iconSize),
       title: Text(l10n.cache),
+      subtitle: Text(
+        l10n.temporaryCacheDescription,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      ),
       onTap: () {
         showAnimationDialog(
           context: context,
@@ -519,48 +519,15 @@ class _SettingsListState extends State<SettingsList> {
                     height: 35,
                     child: Text(l10n.cache, style: AppText.sheetTitle),
                   ),
-
-                  // used / limit
                   ValueListenableBuilder(
                     valueListenable: cacheSizeNotifier,
                     builder: (context, used, child) {
-                      return ValueListenableBuilder(
-                        valueListenable: cacheLimitMbNotifier,
-                        builder: (context, limit, child) {
-                          return ListTile(
-                            title: Text(l10n.cacheUsage),
-                            subtitle: Text(
-                              limit <= 0
-                                  ? '${used.toStringAsFixed(1)}MB / '
-                                        '${l10n.cacheLimitUnlimited}'
-                                  : '${used.toStringAsFixed(1)}MB / $limit MB',
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
-
-                  ValueListenableBuilder(
-                    valueListenable: cacheLimitMbNotifier,
-                    builder: (context, current, child) {
                       return ListTile(
-                        title: Text(l10n.cacheLimit),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(cacheLimitLabel(l10n, current)),
-                            const Icon(Icons.chevron_right),
-                          ],
-                        ),
-                        onTap: () {
-                          Navigator.pop(context);
-                          _showCacheLimitPicker(context, l10n);
-                        },
+                        title: Text(l10n.cacheUsage),
+                        subtitle: Text('${used.toStringAsFixed(1)}MB'),
                       );
                     },
                   ),
-
                   ListTile(
                     title: Text(l10n.clearCache),
                     onTap: () {
@@ -577,54 +544,8 @@ class _SettingsListState extends State<SettingsList> {
       trailing: ValueListenableBuilder(
         valueListenable: cacheSizeNotifier,
         builder: (context, used, child) {
-          return ValueListenableBuilder(
-            valueListenable: cacheLimitMbNotifier,
-            builder: (context, limit, child) {
-              final usedText = '${used.toStringAsFixed(1)}MB';
-              return Text(limit <= 0 ? usedText : '$usedText / $limit MB');
-            },
-          );
+          return Text('${used.toStringAsFixed(1)}MB');
         },
-      ),
-    );
-  }
-
-  void _showCacheLimitPicker(BuildContext context, AppLocalizations l10n) {
-    showAnimationDialog(
-      context: context,
-      child: SizedBox(
-        width: 300,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 15),
-          child: ValueListenableBuilder(
-            valueListenable: cacheLimitMbNotifier,
-            builder: (context, current, child) {
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(
-                    height: 35,
-                    child: Text(l10n.cacheLimit, style: AppText.sheetTitle),
-                  ),
-                  for (final option in cacheLimitOptionsMb)
-                    ListTile(
-                      title: Text(cacheLimitLabel(l10n, option)),
-                      trailing: current == option
-                          ? const Icon(Icons.check)
-                          : null,
-                      onTap: () {
-                        cacheLimitMbNotifier.value = option;
-                        setting.save();
-                        library.enforceCacheLimit(
-                          keepSongIds: playQueue.map((song) => song.id).toSet(),
-                        );
-                      },
-                    ),
-                ],
-              );
-            },
-          ),
-        ),
       ),
     );
   }
@@ -642,14 +563,9 @@ class _SettingsListState extends State<SettingsList> {
       showCenterLoading();
       layersManager.clearDataLayers();
       await library.clearCache();
-      await library.clearPicture();
       playlistManager.updateNotifier.value++;
       removeCenterLoading();
     }
-  }
-
-  String cacheLimitLabel(AppLocalizations l10n, int mb) {
-    return mb <= 0 ? l10n.cacheLimitUnlimited : '$mb MB';
   }
 
   Widget languageListTile(BuildContext context, AppLocalizations l10n) {

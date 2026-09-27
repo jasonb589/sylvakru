@@ -358,7 +358,7 @@ Widget downloadButton(double size) {
             );
           }
 
-          final exists = currentSong.cacheExist;
+          final exists = currentSong.downloadExist;
 
           return IconButton(
             tooltip: exists ? l10n.removeDownload : l10n.downloadForOffline,

@@ -304,10 +304,15 @@ class _EditMetadataState extends State<EditMetadata> {
 
       if (success) {
         song.modified = DateTime.now();
-        if (song.cacheExist) {
+        if (song.cacheExist && song.cachePath != null) {
           File(song.cachePath!).deleteSync();
           song.cacheExist = false;
         }
+        if (song.downloadExist && song.downloadPath != null) {
+          File(song.downloadPath!).deleteSync();
+          song.downloadExist = false;
+        }
+        await library.refreshStorageStats();
         song.title = writeTitle;
         song.artist = writeArtist;
         song.album = writeAlbum;

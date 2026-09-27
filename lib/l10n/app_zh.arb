@@ -158,11 +158,13 @@
   "modifiedTimedescending": "修改时间降序",
   "playQueueEmpty": "播放队列是空的",
   "cannotBeUndone": "不可撤销",
-  "clearCache": "清除缓存",
-  "cacheLimit": "缓存上限",
-  "cacheLimitUnlimited": "不限制",
-  "cache": "缓存",
-  "cacheUsage": "已用空间",
+  "clearCache": "清除临时缓存",
+  "offlineMusicLimit": "离线音乐上限",
+  "offlineMusicLimitUnlimited": "不限制",
+  "cache": "临时缓存",
+  "cacheUsage": "临时缓存占用",
+  "temporaryCacheDescription": "播放过程中产生的临时音频，可随时清理，不影响离线音乐",
+  "offlineMusicStorage": "离线音乐占用",
   "tapAgain": "再按一次退出",
   "close": "关闭",
   "fonts": "字体",
@@ -247,19 +249,20 @@
   "maximum": "最大值",
   "applyFilters": "应用筛选",
   "invalidRange": "请输入有效范围，最小值不能大于最大值",
-  "downloadForOffline": "下载到本地离线播放",
-  "removeDownload": "移除离线文件",
-  "downloading": "正在下载…",
-  "downloadFailed": "下载失败，请检查网络和存储空间",
-  "downloadInUse": "请先暂停播放，再移除此离线文件",
-  "offlineSongs": "已下载歌曲",
-  "noOfflineSongs": "暂无离线下载",
-  "offlineDownloadCount": "已下载 {count} 首歌曲",
-  "@offlineDownloadCount": {
+  "offlineMusic": "离线音乐",
+  "offlineMusicDescription": "已下载到本地，无网络时也可播放；与临时缓存分开管理",
+  "noOfflineMusic": "暂无离线音乐",
+  "offlineMusicCount": "{count} 首离线音乐",
+  "@offlineMusicCount": {
     "placeholders": {
       "count": {
         "type": "int"
       }
     }
-  }
+  },
+  "downloadForOffline": "下载到离线音乐",
+  "removeDownload": "移除离线音乐",
+  "downloading": "正在下载到离线音乐…",
+  "downloadFailed": "下载失败，请检查网络和存储空间",
+  "downloadInUse": "请先暂停播放，再移除此离线音乐"
 }

@@ -18,11 +18,8 @@ import 'package:sylvakru/landscape_view/title_bar.dart';
 final GlobalKey<NavigatorState> downloadKey = GlobalKey();
 final downloadVisibleNotifier = ValueNotifier(true);
 
-/// "Downloads": every song that has an offline copy, and the space it takes.
-///
-/// This used to be a dialog buried two levels inside Settings → Cache, which
-/// made the only place that manages offline copies the last place anyone would
-/// look for it. It is a first-class destination now, reached from the sidebar.
+/// "Offline Music": every song with a user-managed offline copy, and the
+/// storage it occupies. Temporary playback cache is intentionally excluded.
 class DownloadLayer extends StatefulWidget {
   const DownloadLayer({super.key});
 
@@ -73,17 +70,17 @@ class _DownloadLayerState extends State<DownloadLayer> {
   Widget content(BuildContext context, {required double horizontalPadding}) {
     final l10n = AppLocalizations.of(context);
 
-    // The offline list changes under us in three ways: a download finishes, a
-    // copy is removed, or the LRU sweep drops one to stay under the limit.
+    // The offline list changes when a download finishes, a copy is removed,
+    // or the offline limit evicts a file.
     return ListenableBuilder(
       listenable: Listenable.merge([
         library.changeNotifier,
-        cacheSizeNotifier,
-        cacheLimitMbNotifier,
+        downloadSizeNotifier,
+        offlineMusicLimitMbNotifier,
         downloadingSongIdsNotifier,
       ]),
       builder: (context, _) {
-        final songs = library.offlineSongs;
+        final songs = library.offlineMusicSongs;
 
         return CustomScrollView(
           controller: scrollController,
@@ -96,22 +93,41 @@ class _DownloadLayerState extends State<DownloadLayer> {
                   horizontalPadding,
                   0,
                 ),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const ImageIcon(downloadImage, size: 34),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        l10n.offlineSongs,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
+                    Row(
+                      children: [
+                        const ImageIcon(offlineMusicImage, size: 34),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            l10n.offlineMusic,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
-                      ),
+                        Tooltip(
+                          message: l10n.offlineMusicStorage,
+                          child: TextButton.icon(
+                            onPressed: () =>
+                                _showOfflineLimitPicker(context, l10n),
+                            icon: const Icon(Icons.tune, size: 16),
+                            label: Text(storageLabel()),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      l10n.offlineMusicDescription,
+                      style: TextStyle(color: iconColor.value, fontSize: 12),
                     ),
                     Text(
-                      storageLabel(),
-                      style: TextStyle(color: iconColor.value),
+                      l10n.offlineMusicCount(songs.length),
+                      style: TextStyle(color: iconColor.value, fontSize: 12),
                     ),
                   ],
                 ),
@@ -124,8 +140,8 @@ class _DownloadLayerState extends State<DownloadLayer> {
               SliverFillRemaining(
                 hasScrollBody: false,
                 child: EmptyState(
-                  icon: Icons.download_outlined,
-                  title: l10n.noOfflineSongs,
+                  icon: Icons.music_note_outlined,
+                  title: l10n.noOfflineMusic,
                 ),
               )
             else
@@ -148,11 +164,59 @@ class _DownloadLayerState extends State<DownloadLayer> {
     );
   }
 
-  /// How much space the offline copies take, against the configured limit.
+  /// How much space the offline copies take, against the offline music limit.
   String storageLabel() {
-    final used = '${cacheSizeNotifier.value.toStringAsFixed(1)}MB';
-    final limit = cacheLimitMbNotifier.value;
+    final used = '${downloadSizeNotifier.value.toStringAsFixed(1)}MB';
+    final limit = offlineMusicLimitMbNotifier.value;
     return limit <= 0 ? used : '$used / $limit MB';
+  }
+
+  void _showOfflineLimitPicker(BuildContext context, AppLocalizations l10n) {
+    showAnimationDialog(
+      context: context,
+      child: SizedBox(
+        width: 300,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
+          child: ValueListenableBuilder(
+            valueListenable: offlineMusicLimitMbNotifier,
+            builder: (context, current, child) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    height: 35,
+                    child: Text(
+                      l10n.offlineMusicLimit,
+                      style: AppText.sheetTitle,
+                    ),
+                  ),
+                  for (final option in offlineMusicLimitOptionsMb)
+                    ListTile(
+                      title: Text(
+                        option <= 0
+                            ? l10n.offlineMusicLimitUnlimited
+                            : '$option MB',
+                      ),
+                      trailing: current == option
+                          ? const Icon(Icons.check)
+                          : null,
+                      onTap: () {
+                        offlineMusicLimitMbNotifier.value = option;
+                        setting.save();
+                        library.enforceDownloadLimit(
+                          keepSongIds: playQueue.map((song) => song.id).toSet(),
+                        );
+                        Navigator.pop(context);
+                      },
+                    ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
   }
 
   Widget offlineRow(

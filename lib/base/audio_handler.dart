@@ -671,12 +671,28 @@ class MyAudioHandler extends BaseAudioHandler {
 
     isLoading = true;
     try {
-      if (currentSong.cacheExist) {
+      final downloadFile = currentSong.downloadPath == null
+          ? null
+          : File(currentSong.downloadPath!);
+      final cacheFile = currentSong.cachePath == null
+          ? null
+          : File(currentSong.cachePath!);
+      if (downloadFile != null && await downloadFile.exists()) {
+        currentSong.downloadExist = true;
         await _player.open(
-          Media(currentSong.cachePath!, start: start),
+          Media(downloadFile.path, start: start),
+          play: isPlayingNotifier.value,
+        );
+      } else if (cacheFile != null && await cacheFile.exists()) {
+        currentSong.downloadExist = false;
+        currentSong.cacheExist = true;
+        await _player.open(
+          Media(cacheFile.path, start: start),
           play: isPlayingNotifier.value,
         );
       } else {
+        currentSong.downloadExist = false;
+        currentSong.cacheExist = false;
         String? resource;
         Map<String, String>? headers;
 

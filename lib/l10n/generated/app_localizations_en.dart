@@ -501,19 +501,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cannotBeUndone => 'Cannot be Undone';
 
   @override
-  String get clearCache => 'Clear Cache';
+  String get clearCache => 'Clear Temporary Cache';
 
   @override
-  String get cacheLimit => 'Cache Limit';
+  String get offlineMusicLimit => 'Offline Music Limit';
 
   @override
-  String get cacheLimitUnlimited => 'Unlimited';
+  String get offlineMusicLimitUnlimited => 'Unlimited';
 
   @override
-  String get cache => 'Cache';
+  String get cache => 'Temporary Cache';
 
   @override
-  String get cacheUsage => 'Used Space';
+  String get cacheUsage => 'Temporary Cache Usage';
+
+  @override
+  String get temporaryCacheDescription =>
+      'Temporary audio created during playback; safe to clear and separate from offline music';
+
+  @override
+  String get offlineMusicStorage => 'Offline Music Storage';
 
   @override
   String get tapAgain => 'Tap Again to Exit';
@@ -787,28 +794,34 @@ class AppLocalizationsEn extends AppLocalizations {
       'Enter valid values; minimum must not exceed maximum';
 
   @override
-  String get downloadForOffline => 'Download for offline';
+  String get offlineMusic => 'Offline Music';
 
   @override
-  String get removeDownload => 'Remove offline copy';
+  String get offlineMusicDescription =>
+      'Downloaded to this device for playback without a network; managed separately from temporary cache';
 
   @override
-  String get downloading => 'Downloading…';
+  String get noOfflineMusic => 'No offline music';
 
   @override
-  String get downloadFailed => 'Download failed';
-
-  @override
-  String get downloadInUse => 'Pause playback before removing this download';
-
-  @override
-  String get offlineSongs => 'Offline songs';
-
-  @override
-  String get noOfflineSongs => 'No offline songs downloaded';
-
-  @override
-  String offlineDownloadCount(int count) {
-    return '$count offline songs';
+  String offlineMusicCount(int count) {
+    return '$count offline music tracks';
   }
+
+  @override
+  String get downloadForOffline => 'Download to Offline Music';
+
+  @override
+  String get removeDownload => 'Remove from Offline Music';
+
+  @override
+  String get downloading => 'Downloading to Offline Music…';
+
+  @override
+  String get downloadFailed =>
+      'Download failed; check the network and available storage';
+
+  @override
+  String get downloadInUse =>
+      'Pause playback before removing this offline music';
 }

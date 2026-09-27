@@ -968,19 +968,19 @@ void showSongOptions({
                                     iconColor.value,
                               )
                             : Icon(
-                                song.cacheExist
+                                song.downloadExist
                                     ? Icons.download_done_rounded
                                     : Icons.download_rounded,
                               ),
                         text: isDownloading
                             ? l10n.downloading
-                            : song.cacheExist
+                            : song.downloadExist
                             ? l10n.removeDownload
                             : l10n.downloadForOffline,
                         onTap: () async {
                           Navigator.pop(context);
                           if (isDownloading) return;
-                          if (song.cacheExist) {
+                          if (song.downloadExist) {
                             final removed = await library.removeOfflineCopy(
                               song,
                               currentlyPlaying:

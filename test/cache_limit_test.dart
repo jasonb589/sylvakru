@@ -1,22 +1,22 @@
 import 'dart:io';
 
+import 'package:audio_tags_lofty/audio_tags_lofty.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sylvakru/base/app.dart';
 import 'package:sylvakru/base/data/library.dart';
 import 'package:sylvakru/base/data/setting.dart';
-import 'package:sylvakru/base/utils/path.dart';
-import 'package:sylvakru/base/services/logger.dart';
-
-import 'package:audio_tags_lofty/audio_tags_lofty.dart';
 import 'package:sylvakru/base/my_audio_metadata.dart';
+import 'package:sylvakru/base/services/logger.dart';
+import 'package:sylvakru/base/utils/path.dart';
 
 MyAudioMetadata song(String id) => MyAudioMetadata(
   AudioMetadata(title: id),
   id: id,
   path: '/music/$id.flac',
 );
-File writeCacheFile(String name, double mb) {
-  final file = File('${getCachesPath(sourceType)}/$name');
+
+File writeDownloadFile(String name, double mb) {
+  final file = File('${getDownloadsPath(sourceType)}/$name');
   file.createSync(recursive: true);
   file.writeAsBytesSync(List.filled((mb * 1024 * 1024).round(), 0));
   return file;
@@ -24,32 +24,38 @@ File writeCacheFile(String name, double mb) {
 
 void main() {
   late Directory support;
-  late Directory cacheDir;
+  late Directory downloadDir;
 
-  // appSupportDir is a late final, so it can only be assigned once per process
-  // appSupportDir is a late final, so it can only be assigned once per process
   setUpAll(() async {
-    support = Directory.systemTemp.createTempSync('sylvakru_cache');
+    support = Directory.systemTemp.createTempSync('sylvakru_download_limit');
     appSupportDir = support;
-    // enforceCacheLimit logs what it evicted
     await logger.init();
   });
+
   setUp(() {
     sourceType = SourceType.navidrome;
     isStreamSource = true;
     isNotStreamSource = false;
+    library.id2Song.clear();
 
-    cacheDir = Directory(getCachesPath(sourceType));
-    if (cacheDir.existsSync()) {
-      cacheDir.deleteSync(recursive: true);
+    for (final path in [
+      getCachesPath(sourceType),
+      getDownloadsPath(sourceType),
+    ]) {
+      final directory = Directory(path);
+      if (directory.existsSync()) {
+        directory.deleteSync(recursive: true);
+      }
     }
-    cacheDir.createSync(recursive: true);
-    cacheLimitMbNotifier.value = 0;
+    downloadDir = Directory(getDownloadsPath(sourceType));
+    downloadDir.createSync(recursive: true);
+    offlineMusicLimitMbNotifier.value = 0;
+    downloadSizeNotifier.value = 0;
   });
 
-  double cacheMb() {
+  double downloadMb() {
     var total = 0;
-    for (final entity in cacheDir.listSync()) {
+    for (final entity in downloadDir.listSync()) {
       if (entity is File) {
         total += entity.lengthSync();
       }
@@ -57,91 +63,100 @@ void main() {
     return total / (1024 * 1024);
   }
 
-  group('enforceCacheLimit', () {
+  group('enforceDownloadLimit', () {
     test('does nothing when no limit is set', () async {
-      writeCacheFile('a', 3);
-      writeCacheFile('b', 3);
+      writeDownloadFile('a', 3);
+      writeDownloadFile('b', 3);
 
-      await library.enforceCacheLimit();
+      await library.enforceDownloadLimit();
 
-      expect(cacheMb(), closeTo(6, 0.1));
+      expect(downloadMb(), closeTo(6, 0.1));
     });
 
-    test('trims the cache down to the limit', () async {
-      // 2 + 2 + 2 MB against a 3 MB bound: at least one file has to go
+    test('trims offline music down to the limit', () async {
       for (final name in ['old', 'mid', 'new']) {
-        writeCacheFile(name, 2);
+        writeDownloadFile(name, 2);
       }
-      // make the age order unambiguous (lastAccessed is not reliable on every
-      // filesystem, so the code falls back to the modification time)
       final now = DateTime.now();
-      File('${cacheDir.path}/old').setLastModifiedSync(
-        now.subtract(const Duration(days: 3)),
-      );
-      File('${cacheDir.path}/mid').setLastModifiedSync(
-        now.subtract(const Duration(days: 2)),
-      );
-      File('${cacheDir.path}/new').setLastModifiedSync(
-        now.subtract(const Duration(days: 1)),
-      );
+      File(
+        '${downloadDir.path}/old',
+      ).setLastModifiedSync(now.subtract(const Duration(days: 3)));
+      File(
+        '${downloadDir.path}/mid',
+      ).setLastModifiedSync(now.subtract(const Duration(days: 2)));
+      File(
+        '${downloadDir.path}/new',
+      ).setLastModifiedSync(now.subtract(const Duration(days: 1)));
 
-      cacheLimitMbNotifier.value = 3;
-      await library.enforceCacheLimit();
+      offlineMusicLimitMbNotifier.value = 3;
+      await library.enforceDownloadLimit();
 
-      expect(cacheMb(), lessThanOrEqualTo(3.1));
-      // the oldest went first
-      expect(File('${cacheDir.path}/old').existsSync(), isFalse);
+      expect(downloadMb(), lessThanOrEqualTo(3.1));
+      expect(File('${downloadDir.path}/old').existsSync(), isFalse);
     });
 
     test('never deletes the song that is playing', () async {
-      // the cached file name is the md5 of the song id, so build the song
-      // first and use the path it computed
       final playing = song('playing');
-      final playingFile = File(playing.cachePath!);
+      final playingFile = File(playing.downloadPath!);
       playingFile.createSync(recursive: true);
       playingFile.writeAsBytesSync(List.filled(2 * 1024 * 1024, 0));
-      writeCacheFile('other-old', 2);
-      writeCacheFile('other-new', 2);
+      playing.downloadExist = true;
+      writeDownloadFile('other-old', 2);
+      writeDownloadFile('other-new', 2);
 
       final now = DateTime.now();
-      // make the playing song's file the oldest, i.e. the first eviction
-      // candidate, so only the "keep" rule can save it
       playingFile.setLastModifiedSync(now.subtract(const Duration(days: 5)));
-      File('${cacheDir.path}/other-old').setLastModifiedSync(
-        now.subtract(const Duration(days: 3)),
-      );
-      File('${cacheDir.path}/other-new').setLastModifiedSync(
-        now.subtract(const Duration(days: 1)),
-      );
+      File(
+        '${downloadDir.path}/other-old',
+      ).setLastModifiedSync(now.subtract(const Duration(days: 3)));
+      File(
+        '${downloadDir.path}/other-new',
+      ).setLastModifiedSync(now.subtract(const Duration(days: 1)));
 
       library.id2Song['playing'] = playing;
-      addTearDown(() => library.id2Song.remove('playing'));
 
-      cacheLimitMbNotifier.value = 3;
-      await library.enforceCacheLimit(keepSongId: 'playing');
+      offlineMusicLimitMbNotifier.value = 3;
+      await library.enforceDownloadLimit(keepSongId: 'playing');
 
       expect(
         playingFile.existsSync(),
         isTrue,
-        reason: 'the playing song must keep its cached file',
+        reason: 'the playing song must keep its offline file',
       );
-      expect(cacheMb(), lessThanOrEqualTo(3.1));
+      expect(downloadMb(), lessThanOrEqualTo(3.1));
     });
 
-    test('leaves a cache that already fits alone', () async {
-      writeCacheFile('a', 1);
-      cacheLimitMbNotifier.value = 100;
+    test('leaves offline music that already fits alone', () async {
+      writeDownloadFile('a', 1);
+      offlineMusicLimitMbNotifier.value = 100;
 
-      await library.enforceCacheLimit();
+      await library.enforceDownloadLimit();
 
-      expect(File('${cacheDir.path}/a').existsSync(), isTrue);
+      expect(File('${downloadDir.path}/a').existsSync(), isTrue);
     });
 
-    test('is harmless when the cache directory does not exist', () async {
-      cacheDir.deleteSync(recursive: true);
-      cacheLimitMbNotifier.value = 1;
+    test(
+      'does not include temporary cache in the offline music limit',
+      () async {
+        writeDownloadFile('offline', 2);
+        final cacheFile = File('${getCachesPath(sourceType)}/temporary');
+        cacheFile.createSync(recursive: true);
+        cacheFile.writeAsBytesSync(List.filled(10 * 1024 * 1024, 0));
+        cacheSizeNotifier.value = 10;
+        offlineMusicLimitMbNotifier.value = 1;
 
-      await library.enforceCacheLimit();
+        await library.enforceDownloadLimit();
+
+        expect(File('${downloadDir.path}/offline').existsSync(), isFalse);
+        expect(cacheFile.existsSync(), isTrue);
+      },
+    );
+
+    test('is harmless when the downloads directory does not exist', () async {
+      downloadDir.deleteSync(recursive: true);
+      offlineMusicLimitMbNotifier.value = 1;
+
+      await library.enforceDownloadLimit();
     });
   });
 }

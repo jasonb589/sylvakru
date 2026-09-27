@@ -1055,32 +1055,44 @@ abstract class AppLocalizations {
   /// No description provided for @clearCache.
   ///
   /// In en, this message translates to:
-  /// **'Clear Cache'**
+  /// **'Clear Temporary Cache'**
   String get clearCache;
 
-  /// No description provided for @cacheLimit.
+  /// No description provided for @offlineMusicLimit.
   ///
   /// In en, this message translates to:
-  /// **'Cache Limit'**
-  String get cacheLimit;
+  /// **'Offline Music Limit'**
+  String get offlineMusicLimit;
 
-  /// No description provided for @cacheLimitUnlimited.
+  /// No description provided for @offlineMusicLimitUnlimited.
   ///
   /// In en, this message translates to:
   /// **'Unlimited'**
-  String get cacheLimitUnlimited;
+  String get offlineMusicLimitUnlimited;
 
   /// No description provided for @cache.
   ///
   /// In en, this message translates to:
-  /// **'Cache'**
+  /// **'Temporary Cache'**
   String get cache;
 
   /// No description provided for @cacheUsage.
   ///
   /// In en, this message translates to:
-  /// **'Used Space'**
+  /// **'Temporary Cache Usage'**
   String get cacheUsage;
+
+  /// No description provided for @temporaryCacheDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Temporary audio created during playback; safe to clear and separate from offline music'**
+  String get temporaryCacheDescription;
+
+  /// No description provided for @offlineMusicStorage.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline Music Storage'**
+  String get offlineMusicStorage;
 
   /// No description provided for @tapAgain.
   ///
@@ -1586,53 +1598,59 @@ abstract class AppLocalizations {
   /// **'Enter valid values; minimum must not exceed maximum'**
   String get invalidRange;
 
+  /// No description provided for @offlineMusic.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline Music'**
+  String get offlineMusic;
+
+  /// No description provided for @offlineMusicDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloaded to this device for playback without a network; managed separately from temporary cache'**
+  String get offlineMusicDescription;
+
+  /// No description provided for @noOfflineMusic.
+  ///
+  /// In en, this message translates to:
+  /// **'No offline music'**
+  String get noOfflineMusic;
+
+  /// No description provided for @offlineMusicCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} offline music tracks'**
+  String offlineMusicCount(int count);
+
   /// No description provided for @downloadForOffline.
   ///
   /// In en, this message translates to:
-  /// **'Download for offline'**
+  /// **'Download to Offline Music'**
   String get downloadForOffline;
 
   /// No description provided for @removeDownload.
   ///
   /// In en, this message translates to:
-  /// **'Remove offline copy'**
+  /// **'Remove from Offline Music'**
   String get removeDownload;
 
   /// No description provided for @downloading.
   ///
   /// In en, this message translates to:
-  /// **'Downloading…'**
+  /// **'Downloading to Offline Music…'**
   String get downloading;
 
   /// No description provided for @downloadFailed.
   ///
   /// In en, this message translates to:
-  /// **'Download failed'**
+  /// **'Download failed; check the network and available storage'**
   String get downloadFailed;
 
   /// No description provided for @downloadInUse.
   ///
   /// In en, this message translates to:
-  /// **'Pause playback before removing this download'**
+  /// **'Pause playback before removing this offline music'**
   String get downloadInUse;
-
-  /// No description provided for @offlineSongs.
-  ///
-  /// In en, this message translates to:
-  /// **'Offline songs'**
-  String get offlineSongs;
-
-  /// No description provided for @noOfflineSongs.
-  ///
-  /// In en, this message translates to:
-  /// **'No offline songs downloaded'**
-  String get noOfflineSongs;
-
-  /// No description provided for @offlineDownloadCount.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} offline songs'**
-  String offlineDownloadCount(int count);
 }
 
 class _AppLocalizationsDelegate

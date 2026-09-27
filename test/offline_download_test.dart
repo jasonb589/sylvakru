@@ -1,5 +1,5 @@
-import 'dart:io';
 import 'dart:async';
+import 'dart:io';
 
 import 'package:audio_tags_lofty/audio_tags_lofty.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -7,9 +7,8 @@ import 'package:sylvakru/base/app.dart';
 import 'package:sylvakru/base/data/library.dart';
 import 'package:sylvakru/base/data/setting.dart';
 import 'package:sylvakru/base/my_audio_metadata.dart';
-import 'package:sylvakru/base/utils/path.dart';
-
 import 'package:sylvakru/base/services/logger.dart';
+import 'package:sylvakru/base/utils/path.dart';
 
 MyAudioMetadata _song(String id) => MyAudioMetadata(
   AudioMetadata(title: id),
@@ -25,35 +24,45 @@ void main() {
     appSupportDir = support;
     await logger.init();
   });
+
   setUp(() {
     sourceType = SourceType.navidrome;
     isStreamSource = true;
     isNotStreamSource = false;
     cacheSizeNotifier.value = 0;
+    downloadSizeNotifier.value = 0;
     downloadingSongIdsNotifier.value = {};
+    offlineMusicLimitMbNotifier.value = 0;
     library.id2Song.clear();
-    final cacheDir = Directory(getCachesPath(sourceType));
-    if (cacheDir.existsSync()) {
-      cacheDir.deleteSync(recursive: true);
+    for (final path in [
+      getCachesPath(sourceType),
+      getDownloadsPath(sourceType),
+    ]) {
+      final directory = Directory(path);
+      if (directory.existsSync()) {
+        directory.deleteSync(recursive: true);
+      }
     }
   });
 
-  test('downloads an offline copy and reports it in the library', () async {
+  test('downloads an offline copy into downloads and reports it', () async {
     final song = _song('downloadable');
     library.id2Song[song.id] = song;
 
     final result = await library.downloadForOffline(
       song,
       downloader: (song) async {
-        await File(song.cachePath!).writeAsString('audio');
+        await File(song.downloadPath!).writeAsString('audio');
         return true;
       },
     );
 
     expect(result, isTrue);
-    expect(song.cacheExist, isTrue);
-    expect(File(song.cachePath!).readAsStringSync(), 'audio');
-    expect(library.offlineSongs, contains(song));
+    expect(song.downloadExist, isTrue);
+    expect(File(song.downloadPath!).readAsStringSync(), 'audio');
+    expect(File(song.cachePath!).existsSync(), isFalse);
+    expect(library.offlineMusicSongs, contains(song));
+    expect(downloadSizeNotifier.value, greaterThan(0));
     expect(downloadingSongIdsNotifier.value, isEmpty);
   });
 
@@ -65,13 +74,39 @@ void main() {
       await library.downloadForOffline(
         song,
         downloader: (song) async {
-          await File(song.cachePath!).writeAsString('audio');
+          await File(song.downloadPath!).writeAsString('audio');
           return true;
         },
       ),
       isTrue,
     );
   });
+
+  test(
+    'migrates known legacy copies and leaves unknown cache files alone',
+    () async {
+      final known = _song('known-legacy');
+      library.id2Song[known.id] = known;
+      final oldFile = File(known.cachePath!)..createSync(recursive: true);
+      oldFile.writeAsStringSync('legacy audio');
+      final unknown = File('${getCachesPath(sourceType)}/temporary-file')
+        ..createSync(recursive: true);
+      unknown.writeAsStringSync('temporary audio');
+
+      await library.migrateLegacyOfflineCopies();
+
+      expect(File(known.downloadPath!).readAsStringSync(), 'legacy audio');
+      expect(File(known.cachePath!).existsSync(), isFalse);
+      expect(known.cacheExist, isFalse);
+      expect(known.downloadExist, isTrue);
+      expect(unknown.existsSync(), isTrue);
+      expect(downloadSizeNotifier.value, greaterThan(0));
+
+      await library.migrateLegacyOfflineCopies();
+      expect(unknown.existsSync(), isTrue);
+      expect(File(known.downloadPath!).existsSync(), isTrue);
+    },
+  );
 
   test('keeps queued copies while the limit can still be met', () async {
     final playing = _song('playing');
@@ -81,27 +116,25 @@ void main() {
       library.id2Song[song.id] = song;
     }
     for (final song in [playing, queued, disposable]) {
-      final file = File(song.cachePath!)..createSync(recursive: true);
+      final file = File(song.downloadPath!)..createSync(recursive: true);
       file.writeAsBytesSync(List.filled(2 * 1024 * 1024, 0));
-      song.cacheExist = true;
+      song.downloadExist = true;
     }
     for (final id in ['playing', 'queued', 'disposable']) {
-      File(library.id2Song[id]!.cachePath!).setLastModifiedSync(
+      File(library.id2Song[id]!.downloadPath!).setLastModifiedSync(
         DateTime.now().subtract(
           Duration(days: 4 - ['playing', 'queued', 'disposable'].indexOf(id)),
         ),
       );
     }
-    // Six megabytes against a five megabyte cap: dropping the unqueued copy
-    // alone is enough, so the queued ones must be left alone.
-    cacheLimitMbNotifier.value = 5;
+    offlineMusicLimitMbNotifier.value = 5;
 
-    await library.enforceCacheLimit(keepSongIds: {'playing', 'queued'});
+    await library.enforceDownloadLimit(keepSongIds: {'playing', 'queued'});
 
-    expect(File(playing.cachePath!).existsSync(), isTrue);
-    expect(File(queued.cachePath!).existsSync(), isTrue);
-    expect(File(disposable.cachePath!).existsSync(), isFalse);
-    expect(disposable.cacheExist, isFalse);
+    expect(File(playing.downloadPath!).existsSync(), isTrue);
+    expect(File(queued.downloadPath!).existsSync(), isTrue);
+    expect(File(disposable.downloadPath!).existsSync(), isFalse);
+    expect(disposable.downloadExist, isFalse);
   });
 
   test('evicts queued copies when the queue alone exceeds the limit', () async {
@@ -112,35 +145,30 @@ void main() {
       library.id2Song[song.id] = song;
     }
     for (final song in [playing, queued, olderQueued]) {
-      final file = File(song.cachePath!)..createSync(recursive: true);
+      final file = File(song.downloadPath!)..createSync(recursive: true);
       file.writeAsBytesSync(List.filled(2 * 1024 * 1024, 0));
-      song.cacheExist = true;
+      song.downloadExist = true;
     }
     File(
-      playing.cachePath!,
+      playing.downloadPath!,
     ).setLastModifiedSync(DateTime.now().subtract(const Duration(days: 1)));
     File(
-      queued.cachePath!,
+      queued.downloadPath!,
     ).setLastModifiedSync(DateTime.now().subtract(const Duration(days: 2)));
     File(
-      olderQueued.cachePath!,
+      olderQueued.downloadPath!,
     ).setLastModifiedSync(DateTime.now().subtract(const Duration(days: 3)));
-    // Every file is queued and the queue alone is over the cap. Before this
-    // was handled the loop skipped all of them and the folder stayed over its
-    // own limit with nothing evicted.
-    cacheLimitMbNotifier.value = 3;
+    offlineMusicLimitMbNotifier.value = 3;
 
-    await library.enforceCacheLimit(
+    await library.enforceDownloadLimit(
       keepSongId: 'playing',
       keepSongIds: {'playing', 'queued', 'olderQueued'},
     );
 
-    // The song playing right now never loses its file.
-    expect(File(playing.cachePath!).existsSync(), isTrue);
-    expect(playing.cacheExist, isTrue);
-    // The oldest queued copies go, oldest first, until the cap holds.
-    expect(File(olderQueued.cachePath!).existsSync(), isFalse);
-    expect(File(queued.cachePath!).existsSync(), isFalse);
+    expect(File(playing.downloadPath!).existsSync(), isTrue);
+    expect(playing.downloadExist, isTrue);
+    expect(File(olderQueued.downloadPath!).existsSync(), isFalse);
+    expect(File(queued.downloadPath!).existsSync(), isFalse);
   });
 
   test('evicts the oldest unqueued offline copy first', () async {
@@ -149,28 +177,28 @@ void main() {
     final old = _song('old');
     for (final song in [playing, queued, old]) {
       library.id2Song[song.id] = song;
-      final file = File(song.cachePath!)..createSync(recursive: true);
+      final file = File(song.downloadPath!)..createSync(recursive: true);
       file.writeAsBytesSync(List.filled(2 * 1024 * 1024, 0));
-      song.cacheExist = true;
+      song.downloadExist = true;
     }
     final now = DateTime.now();
     File(
-      old.cachePath!,
+      old.downloadPath!,
     ).setLastModifiedSync(now.subtract(const Duration(days: 3)));
     File(
-      playing.cachePath!,
+      playing.downloadPath!,
     ).setLastModifiedSync(now.subtract(const Duration(days: 2)));
     File(
-      queued.cachePath!,
+      queued.downloadPath!,
     ).setLastModifiedSync(now.subtract(const Duration(days: 1)));
-    cacheLimitMbNotifier.value = 4;
+    offlineMusicLimitMbNotifier.value = 4;
 
-    await library.enforceCacheLimit(keepSongIds: {'playing', 'queued'});
+    await library.enforceDownloadLimit(keepSongIds: {'playing', 'queued'});
 
-    expect(File(playing.cachePath!).existsSync(), isTrue);
-    expect(File(queued.cachePath!).existsSync(), isTrue);
-    expect(File(old.cachePath!).existsSync(), isFalse);
-    expect(old.cacheExist, isFalse);
+    expect(File(playing.downloadPath!).existsSync(), isTrue);
+    expect(File(queued.downloadPath!).existsSync(), isTrue);
+    expect(File(old.downloadPath!).existsSync(), isFalse);
+    expect(old.downloadExist, isFalse);
   });
 
   test('failed downloads remove partial files and allow retry', () async {
@@ -180,14 +208,14 @@ void main() {
     final result = await library.downloadForOffline(
       song,
       downloader: (song) async {
-        await File(song.cachePath!).writeAsString('partial');
+        await File(song.downloadPath!).writeAsString('partial');
         return false;
       },
     );
 
     expect(result, isFalse);
-    expect(song.cacheExist, isFalse);
-    expect(File(song.cachePath!).existsSync(), isFalse);
+    expect(song.downloadExist, isFalse);
+    expect(File(song.downloadPath!).existsSync(), isFalse);
     expect(downloadingSongIdsNotifier.value, isEmpty);
   });
 
@@ -202,7 +230,7 @@ void main() {
       downloader: (song) async {
         started.complete();
         await release.future;
-        await File(song.cachePath!).writeAsString('audio');
+        await File(song.downloadPath!).writeAsString('audio');
         return true;
       },
     );
@@ -224,7 +252,7 @@ void main() {
       await library.downloadForOffline(
         song,
         downloader: (song) async {
-          await File(song.cachePath!).writeAsString('audio');
+          await File(song.downloadPath!).writeAsString('audio');
           return true;
         },
       );
@@ -233,27 +261,27 @@ void main() {
         await library.removeOfflineCopy(song, currentlyPlaying: true),
         isFalse,
       );
-      expect(song.cacheExist, isTrue);
+      expect(song.downloadExist, isTrue);
       expect(
         await library.removeOfflineCopy(song, currentlyQueued: true),
         isFalse,
       );
-      expect(song.cacheExist, isTrue);
-      expect(File(song.cachePath!).existsSync(), isTrue);
+      expect(song.downloadExist, isTrue);
+      expect(File(song.downloadPath!).existsSync(), isTrue);
       expect(await library.removeOfflineCopy(song), isTrue);
 
-      expect(song.cacheExist, isFalse);
-      expect(File(song.cachePath!).existsSync(), isFalse);
+      expect(song.downloadExist, isFalse);
+      expect(File(song.downloadPath!).existsSync(), isFalse);
     },
   );
 
-  test('local sources do not expose a downloadable cache', () async {
+  test('local sources do not expose a downloadable copy', () async {
     sourceType = SourceType.local;
     isStreamSource = false;
     isNotStreamSource = true;
     final song = _song('local');
 
     expect(await library.downloadForOffline(song), isFalse);
-    expect(song.cachePath, isNull);
+    expect(song.downloadPath, isNull);
   });
 }

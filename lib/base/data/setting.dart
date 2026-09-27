@@ -24,13 +24,13 @@ final playlistsUseLargePictureNotifier = ValueNotifier(true);
 
 final exitOnCloseNotifier = ValueNotifier(false);
 
-/// Upper bound for the audio cache, in MB. 0 means "no limit".
-///
-/// Cached downloads used to grow without bound (the settings page showed
-/// 5.7 GB), because nothing ever removed a file once it had been fetched.
-final cacheLimitMbNotifier = ValueNotifier<int>(0);
+/// Upper bound for user-managed offline music, in MB. 0 means "no limit".
+/// The persisted key remains `cacheLimitMb` for settings migration compatibility.
+final offlineMusicLimitMbNotifier = ValueNotifier<int>(0);
 
 final setting = Setting();
+
+const offlineMusicLimitOptionsMb = [0, 1024, 2048, 5120, 10240];
 
 class Setting {
   late final File file;
@@ -108,8 +108,9 @@ class Setting {
 
     recursiveScanNotifier.value = json['recursiveScan'] as bool? ?? false;
 
-    cacheLimitMbNotifier.value =
-        (json['cacheLimitMb'] as num?)?.toInt() ?? cacheLimitMbNotifier.value;
+    offlineMusicLimitMbNotifier.value =
+        (json['cacheLimitMb'] as num?)?.toInt() ??
+        offlineMusicLimitMbNotifier.value;
   }
 
   void save() {
@@ -136,12 +137,11 @@ class Setting {
 
         'mainPageTheme': mainPageThemeNotifier.value.name,
         'lyricsPageTheme': lyricsPageThemeNotifier.value.name,
-
         'lyricsFontSizeOffset': lyricsFontSizeOffsetNotifier.value,
         'exitOnClose': exitOnCloseNotifier.value,
 
         'recursiveScan': recursiveScanNotifier.value,
-        'cacheLimitMb': cacheLimitMbNotifier.value,
+        'cacheLimitMb': offlineMusicLimitMbNotifier.value,
       }),
     );
   }

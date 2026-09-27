@@ -116,6 +116,10 @@ String getCachesPath(SourceType sourceType) {
   return '${appSupportDir.path}/${sourceType.name}/caches';
 }
 
+String getDownloadsPath(SourceType sourceType) {
+  return '${appSupportDir.path}/${sourceType.name}/downloads';
+}
+
 String getPicturesPath(SourceType sourceType) {
   return '${appSupportDir.path}/${sourceType.name}/pictures';
 }

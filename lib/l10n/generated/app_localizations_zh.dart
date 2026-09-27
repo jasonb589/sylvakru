@@ -500,19 +500,25 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cannotBeUndone => '不可撤销';
 
   @override
-  String get clearCache => '清除缓存';
+  String get clearCache => '清除临时缓存';
 
   @override
-  String get cacheLimit => '缓存上限';
+  String get offlineMusicLimit => '离线音乐上限';
 
   @override
-  String get cacheLimitUnlimited => '不限制';
+  String get offlineMusicLimitUnlimited => '不限制';
 
   @override
-  String get cache => '缓存';
+  String get cache => '临时缓存';
 
   @override
-  String get cacheUsage => '已用空间';
+  String get cacheUsage => '临时缓存占用';
+
+  @override
+  String get temporaryCacheDescription => '播放过程中产生的临时音频，可随时清理，不影响离线音乐';
+
+  @override
+  String get offlineMusicStorage => '离线音乐占用';
 
   @override
   String get tapAgain => '再按一次退出';
@@ -775,28 +781,31 @@ class AppLocalizationsZh extends AppLocalizations {
   String get invalidRange => '请输入有效范围，最小值不能大于最大值';
 
   @override
-  String get downloadForOffline => '下载到本地离线播放';
+  String get offlineMusic => '离线音乐';
 
   @override
-  String get removeDownload => '移除离线文件';
+  String get offlineMusicDescription => '已下载到本地，无网络时也可播放；与临时缓存分开管理';
 
   @override
-  String get downloading => '正在下载…';
+  String get noOfflineMusic => '暂无离线音乐';
+
+  @override
+  String offlineMusicCount(int count) {
+    return '$count 首离线音乐';
+  }
+
+  @override
+  String get downloadForOffline => '下载到离线音乐';
+
+  @override
+  String get removeDownload => '移除离线音乐';
+
+  @override
+  String get downloading => '正在下载到离线音乐…';
 
   @override
   String get downloadFailed => '下载失败，请检查网络和存储空间';
 
   @override
-  String get downloadInUse => '请先暂停播放，再移除此离线文件';
-
-  @override
-  String get offlineSongs => '已下载歌曲';
-
-  @override
-  String get noOfflineSongs => '暂无离线下载';
-
-  @override
-  String offlineDownloadCount(int count) {
-    return '已下载 $count 首歌曲';
-  }
+  String get downloadInUse => '请先暂停播放，再移除此离线音乐';
 }

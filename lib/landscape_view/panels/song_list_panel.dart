@@ -925,14 +925,14 @@ extension _SongListPanel on _SongListState {
       if (sourceType != .local) {
         menuItems.add(
           MenuItem(
-            text: song.cacheExist
+            text: song.downloadExist
                 ? l10n.removeDownload
                 : l10n.downloadForOffline,
-            iconData: song.cacheExist
+            iconData: song.downloadExist
                 ? Icons.download_done_rounded
                 : Icons.download_rounded,
             callback: () async {
-              if (song.cacheExist) {
+              if (song.downloadExist) {
                 final removed = await library.removeOfflineCopy(
                   song,
                   currentlyPlaying:

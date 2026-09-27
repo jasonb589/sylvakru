@@ -299,11 +299,8 @@ class Sidebar extends StatelessWidget {
                       child: sidebarItem(
                         label: 'download',
 
-                        // The sidebar's own icon family: a Material glyph here
-                        // was the only filled, heavy shape in a column of thin
-                        // outlines.
-                        leading: ImageIcon(downloadImage, size: 30),
-                        content: l10n.offlineSongs,
+                        leading: ImageIcon(offlineMusicImage, size: 30),
+                        content: l10n.offlineMusic,
 
                         onTap: () {
                           layersManager.switchRootLayer('download');

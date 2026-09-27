@@ -25,8 +25,13 @@ class MyAudioMetadata {
 
   ParsedLyrics? parsedLyrics;
 
+  /// Temporary playback data. It may be cleared or evicted automatically.
   bool cacheExist = false;
   String? cachePath;
+
+  /// A user-requested offline music copy. It is not temporary cache data.
+  bool downloadExist = false;
+  String? downloadPath;
 
   final isFavoriteNotifier = ValueNotifier(false);
   final updateNotifier = ValueNotifier(0);
@@ -51,14 +56,14 @@ class MyAudioMetadata {
     // server's coverId (falling back to the song id), local/WebDAV ones by file
     // path. path is optional, so fall back to id instead of asserting: MyPicture
     // already handles an unusable id by marking itself loaded-but-absent.
-    picture = MyPicture.form(
-      isStreamSource ? (coverId ?? id) : (path ?? id),
-    );
+    picture = MyPicture.form(isStreamSource ? (coverId ?? id) : (path ?? id));
 
     final md5Hash = md5.convert(utf8.encode(id)).toString();
     if (sourceType != .local) {
       cachePath = '${getCachesPath(sourceType)}/$md5Hash';
       cacheExist = File(cachePath!).existsSync();
+      downloadPath = '${getDownloadsPath(sourceType)}/$md5Hash';
+      downloadExist = File(downloadPath!).existsSync();
     }
 
     compareTitle = PinyinHelper.getPinyinE(getTitle(this));
@@ -101,6 +106,7 @@ class MyAudioMetadata {
   factory MyAudioMetadata.fromMap(
     Map<String, dynamic> song,
     SourceType sourceType, {
+
     /// When false the caller only wants the metadata, not a cache lookup that
     /// touches the filesystem on every song.
     bool cache = true,
@@ -167,6 +173,7 @@ class MyAudioMetadata {
           path: audioSpec['path'],
         );
       }
+
       return cache
           ? library.id2Song.putIfAbsent(song['guid'], createMetadata)
           : createMetadata();

@@ -22,11 +22,12 @@ import 'package:pool/pool.dart';
 Library library = Library();
 
 final ValueNotifier<double> cacheSizeNotifier = ValueNotifier(0);
+final ValueNotifier<double> downloadSizeNotifier = ValueNotifier(0);
 
-/// Songs currently being downloaded to the local cache.
+/// Songs currently being downloaded for offline playback or temporary cache.
 final ValueNotifier<Set<String>> downloadingSongIdsNotifier = ValueNotifier({});
 
-typedef CacheSongDownloader = Future<bool> Function(MyAudioMetadata song);
+typedef SongDownloader = Future<bool> Function(MyAudioMetadata song);
 
 class Library {
   MetadataDB? _metadataDB;
@@ -159,6 +160,11 @@ class Library {
       }
     } while (true);
 
+    // Legacy releases stored explicit offline copies in caches/. Only files
+    // whose md5 name belongs to a loaded song are eligible for migration;
+    // every other cache file remains temporary playback data.
+    await migrateLegacyOfflineCopies();
+
     canModify = true;
     changeNotifier.value++;
     layersManager.updateBackground();
@@ -168,37 +174,106 @@ class Library {
     }
 
     await _accumulateCache();
+    await _accumulateDownloads();
+  }
+
+  Future<double> _directorySize(String path) async {
+    final directory = Directory(path);
+    if (!await directory.exists()) {
+      return 0;
+    }
+    var total = 0;
+    await for (final entity in directory.list()) {
+      if (entity is File) {
+        total += await entity.length();
+      }
+    }
+    return total / (1024 * 1024);
   }
 
   Future<void> _accumulateCache() async {
-    cacheSizeNotifier.value = 0;
-    Directory cacheDir = Directory(getCachesPath(sourceType));
+    cacheSizeNotifier.value = await _directorySize(getCachesPath(sourceType));
+  }
+
+  Future<void> _accumulateDownloads() async {
+    downloadSizeNotifier.value = await _directorySize(
+      getDownloadsPath(sourceType),
+    );
+  }
+
+  Future<void> refreshStorageStats() async {
+    await _accumulateCache();
+    await _accumulateDownloads();
+  }
+
+  /// Moves known legacy offline copies out of the temporary cache directory.
+  ///
+  /// The source and destination have the same md5 filename. Unknown files are
+  /// deliberately untouched because they are temporary playback cache. The
+  /// operation is idempotent and never overwrites an existing destination.
+  Future<void> migrateLegacyOfflineCopies() async {
+    if (sourceType == .local) {
+      return;
+    }
+
+    final cacheDir = Directory(getCachesPath(sourceType));
     if (!await cacheDir.exists()) {
       return;
     }
-    int total = 0;
-    await for (final file in cacheDir.list()) {
-      if (file is File) {
-        total += await file.length();
+
+    final downloadsDir = Directory(getDownloadsPath(sourceType));
+    for (final song in id2Song.values) {
+      final oldPath = song.cachePath;
+      final newPath = song.downloadPath;
+      if (oldPath == null || newPath == null) {
+        continue;
+      }
+
+      final oldFile = File(oldPath);
+      final newFile = File(newPath);
+      if (!await oldFile.exists() || await newFile.exists()) {
+        continue;
+      }
+
+      try {
+        await downloadsDir.create(recursive: true);
+        var moved = false;
+        try {
+          await oldFile.rename(newPath);
+          moved = true;
+        } on FileSystemException {
+          // A rename can fail on a different filesystem. Copy first and only
+          // remove the old cache after the destination is known to exist.
+          if (!await newFile.exists()) {
+            await oldFile.copy(newPath);
+          }
+          moved = await newFile.exists();
+          if (moved && await oldFile.exists()) {
+            await oldFile.delete();
+          }
+        }
+
+        if (moved && await newFile.exists()) {
+          song.cacheExist = false;
+          song.downloadExist = true;
+          song.updateNotifier.value++;
+        }
+      } catch (error) {
+        logger.output(
+          'Failed to migrate legacy offline copy for ${song.id}: $error',
+        );
       }
     }
-    cacheSizeNotifier.value += total / (1024 * 1024);
+    await _accumulateCache();
+    await _accumulateDownloads();
   }
 
-  Future<bool> downloadForOffline(
-    MyAudioMetadata song, {
-    CacheSongDownloader? downloader,
+  Future<bool> _downloadToPath(
+    MyAudioMetadata song,
+    String savePath, {
+    SongDownloader? downloader,
     bool delayForPlayback = false,
-    Set<String> keepSongIds = const {},
   }) async {
-    if (sourceType == .local ||
-        song.cachePath == null ||
-        (sourceType == .webdav && song.path == null)) {
-      return false;
-    }
-    if (song.cacheExist && await File(song.cachePath!).exists()) {
-      return true;
-    }
     if (downloadingSongIdsNotifier.value.contains(song.id)) {
       return false;
     }
@@ -207,14 +282,13 @@ class Library {
       ...downloadingSongIdsNotifier.value,
       song.id,
     };
-    final savePath = song.cachePath!;
-    final cacheFile = File(savePath);
+    final outputFile = File(savePath);
     var success = false;
     try {
       if (delayForPlayback) {
         await Future.delayed(const Duration(seconds: 3));
       }
-      await cacheFile.parent.create(recursive: true);
+      await outputFile.parent.create(recursive: true);
       if (downloader != null) {
         success = await downloader(song);
       } else if (sourceType == .webdav) {
@@ -228,27 +302,18 @@ class Library {
         success = await streamClient?.downloadSong(song.id, savePath) ?? false;
       }
 
-      if (!success || !await cacheFile.exists()) {
-        if (await cacheFile.exists()) {
-          await cacheFile.delete();
+      if (!success || !await outputFile.exists()) {
+        if (await outputFile.exists()) {
+          await outputFile.delete();
         }
-        song.cacheExist = false;
-        song.updateNotifier.value++;
         return false;
       }
-
-      song.cacheExist = true;
-      song.updateNotifier.value++;
-      await _accumulateCache();
-      await enforceCacheLimit(keepSongId: song.id, keepSongIds: keepSongIds);
-      return song.cacheExist;
+      return true;
     } catch (error) {
-      logger.output('Offline download failed for ${song.id}: $error');
-      if (await cacheFile.exists()) {
-        await cacheFile.delete();
+      logger.output('Audio download failed for ${song.id}: $error');
+      if (await outputFile.exists()) {
+        await outputFile.delete();
       }
-      song.cacheExist = false;
-      song.updateNotifier.value++;
       return false;
     } finally {
       final remaining = {...downloadingSongIdsNotifier.value}..remove(song.id);
@@ -256,29 +321,51 @@ class Library {
     }
   }
 
+  Future<bool> downloadForOffline(
+    MyAudioMetadata song, {
+    SongDownloader? downloader,
+    Set<String> keepSongIds = const {},
+  }) async {
+    if (sourceType == .local ||
+        song.downloadPath == null ||
+        (sourceType == .webdav && song.path == null)) {
+      return false;
+    }
+    final path = song.downloadPath!;
+    if (song.downloadExist && await File(path).exists()) {
+      return true;
+    }
+
+    final success = await _downloadToPath(song, path, downloader: downloader);
+    song.downloadExist = success && await File(path).exists();
+    song.updateNotifier.value++;
+    if (!song.downloadExist) {
+      return false;
+    }
+
+    await _accumulateDownloads();
+    await enforceDownloadLimit(keepSongId: song.id, keepSongIds: keepSongIds);
+    return song.downloadExist;
+  }
+
   Future<bool> removeOfflineCopy(
     MyAudioMetadata song, {
     bool currentlyPlaying = false,
     bool currentlyQueued = false,
   }) async {
-    final cachePath = song.cachePath;
-    if (cachePath == null || currentlyPlaying || currentlyQueued) {
+    final path = song.downloadPath;
+    if (path == null || currentlyPlaying || currentlyQueued) {
       return false;
     }
 
     try {
-      final cacheFile = File(cachePath);
-      if (await cacheFile.exists()) {
-        final size = await cacheFile.length();
-        await cacheFile.delete();
-        cacheSizeNotifier.value =
-            (cacheSizeNotifier.value - size / (1024 * 1024)).clamp(
-              0,
-              double.infinity,
-            );
+      final file = File(path);
+      if (await file.exists()) {
+        await file.delete();
       }
-      song.cacheExist = false;
+      song.downloadExist = false;
       song.updateNotifier.value++;
+      await _accumulateDownloads();
       return true;
     } catch (error) {
       logger.output('Failed to remove offline copy for ${song.id}: $error');
@@ -286,9 +373,9 @@ class Library {
     }
   }
 
-  List<MyAudioMetadata> get offlineSongs =>
+  List<MyAudioMetadata> get offlineMusicSongs =>
       id2Song.values
-          .where((song) => song.cachePath != null && song.cacheExist)
+          .where((song) => song.downloadPath != null && song.downloadExist)
           .toList()
         ..sort((a, b) => a.compareTitle.compareTo(b.compareTitle));
 
@@ -296,53 +383,61 @@ class Library {
     MyAudioMetadata song, {
     Set<String> keepSongIds = const {},
   }) async {
-    await downloadForOffline(
-      song,
-      delayForPlayback: true,
-      keepSongIds: keepSongIds,
-    );
+    if (sourceType == .local || song.cachePath == null || song.downloadExist) {
+      return;
+    }
+    final path = song.cachePath!;
+    if (song.cacheExist && await File(path).exists()) {
+      return;
+    }
+
+    final success = await _downloadToPath(song, path, delayForPlayback: true);
+    song.cacheExist = success && await File(path).exists();
+    song.updateNotifier.value++;
+    await _accumulateCache();
   }
 
+  /// Removes only temporary playback cache. Offline music lives in downloads/
+  /// and is intentionally not touched by this operation.
   Future<void> clearCache() async {
-    Directory cacheDir = Directory(getCachesPath(sourceType));
+    final cacheDir = Directory(getCachesPath(sourceType));
     if (await cacheDir.exists()) {
-      await for (final file in cacheDir.list()) {
-        if (file is File) {
-          await file.delete();
+      await for (final entity in cacheDir.list()) {
+        if (entity is File) {
+          await entity.delete();
         }
       }
     }
 
     cacheSizeNotifier.value = 0;
-    for (final song in library.id2Song.values) {
-      song.cacheExist = false;
-      song.updateNotifier.value++;
+    for (final song in id2Song.values) {
+      if (song.cacheExist) {
+        song.cacheExist = false;
+        song.updateNotifier.value++;
+      }
     }
   }
 
-  /// Deletes the least recently used cache files until the cache fits
-  /// [cacheLimitMbNotifier].
-  ///
-  /// Cached songs were never evicted, so the folder grew without bound. The
-  /// limit is what keeps it in check; 0 means "no limit" and does nothing.
-  /// The currently playing song is skipped so playback never loses its file.
-  Future<void> enforceCacheLimit({
+  /// Deletes least-recently-used offline music until it fits the configured
+  /// [offlineMusicLimitMbNotifier]. The persisted setting keeps its legacy key
+  /// for compatibility with older installations.
+  Future<void> enforceDownloadLimit({
     String? keepSongId,
     Set<String> keepSongIds = const {},
   }) async {
-    final limitMb = cacheLimitMbNotifier.value;
+    final limitMb = offlineMusicLimitMbNotifier.value;
     if (limitMb <= 0) {
       return;
     }
 
-    final cacheDir = Directory(getCachesPath(sourceType));
-    if (!await cacheDir.exists()) {
+    final downloadDir = Directory(getDownloadsPath(sourceType));
+    if (!await downloadDir.exists()) {
       return;
     }
 
     final files = <File>[];
     var totalBytes = 0;
-    await for (final entity in cacheDir.list()) {
+    await for (final entity in downloadDir.list()) {
       if (entity is! File) {
         continue;
       }
@@ -352,12 +447,13 @@ class Library {
 
     final limitBytes = limitMb * 1024 * 1024;
     if (totalBytes <= limitBytes) {
+      downloadSizeNotifier.value = totalBytes / (1024 * 1024);
       return;
     }
 
     final keepIds = {...keepSongIds, ?keepSongId};
     final keepNames = keepIds
-        .map((id) => id2Song[id]?.cachePath)
+        .map((id) => id2Song[id]?.downloadPath)
         .whereType<String>()
         .map(_fileNameOf)
         .toSet();
@@ -370,7 +466,6 @@ class Library {
         size: await file.length(),
       ));
     }
-    // oldest first, so the head is what gets removed
     entries.sort((a, b) => a.time.compareTo(b.time));
 
     var removedBytes = 0;
@@ -384,21 +479,18 @@ class Library {
       try {
         await entry.file.delete();
         removedBytes += entry.size;
-        _markCacheMissing(entry.file.path);
-      } catch (e) {
-        logger.output('Failed to evict ${entry.file.path}: $e');
+        _markDownloadMissing(entry.file.path);
+      } catch (error) {
+        logger.output('Failed to evict ${entry.file.path}: $error');
       }
     }
 
-    // Second pass. Protecting every queued song means a queue holding more
-    // than the limit makes the limit unreachable: the loop above skips every
-    // entry and the folder silently stays over its own cap. A queued song only
-    // loses a cached copy that can be fetched again, so once the unprotected
-    // files are gone the oldest queued ones go too. The song playing right now
-    // is never touched, because deleting that one interrupts playback.
+    // If the queue itself exceeds the limit, retain only the currently playing
+    // copy. A queued song can be downloaded again, but deleting the playing
+    // file would interrupt playback.
     if (totalBytes - removedBytes > limitBytes) {
       final playingName = switch (keepSongId) {
-        final String id => switch (id2Song[id]?.cachePath) {
+        final String id => switch (id2Song[id]?.downloadPath) {
           final String path => _fileNameOf(path),
           _ => null,
         },
@@ -409,27 +501,26 @@ class Library {
         if (totalBytes - removedBytes <= limitBytes) {
           break;
         }
-        final name = _fileNameOf(entry.file.path);
-        if (name == playingName) {
+        if (_fileNameOf(entry.file.path) == playingName) {
           continue;
         }
         try {
           await entry.file.delete();
           removedBytes += entry.size;
-          _markCacheMissing(entry.file.path);
-        } catch (e) {
-          logger.output('Failed to evict ${entry.file.path}: $e');
+          _markDownloadMissing(entry.file.path);
+        } catch (error) {
+          logger.output('Failed to evict ${entry.file.path}: $error');
         }
       }
     }
 
     if (removedBytes > 0) {
       logger.output(
-        'Cache limit ${limitMb}MB: evicted '
+        'Offline music limit ${limitMb}MB: evicted '
         '${(removedBytes / (1024 * 1024)).toStringAsFixed(1)}MB',
       );
-      cacheSizeNotifier.value = (totalBytes - removedBytes) / (1024 * 1024);
     }
+    downloadSizeNotifier.value = (totalBytes - removedBytes) / (1024 * 1024);
   }
 
   /// The file name part of [path], accepting either separator.
@@ -440,11 +531,6 @@ class Library {
     return cut < 0 ? path : path.substring(cut + 1);
   }
 
-  /// When a cache file was last read.
-  ///
-  /// `lastAccessed` is not maintained by every platform, so a zero timestamp
-  /// would make that file look like the oldest; falling back to the
-  /// modification time keeps the order meaningful.
   Future<DateTime> _lastUsed(File file) async {
     try {
       final stat = await file.stat();
@@ -456,13 +542,13 @@ class Library {
     }
   }
 
-  /// Clears [MyAudioMetadata.cacheExist] for the song whose file was removed.
-  void _markCacheMissing(String path) {
+  /// Clears [MyAudioMetadata.downloadExist] for an evicted offline copy.
+  void _markDownloadMissing(String path) {
     final removedName = _fileNameOf(path);
     for (final song in id2Song.values) {
-      if (song.cachePath != null &&
-          _fileNameOf(song.cachePath!) == removedName) {
-        song.cacheExist = false;
+      if (song.downloadPath != null &&
+          _fileNameOf(song.downloadPath!) == removedName) {
+        song.downloadExist = false;
         song.updateNotifier.value++;
         break;
       }
@@ -473,7 +559,9 @@ class Library {
     Directory pictureDir = Directory(getPicturesPath(sourceType));
     if (await pictureDir.exists()) {
       await for (final file in pictureDir.list()) {
-        await file.delete();
+        if (file is File) {
+          await file.delete();
+        }
       }
     }
     pictureLoadScheduler.clear();
