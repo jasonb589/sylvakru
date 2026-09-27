@@ -146,12 +146,19 @@ extension _CollectionListPanel on CollectionListState {
           sliver: ValueListenableBuilder(
             valueListenable: useLargePictureNotifier,
             builder: (context, useLargePicture, child) {
+              // The large cards get room for two lines, and the reservation
+              // follows the system text scale so the second line still fits
+              // when the listener runs their OS at a larger text size.
+              final titleExtent =
+                  (useLargePicture ? 50.0 : 30.0) *
+                  MediaQuery.textScalerOf(context).scale(1);
+
               return SliverGrid.builder(
                 gridDelegate: MyGirdDelegate(
                   maxCrossAxisExtent: useLargePicture ? 240 : 120,
                   crossAxisSpacing: 15,
                   mainAxisSpacing: 5,
-                  textExtent: 30,
+                  textExtent: titleExtent,
                 ),
                 itemCount: currentPictureList.length,
                 itemBuilder: (context, index) {
@@ -187,7 +194,7 @@ extension _CollectionListPanel on CollectionListState {
                             width: constraints.maxWidth - 10,
                             child: Text(
                               text,
-                              maxLines: 1,
+                              maxLines: useLargePicture ? 2 : 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),

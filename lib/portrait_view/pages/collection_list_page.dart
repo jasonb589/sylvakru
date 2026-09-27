@@ -224,13 +224,19 @@ extension _CollectionListPage on CollectionListState {
     return ValueListenableBuilder(
       valueListenable: useLargePictureNotifier,
       builder: (context, useLargePicture, child) {
+        // The large cards get room for two lines, scaled with the system text
+        // size so the second line still fits at a larger OS text scale.
+        final titleExtent =
+            (useLargePicture ? 48.0 : 25.0) *
+            MediaQuery.textScalerOf(context).scale(1);
+
         return GridView.builder(
           padding: EdgeInsets.symmetric(horizontal: 20),
           gridDelegate: MyGirdDelegate(
             maxCrossAxisExtent: useLargePicture ? 240 : 120,
             crossAxisSpacing: 10,
             mainAxisSpacing: 5,
-            textExtent: 25,
+            textExtent: titleExtent,
           ),
           itemCount: currentPictureList.length + (useLargePicture ? 2 : 3),
           itemBuilder: (context, index) {
@@ -262,7 +268,7 @@ extension _CollectionListPage on CollectionListState {
                       width: constraints.maxWidth - 10,
                       child: Text(
                         text,
-                        maxLines: 1,
+                        maxLines: useLargePicture ? 2 : 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
