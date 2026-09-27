@@ -451,15 +451,18 @@ class _MiniViewState extends State<MiniView> {
   Widget bottomControls() {
     return Positioned(
       bottom: 0,
-      left: 10,
-      right: 10,
+      left: 6,
+      right: 6,
       child: ValueListenableBuilder(
         valueListenable: miniViewForegroundColor.valueNotifier,
         builder: (context, foregroundColor, child) {
           return Row(
             children: [
               Spacer(),
-              playModeButton(25, iconColor: foregroundColor),
+              SizedBox(
+                width: 40,
+                child: playModeButton(25, iconColor: foregroundColor),
+              ),
 
               Spacer(),
 
@@ -494,18 +497,28 @@ class _MiniViewState extends State<MiniView> {
                 },
                 icon: ImageIcon(lyricsImage),
                 color: foregroundColor,
+                constraints: const BoxConstraints(minWidth: 40, maxWidth: 40),
               ),
               Spacer(),
 
-              skip2PreviousButton(25, iconColor: foregroundColor),
+              SizedBox(
+                width: 40,
+                child: skip2PreviousButton(25, iconColor: foregroundColor),
+              ),
 
               Spacer(),
 
-              playOrPauseButton(35, iconColor: foregroundColor),
+              SizedBox(
+                width: 40,
+                child: playOrPauseButton(35, iconColor: foregroundColor),
+              ),
 
               Spacer(),
 
-              skip2NextButton(25, iconColor: foregroundColor),
+              SizedBox(
+                width: 40,
+                child: skip2NextButton(25, iconColor: foregroundColor),
+              ),
 
               Spacer(),
 
@@ -541,6 +554,7 @@ class _MiniViewState extends State<MiniView> {
                 },
                 icon: const ImageIcon(playQueueImage, size: 25),
                 color: foregroundColor,
+                constraints: const BoxConstraints(minWidth: 40, maxWidth: 40),
               ),
               Spacer(),
 
@@ -549,6 +563,7 @@ class _MiniViewState extends State<MiniView> {
                 icon: const ImageIcon(desktopLyricsImage, size: 25),
 
                 color: foregroundColor,
+                constraints: const BoxConstraints(minWidth: 40, maxWidth: 40),
               ),
               Spacer(),
             ],
