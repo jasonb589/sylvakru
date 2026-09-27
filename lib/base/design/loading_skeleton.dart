@@ -174,8 +174,8 @@ class SkeletonGrid extends StatelessWidget {
   const SkeletonGrid({
     super.key,
     this.cards = 12,
-    this.maxExtent = 190,
-    this.aspectRatio = 0.78,
+    this.maxExtent = 120,
+    this.aspectRatio = 0.82,
     this.horizontalPadding = 40,
   });
 

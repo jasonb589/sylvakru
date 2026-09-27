@@ -587,7 +587,7 @@ class HomeLayerState extends State<HomeLayer> {
           itemCount: songList.length ~/ 3 + 2,
           itemBuilder: (context, index) {
             if (index == 0) {
-              return SizedBox(width: 15);
+              return SizedBox(width: 20);
             }
             index -= 1;
             return SizedBox(
