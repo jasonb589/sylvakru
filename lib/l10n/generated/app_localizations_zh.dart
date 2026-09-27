@@ -829,4 +829,30 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get system => '系统';
+
+  @override
+  String get connectFailedWebdav => '无法连接 WebDAV';
+
+  @override
+  String get connectFailedNavidrome => '无法连接 Navidrome';
+
+  @override
+  String get connectFailedEmby => '无法连接 Emby';
+
+  @override
+  String get connectWebdavFirst => '请先连接 WebDAV';
+
+  @override
+  String get addedToPlayQueue => '已加入播放列表';
+
+  @override
+  String get currentSongNotFound => '找不到当前歌曲';
+
+  @override
+  String get fontNameConflict => '与系统字体同名';
+
+  @override
+  String exportTo(String path) {
+    return '已导出到 $path';
+  }
 }

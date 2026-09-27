@@ -28,7 +28,9 @@ extension _SongListPanel on _SongListState {
                 (e) => currentSongNotifier.value!.id == e.id,
               );
               if (index == -1) {
-                showCenterMessage('Current song not found');
+                showCenterMessage(
+                  AppLocalizations.of(context).currentSongNotFound,
+                );
                 return;
               }
               final position = scrollController.position;

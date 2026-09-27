@@ -1693,6 +1693,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'System'**
   String get system;
+
+  /// No description provided for @connectFailedWebdav.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot connect to WebDAV'**
+  String get connectFailedWebdav;
+
+  /// No description provided for @connectFailedNavidrome.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot connect to Navidrome'**
+  String get connectFailedNavidrome;
+
+  /// No description provided for @connectFailedEmby.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot connect to Emby'**
+  String get connectFailedEmby;
+
+  /// No description provided for @connectWebdavFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to WebDAV first'**
+  String get connectWebdavFirst;
+
+  /// No description provided for @addedToPlayQueue.
+  ///
+  /// In en, this message translates to:
+  /// **'Added to the play queue'**
+  String get addedToPlayQueue;
+
+  /// No description provided for @currentSongNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Current song not found'**
+  String get currentSongNotFound;
+
+  /// No description provided for @fontNameConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'That name belongs to a system font'**
+  String get fontNameConflict;
+
+  /// No description provided for @exportTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Exported to {path}'**
+  String exportTo(String path);
 }
 
 class _AppLocalizationsDelegate

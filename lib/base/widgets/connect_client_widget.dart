@@ -282,7 +282,7 @@ class _ConnectClientWidgetState extends State<ConnectClientWidget> {
           password: passwordTmp.text,
         );
         if (!await webdavClient!.ping()) {
-          showCenterMessage('Can not connect to WebDAV');
+          showCenterMessage(l10n.connectFailedWebdav);
           webdavClient = tmp;
           return;
         }
@@ -294,7 +294,7 @@ class _ConnectClientWidgetState extends State<ConnectClientWidget> {
           password: passwordTmp.text,
         );
         if (!await navidromeClient.ping()) {
-          showCenterMessage('Can not connect to Navidrome');
+          showCenterMessage(l10n.connectFailedNavidrome);
           streamClient = tmp;
           return;
         }
@@ -313,7 +313,7 @@ class _ConnectClientWidgetState extends State<ConnectClientWidget> {
         );
 
         if (!await embyClient.ping()) {
-          showCenterMessage('Can not connect to Emby');
+          showCenterMessage(l10n.connectFailedEmby);
           streamClient = tmp;
           return;
         }

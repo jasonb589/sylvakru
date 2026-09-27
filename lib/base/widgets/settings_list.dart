@@ -1154,12 +1154,14 @@ class _SettingsListState extends State<SettingsList> {
                                   }
                                   logger.export2Directory(result);
                                   if (context.mounted) {
-                                    showCenterMessage('Export to $result');
+                                    showCenterMessage(l10n.exportTo(result));
                                   }
                                 } else {
                                   result = '${appDocsDir.path}/logs';
                                   logger.export2Directory(result);
-                                  showCenterMessage('Export to Sylvakru/logs');
+                                  showCenterMessage(
+                                    l10n.exportTo('Sylvakru/logs'),
+                                  );
                                 }
                               },
                               child: Text(l10n.exportLog),

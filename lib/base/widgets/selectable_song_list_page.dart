@@ -205,7 +205,7 @@ class SelectableSongListPage extends StatelessWidget {
                           for (final song in getSelectedSongList().reversed) {
                             audioHandler.insert2Next(song);
                           }
-                          showCenterMessage('Added to Play Queue');
+                          showCenterMessage(l10n.addedToPlayQueue);
                           if (audioHandler.currentIndex == -1) {
                             await audioHandler.skipToNext();
                             audioHandler.play();
@@ -242,7 +242,7 @@ class SelectableSongListPage extends StatelessWidget {
                           for (final song in selectedSongList) {
                             audioHandler.add2Last(song);
                           }
-                          showCenterMessage('Added to Play Queue');
+                          showCenterMessage(l10n.addedToPlayQueue);
                           if (audioHandler.currentIndex == -1) {
                             await audioHandler.skipToNext();
                             audioHandler.play();

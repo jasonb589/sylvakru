@@ -348,5 +348,20 @@
   "musicSource": "Music Source",
   "appearance": "Appearance",
   "playback": "Playback",
-  "system": "System"
+  "system": "System",
+  "connectFailedWebdav": "Cannot connect to WebDAV",
+  "connectFailedNavidrome": "Cannot connect to Navidrome",
+  "connectFailedEmby": "Cannot connect to Emby",
+  "connectWebdavFirst": "Connect to WebDAV first",
+  "addedToPlayQueue": "Added to the play queue",
+  "currentSongNotFound": "Current song not found",
+  "fontNameConflict": "That name belongs to a system font",
+  "exportTo": "Exported to {path}",
+  "@exportTo": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  }
 }

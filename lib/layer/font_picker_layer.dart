@@ -99,7 +99,7 @@ class _FontPickerLayerState extends State<FontPickerLayer> {
         for (final font in JustFontScan.scan().map((e) => e.name).toList()) {
           if (font == result) {
             if (context.mounted) {
-              showCenterMessage('Conflict name with system font');
+              showCenterMessage(l10n.fontNameConflict);
             }
             return;
           }

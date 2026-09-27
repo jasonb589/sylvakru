@@ -485,7 +485,7 @@ class _ManageMusicFoldersState extends State<ManageMusicFolders> {
 
   Future<bool> _isWebdavValid(BuildContext context) async {
     if (webdavClient == null) {
-      showCenterMessage('Please connect to WebDAV first');
+      showCenterMessage(AppLocalizations.of(context).connectWebdavFirst);
       return false;
     }
     try {
@@ -494,7 +494,7 @@ class _ManageMusicFoldersState extends State<ManageMusicFolders> {
       if (!context.mounted) {
         return false;
       }
-      showCenterMessage('Can not connect to WebDAV');
+      showCenterMessage(AppLocalizations.of(context).connectFailedWebdav);
       return false;
     }
     return true;

@@ -847,4 +847,30 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get system => 'System';
+
+  @override
+  String get connectFailedWebdav => 'Cannot connect to WebDAV';
+
+  @override
+  String get connectFailedNavidrome => 'Cannot connect to Navidrome';
+
+  @override
+  String get connectFailedEmby => 'Cannot connect to Emby';
+
+  @override
+  String get connectWebdavFirst => 'Connect to WebDAV first';
+
+  @override
+  String get addedToPlayQueue => 'Added to the play queue';
+
+  @override
+  String get currentSongNotFound => 'Current song not found';
+
+  @override
+  String get fontNameConflict => 'That name belongs to a system font';
+
+  @override
+  String exportTo(String path) {
+    return 'Exported to $path';
+  }
 }

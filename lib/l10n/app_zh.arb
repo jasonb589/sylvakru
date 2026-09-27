@@ -271,5 +271,20 @@
   "musicSource": "音乐来源",
   "appearance": "外观",
   "playback": "播放",
-  "system": "系统"
+  "system": "系统",
+  "connectFailedWebdav": "无法连接 WebDAV",
+  "connectFailedNavidrome": "无法连接 Navidrome",
+  "connectFailedEmby": "无法连接 Emby",
+  "connectWebdavFirst": "请先连接 WebDAV",
+  "addedToPlayQueue": "已加入播放列表",
+  "currentSongNotFound": "找不到当前歌曲",
+  "fontNameConflict": "与系统字体同名",
+  "exportTo": "已导出到 {path}",
+  "@exportTo": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  }
 }
