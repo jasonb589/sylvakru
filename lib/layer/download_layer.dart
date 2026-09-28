@@ -15,6 +15,7 @@ import 'package:sylvakru/base/widgets/my_navigator.dart';
 import 'package:sylvakru/l10n/generated/app_localizations.dart';
 import 'package:sylvakru/landscape_view/title_bar.dart';
 import 'package:sylvakru/layer/layers_manager.dart';
+import 'package:sylvakru/base/services/download_queue.dart';
 
 final GlobalKey<NavigatorState> downloadKey = GlobalKey();
 final downloadVisibleNotifier = ValueNotifier(true);
@@ -79,13 +80,18 @@ class _DownloadLayerState extends State<DownloadLayer> {
         downloadSizeNotifier,
         otherDownloadSizeNotifier,
         offlineMusicLimitMbNotifier,
+        downloadOverLimitMbNotifier,
         downloadingSongIdsNotifier,
+        downloadQueueNotifier,
+        downloadRunningNotifier,
+        downloadProgressNotifier,
+        downloadErrorsNotifier,
       ]),
       builder: (context, _) {
         final songs = library.offlineMusicSongs;
-        // Downloads still running are listed too, so a download that has not
-        // finished is visible instead of the list only filling in later.
-        final downloading = downloadingSongIdsNotifier.value
+        // Queued and running downloads are listed too, so a download that has
+        // not finished yet is visible instead of the list only filling in later.
+        final downloading = downloadQueue.activeIds
             .map((id) => library.id2Song[id])
             .whereType<MyAudioMetadata>()
             .where((song) => !song.downloadExist)
@@ -237,9 +243,10 @@ class _DownloadLayerState extends State<DownloadLayer> {
                       onTap: () {
                         offlineMusicLimitMbNotifier.value = option;
                         setting.save();
-                        library.enforceDownloadLimit(
+                        library.cleanUpToLimit(
                           keepSongIds: playQueue.map((song) => song.id).toSet(),
                         );
+                        library.checkDownloadBudget();
                         Navigator.pop(context);
                       },
                     ),
@@ -282,15 +289,20 @@ class _DownloadLayerState extends State<DownloadLayer> {
         icon: const Icon(Icons.delete_outline),
         tooltip: l10n.removeDownload,
         onPressed: () async {
-          // Never pull the file out from under a playing or queued track; the
-          // same guard the song menu uses.
-          final removed = await library.removeOfflineCopy(
-            song,
-            currentlyPlaying:
-                currentSongNotifier.value?.id == song.id &&
-                isPlayingNotifier.value,
-            currentlyQueued: playQueue.any((item) => item.id == song.id),
-          );
+          // A playing file cannot be deleted, so this case moves on first
+          // instead of refusing and asking the listener to pause.
+          if (currentSongNotifier.value?.id == song.id &&
+              isPlayingNotifier.value) {
+            await audioHandler.skipToNext();
+            if (currentSongNotifier.value?.id == song.id) {
+              // Nothing to move on to: the file is still in use.
+              if (context.mounted) {
+                showCenterMessage(l10n.downloadInUse);
+              }
+              return;
+            }
+          }
+          final removed = await library.removeOfflineCopy(song);
           if (!removed && context.mounted) {
             showCenterMessage(l10n.downloadInUse);
           }
@@ -302,13 +314,19 @@ class _DownloadLayerState extends State<DownloadLayer> {
     );
   }
 
-  /// A song whose offline copy is still being written.
+  /// A song the queue is working on, waiting on, or gave up on.
+  ///
+  /// A running download shows how far it has come; one whose size the server
+  /// did not report stays indeterminate rather than pretending to be at 0%.
   Widget downloadingRow(
     BuildContext context,
     MyAudioMetadata song,
     double horizontalPadding,
   ) {
     final l10n = AppLocalizations.of(context);
+    final error = downloadErrorsNotifier.value[song.id];
+    final progress = downloadProgressNotifier.value[song.id] ?? -1;
+    final running = downloadRunningNotifier.value.contains(song.id);
 
     return ListTile(
       contentPadding: EdgeInsets.symmetric(horizontal: horizontalPadding),
@@ -318,13 +336,37 @@ class _DownloadLayerState extends State<DownloadLayer> {
         picture: song.picture,
       ),
       title: Text(getTitle(song), maxLines: 1, overflow: TextOverflow.ellipsis),
-      subtitle: Text(l10n.downloading),
-      trailing: const SizedBox(
-        width: 20,
-        height: 20,
-        child: CircularProgressIndicator(strokeWidth: 2),
+      subtitle: error != null
+          ? Text(
+              l10n.downloadFailed,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            )
+          : running && progress >= 0
+          ? Padding(
+              padding: const EdgeInsets.only(top: 6, bottom: 4),
+              child: LinearProgressIndicator(
+                value: progress.clamp(0.0, 1.0),
+                minHeight: 3,
+              ),
+            )
+          : Text(l10n.downloading),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (error != null)
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: l10n.downloadRetry,
+              onPressed: () => downloadQueue.retry(song),
+            ),
+          IconButton(
+            icon: const Icon(Icons.close),
+            tooltip: l10n.downloadCancel,
+            onPressed: () => downloadQueue.cancel(song.id),
+          ),
+        ],
       ),
-      enabled: false,
     );
   }
 }

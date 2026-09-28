@@ -1649,7 +1649,7 @@ abstract class AppLocalizations {
   /// No description provided for @downloadInUse.
   ///
   /// In en, this message translates to:
-  /// **'Pause playback before removing this download'**
+  /// **'This one is playing with nothing to move on to; switch songs first'**
   String get downloadInUse;
 
   /// No description provided for @noOfflineMusicHint.
@@ -1783,6 +1783,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Moved {count} files'**
   String downloadsMoved(int count);
+
+  /// No description provided for @downloadCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel download'**
+  String get downloadCancel;
+
+  /// No description provided for @downloadRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get downloadRetry;
 }
 
 class _AppLocalizationsDelegate

@@ -377,5 +377,8 @@
         "type": "int"
       }
     }
-  }
+  },
+  "downloadCancel": "Cancel download",
+  "downloadRetry": "Retry",
+  "downloadInUse": "This one is playing with nothing to move on to; switch songs first"
 }

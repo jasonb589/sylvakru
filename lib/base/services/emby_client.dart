@@ -154,7 +154,6 @@ class EmbyClient extends StreamClient {
     return response['SongCount'] as int? ?? 0;
   }
 
-
   /// Songs Emby reports as played, ordered by play count or play date.
   ///
   /// [isRecently] picks the ordering: most recent first, or most played first.
@@ -195,7 +194,6 @@ class EmbyClient extends StreamClient {
   Future<List<MyAudioMetadata>?> getRecentlySongs() async {
     return _getHistorySongs(true);
   }
-
 
   /// Get all libraries
   Future<List<dynamic>> _getLibraries() async {
@@ -647,12 +645,21 @@ class EmbyClient extends StreamClient {
   }
 
   @override
-  Future<bool> downloadSong(String songId, String savePath) async {
+  Future<bool> downloadSong(
+    String songId,
+    String savePath, {
+    void Function(int received, int total)? onProgress,
+    DownloadCancellation? cancellation,
+  }) async {
+    final token = CancelToken();
+    cancellation?.bind(token.cancel);
     try {
       final response = await dio.download(
         '/Items/$songId/Download',
         savePath,
         queryParameters: {'api_key': accessToken},
+        onReceiveProgress: onProgress,
+        cancelToken: token,
       );
       return response.statusCode == 200;
     } on DioException catch (e) {

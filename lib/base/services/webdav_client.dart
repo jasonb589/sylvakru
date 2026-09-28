@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:sylvakru/base/services/logger.dart';
+import 'package:sylvakru/base/services/download_cancellation.dart';
 import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart';
 
@@ -265,13 +266,17 @@ class WebDavClient {
     required String remotePath,
     required String localPath,
     ProgressCallback? onReceiveProgress,
+    DownloadCancellation? cancellation,
   }) async {
+    final token = CancelToken();
+    cancellation?.bind(token.cancel);
     return _boolRequest(
       'download $remotePath',
       () => dio.download(
         remotePath,
         localPath,
         onReceiveProgress: onReceiveProgress,
+        cancelToken: token,
       ),
     );
   }

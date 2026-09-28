@@ -5,6 +5,11 @@ import 'package:flutter/foundation.dart';
 import 'package:sylvakru/base/data/playlist.dart';
 import 'package:sylvakru/base/data/artist_album.dart';
 import 'package:sylvakru/base/my_audio_metadata.dart';
+import 'package:sylvakru/base/services/download_cancellation.dart';
+
+// Re-exported so every client that speaks to the queue sees the cancel signal
+// through the interface it already imports.
+export 'package:sylvakru/base/services/download_cancellation.dart';
 
 StreamClient? streamClient;
 
@@ -35,7 +40,6 @@ abstract class StreamClient {
   Future<int> getSongCount() async {
     return 0;
   }
-
 
   /// Searches the server for songs matching [query].
   ///
@@ -96,7 +100,12 @@ abstract class StreamClient {
 
   Future<String> getLyricsById(String songId);
 
-  Future<bool> downloadSong(String songId, String savePath);
+  Future<bool> downloadSong(
+    String songId,
+    String savePath, {
+    void Function(int received, int total)? onProgress,
+    DownloadCancellation? cancellation,
+  });
 
   Future<bool> scrobble(String songId);
 }

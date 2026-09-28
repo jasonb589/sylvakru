@@ -807,7 +807,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get downloadFailed => '下载失败，请检查网络和存储空间';
 
   @override
-  String get downloadInUse => '请先暂停播放，再移除这首下载';
+  String get downloadInUse => '这首歌正在播放且没有下一首可切换，请先切歌再移除';
 
   @override
   String get noOfflineMusicHint => '在歌曲菜单里选择「下载」，之后无网络也能播放';
@@ -878,4 +878,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String downloadsMoved(int count) {
     return '已迁移 $count 个文件';
   }
+
+  @override
+  String get downloadCancel => '取消下载';
+
+  @override
+  String get downloadRetry => '重试';
 }

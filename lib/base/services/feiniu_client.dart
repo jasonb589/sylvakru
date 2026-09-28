@@ -205,8 +205,6 @@ class FeiniuClient extends StreamClient {
     return rows == null ? null : _songs(rows);
   }
 
-
-
   Future<List<Map<String, dynamic>>?> _list(
     String path, {
     Map<String, dynamic>? query,
@@ -674,7 +672,12 @@ class FeiniuClient extends StreamClient {
   }
 
   @override
-  Future<bool> downloadSong(String songId, String savePath) async {
+  Future<bool> downloadSong(
+    String songId,
+    String savePath, {
+    void Function(int received, int total)? onProgress,
+    DownloadCancellation? cancellation,
+  }) async {
     try {
       final response = await _openResource(
         '/track/stream',
@@ -685,11 +688,21 @@ class FeiniuClient extends StreamClient {
       await file.parent.create(recursive: true);
       final output = file.openWrite();
       var received = 0;
+      final expectedLength = int.tryParse(
+        response.headers.value('content-length') ?? '',
+      );
       try {
         var checkedContent = false;
         await output.addStream(
           response.data!.stream.map((chunk) {
             received += chunk.length;
+            // The queue shows this, and stopping mid-transfer is what the
+            // cancel button has to do; a chunk boundary is the finest
+            // granularity a hand-rolled stream gives us.
+            onProgress?.call(received, expectedLength ?? -1);
+            if (cancellation?.isCancelled ?? false) {
+              throw const FormatException('Download cancelled');
+            }
             if (!checkedContent && chunk.isNotEmpty) {
               final prefix = utf8
                   .decode(chunk.take(32).toList(), allowMalformed: true)
@@ -708,9 +721,6 @@ class FeiniuClient extends StreamClient {
       } finally {
         await output.close();
       }
-      final expectedLength = int.tryParse(
-        response.headers.value('content-length') ?? '',
-      );
       return received > 0 &&
           (expectedLength == null || received == expectedLength);
     } on DioException catch (e) {

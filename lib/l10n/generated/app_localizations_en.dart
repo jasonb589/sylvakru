@@ -822,7 +822,8 @@ class AppLocalizationsEn extends AppLocalizations {
       'Download failed; check the network and available storage';
 
   @override
-  String get downloadInUse => 'Pause playback before removing this download';
+  String get downloadInUse =>
+      'This one is playing with nothing to move on to; switch songs first';
 
   @override
   String get noOfflineMusicHint =>
@@ -895,4 +896,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String downloadsMoved(int count) {
     return 'Moved $count files';
   }
+
+  @override
+  String get downloadCancel => 'Cancel download';
+
+  @override
+  String get downloadRetry => 'Retry';
 }

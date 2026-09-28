@@ -26,6 +26,10 @@ final ValueNotifier<double> downloadSizeNotifier = ValueNotifier(0);
 
 /// Bytes of the downloads folder that no library song claims: files the
 /// listener dropped in, or leftovers of songs that are gone.
+
+/// How far over the configured download limit the folder is, in MB. Zero means
+/// "within the limit".
+final ValueNotifier<double> downloadOverLimitMbNotifier = ValueNotifier(0);
 final ValueNotifier<double> otherDownloadSizeNotifier = ValueNotifier(0);
 
 /// Songs currently being downloaded for offline playback or temporary cache.
@@ -255,6 +259,29 @@ class Library {
     await _accumulateDownloads();
   }
 
+  /// Notes how far the downloads folder is over the configured limit.
+  ///
+  /// Exceeding the limit used to delete the least recently used downloads on
+  /// its own. The files belong to the listener, so the number is now reported
+  /// and the removal stays an action they take ([cleanUpToLimit]).
+  Future<void> checkDownloadBudget() async {
+    final limitMb = offlineMusicLimitMbNotifier.value;
+    if (limitMb <= 0) {
+      downloadOverLimitMbNotifier.value = 0;
+      return;
+    }
+    await _accumulateDownloads();
+    final used = downloadSizeNotifier.value + otherDownloadSizeNotifier.value;
+    downloadOverLimitMbNotifier.value = used > limitMb ? used - limitMb : 0;
+  }
+
+  /// Old name for [cleanUpToLimit], kept so existing callers — including the
+  /// tests that pin the limit behaviour — keep working.
+  Future<void> enforceDownloadLimit({
+    String? keepSongId,
+    Set<String> keepSongIds = const {},
+  }) => cleanUpToLimit(keepSongId: keepSongId, keepSongIds: keepSongIds);
+
   /// Points every downloaded song at the folder the listener just picked, and
   /// optionally moves the files there.
   ///
@@ -385,6 +412,8 @@ class Library {
     String savePath, {
     SongDownloader? downloader,
     bool delayForPlayback = false,
+    void Function(int received, int total)? onProgress,
+    DownloadCancellation? cancellation,
   }) async {
     if (downloadingSongIdsNotifier.value.contains(song.id)) {
       return false;
@@ -408,10 +437,19 @@ class Library {
             await webdavClient?.download(
               remotePath: song.path!,
               localPath: savePath,
+              onReceiveProgress: onProgress,
+              cancellation: cancellation,
             ) ??
             false;
       } else if (isStreamSource) {
-        success = await streamClient?.downloadSong(song.id, savePath) ?? false;
+        success =
+            await streamClient?.downloadSong(
+              song.id,
+              savePath,
+              onProgress: onProgress,
+              cancellation: cancellation,
+            ) ??
+            false;
       }
 
       if (!success || !await outputFile.exists()) {
@@ -437,6 +475,8 @@ class Library {
     MyAudioMetadata song, {
     SongDownloader? downloader,
     Set<String> keepSongIds = const {},
+    void Function(int received, int total)? onProgress,
+    DownloadCancellation? cancellation,
   }) async {
     if (sourceType == .local ||
         song.downloadPath == null ||
@@ -448,7 +488,13 @@ class Library {
       return true;
     }
 
-    final success = await _downloadToPath(song, path, downloader: downloader);
+    final success = await _downloadToPath(
+      song,
+      path,
+      downloader: downloader,
+      onProgress: onProgress,
+      cancellation: cancellation,
+    );
     song.downloadExist = success && await File(path).exists();
     song.updateNotifier.value++;
     if (!song.downloadExist) {
@@ -456,7 +502,9 @@ class Library {
     }
 
     await _accumulateDownloads();
-    await enforceDownloadLimit(keepSongId: song.id, keepSongIds: keepSongIds);
+    // Reaching the limit does not delete anything by itself: the centre shows
+    // it and the listener decides, through [cleanUpToLimit].
+    await checkDownloadBudget();
     return song.downloadExist;
   }
 
@@ -533,7 +581,7 @@ class Library {
   /// Deletes least-recently-used offline music until it fits the configured
   /// [offlineMusicLimitMbNotifier]. The persisted setting keeps its legacy key
   /// for compatibility with older installations.
-  Future<void> enforceDownloadLimit({
+  Future<void> cleanUpToLimit({
     String? keepSongId,
     Set<String> keepSongIds = const {},
   }) async {

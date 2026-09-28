@@ -300,5 +300,8 @@
         "type": "int"
       }
     }
-  }
+  },
+  "downloadCancel": "取消下载",
+  "downloadRetry": "重试",
+  "downloadInUse": "这首歌正在播放且没有下一首可切换，请先切歌再移除"
 }

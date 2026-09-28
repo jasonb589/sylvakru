@@ -181,15 +181,19 @@ class NavidromeClient extends StreamClient {
     // is supported by every Subsonic-compatible server, getArtistInfo2 is the
     // newer revision. Try the newer first, then fall back. (feishin only uses
     // getArtistInfo.)
-    Map? info = (await safeRequest(
-      '/rest/getArtistInfo2.view',
-      query: {'id': artist.id},
-    ))?['artistInfo2'] as Map?;
+    Map? info =
+        (await safeRequest(
+              '/rest/getArtistInfo2.view',
+              query: {'id': artist.id},
+            ))?['artistInfo2']
+            as Map?;
 
-    info ??= (await safeRequest(
-      '/rest/getArtistInfo.view',
-      query: {'id': artist.id},
-    ))?['artistInfo'] as Map?;
+    info ??=
+        (await safeRequest(
+              '/rest/getArtistInfo.view',
+              query: {'id': artist.id},
+            ))?['artistInfo']
+            as Map?;
 
     if (info == null) {
       return null;
@@ -621,10 +625,22 @@ class NavidromeClient extends StreamClient {
   }
 
   @override
-  Future<bool> downloadSong(String songId, String savePath) async {
+  Future<bool> downloadSong(
+    String songId,
+    String savePath, {
+    void Function(int received, int total)? onProgress,
+    DownloadCancellation? cancellation,
+  }) async {
+    final token = CancelToken();
+    cancellation?.bind(token.cancel);
     try {
       final streamUrl = getStreamUrl(songId);
-      final response = await dio.download(streamUrl, savePath);
+      final response = await dio.download(
+        streamUrl,
+        savePath,
+        onReceiveProgress: onProgress,
+        cancelToken: token,
+      );
       return response.statusCode == 200;
     } on DioException catch (e) {
       logger.output('[$runtimeType] Download failed: ${e.message}');
