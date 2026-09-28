@@ -331,11 +331,13 @@ class ColorManager {
   /// artwork at all; leaving it transparent lets the row's own surface show,
   /// which is what the note icon is meant to sit on.
   Color? getSpecificMainPageCoverArtBaseColorForm(MyPicture? picture) {
-    return mainPageThemeNotifier.value == .vivid
-        ? picture?.color
-        : isMobile
-        ? pageBackgroundColor.value
-        : panelColor.value;
+    final colour = picture?.color;
+    if (mainPageThemeNotifier.value != .vivid) {
+      return isMobile ? pageBackgroundColor.value : panelColor.value;
+    }
+    // `Colors.grey` is the pipeline's own "this artwork has no colour" value;
+    // painting it opaque is what turned a missing cover into a grey slab.
+    return colour == Colors.grey ? null : colour;
   }
 
   Color? getSpecificMainPageSearchFieldColorForm(MyPicture? picture) {
@@ -361,9 +363,13 @@ class ColorManager {
   }
 
   Color getSpecificBgBaseColor() {
-    return viewModeNotifier.value == .mini || displayLyricsPage
+    final colour = viewModeNotifier.value == .mini || displayLyricsPage
         ? currentCoverArtColor
         : backgroundCoverArtColor;
+    // The opaque base behind the window's artwork. The colour pipeline hands
+    // out `Colors.grey` until a cover colour is known, and that grey base is
+    // what showed through wherever the artwork had not arrived yet.
+    return colour == Colors.grey ? Colors.grey.shade100 : colour;
   }
 
   Color getSpecificBgColor() {

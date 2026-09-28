@@ -397,83 +397,87 @@ class HomeLayerState extends State<HomeLayer> {
 
         SizedBox(height: 15),
 
-        Row(
-          mainAxisSize: .min,
-          children: [
-            SizedBox(width: 20),
-            GestureDetector(
-              onTap: () {
-                layersManager.switchRootLayer('frequently');
-              },
-              child: MouseRegion(
-                cursor: SystemMouseCursors.click,
-                child: Row(
-                  children: [
-                    Text(
-                      l10n.frequently,
-                      style: .new(fontWeight: .bold, fontSize: 20),
-                    ),
-                    Icon(Icons.arrow_forward_ios_rounded, size: 20),
-                  ],
+        if (history.frequentlySongList.isNotEmpty) ...[
+          Row(
+            mainAxisSize: .min,
+            children: [
+              SizedBox(width: 20),
+              GestureDetector(
+                onTap: () {
+                  layersManager.switchRootLayer('frequently');
+                },
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: Row(
+                    children: [
+                      Text(
+                        l10n.frequently,
+                        style: .new(fontWeight: .bold, fontSize: 20),
+                      ),
+                      Icon(Icons.arrow_forward_ios_rounded, size: 20),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
-        SizedBox(height: 10),
-
-        mouseRegionForScroll(
-          child: ValueListenableBuilder(
-            valueListenable: history.frequentlyChangeNotifier,
-            builder: (context, value, child) {
-              return songListView(history.frequentlySongList, frequentlySC);
-            },
+            ],
           ),
-          scrollController: frequentlySC,
-          displayIconNotifier: frequentlyDisplayIconNotifier,
-          changeNotifier: frequentlyChangeNotifier,
-          iconTop: 67,
-        ),
+          SizedBox(height: 10),
+
+          mouseRegionForScroll(
+            child: ValueListenableBuilder(
+              valueListenable: history.frequentlyChangeNotifier,
+              builder: (context, value, child) {
+                return songListView(history.frequentlySongList, frequentlySC);
+              },
+            ),
+            scrollController: frequentlySC,
+            displayIconNotifier: frequentlyDisplayIconNotifier,
+            changeNotifier: frequentlyChangeNotifier,
+            iconTop: 67,
+          ),
+        ],
 
         SizedBox(height: 15),
 
-        Row(
-          mainAxisSize: .min,
-          children: [
-            SizedBox(width: 20),
-            GestureDetector(
-              onTap: () {
-                layersManager.switchRootLayer('recently');
-              },
-              child: MouseRegion(
-                cursor: SystemMouseCursors.click,
-                child: Row(
-                  children: [
-                    Text(
-                      l10n.recently,
-                      style: .new(fontWeight: .bold, fontSize: 20),
-                    ),
-                    Icon(Icons.arrow_forward_ios_rounded, size: 20),
-                  ],
+        if (history.recentlySongList.isNotEmpty) ...[
+          Row(
+            mainAxisSize: .min,
+            children: [
+              SizedBox(width: 20),
+              GestureDetector(
+                onTap: () {
+                  layersManager.switchRootLayer('recently');
+                },
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: Row(
+                    children: [
+                      Text(
+                        l10n.recently,
+                        style: .new(fontWeight: .bold, fontSize: 20),
+                      ),
+                      Icon(Icons.arrow_forward_ios_rounded, size: 20),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
-        SizedBox(height: 10),
-
-        mouseRegionForScroll(
-          child: ValueListenableBuilder(
-            valueListenable: history.recentlyChangeNotifier,
-            builder: (context, value, child) {
-              return songListView(history.recentlySongList, recentlySC);
-            },
+            ],
           ),
-          scrollController: recentlySC,
-          displayIconNotifier: recentlyDisplayIconNotifier,
-          changeNotifier: recentlyChangeNotifier,
-          iconTop: 67,
-        ),
+          SizedBox(height: 10),
+
+          mouseRegionForScroll(
+            child: ValueListenableBuilder(
+              valueListenable: history.recentlyChangeNotifier,
+              builder: (context, value, child) {
+                return songListView(history.recentlySongList, recentlySC);
+              },
+            ),
+            scrollController: recentlySC,
+            displayIconNotifier: recentlyDisplayIconNotifier,
+            changeNotifier: recentlyChangeNotifier,
+            iconTop: 67,
+          ),
+        ],
 
         SizedBox(height: 15),
 
@@ -584,6 +588,12 @@ class HomeLayerState extends State<HomeLayer> {
     List<MyAudioMetadata> songList,
     ScrollController scrollController,
   ) {
+    if (songList.isEmpty) {
+      // An empty section used to draw its own 180px box holding two ghost
+      // items; the box stayed empty on screen, which read as a hole in the
+      // page rather than as "nothing here yet".
+      return const SizedBox.shrink();
+    }
     return SizedBox(
       height: 180,
       child: MouseRegion(
@@ -591,7 +601,7 @@ class HomeLayerState extends State<HomeLayer> {
           padding: .zero,
           controller: scrollController,
           scrollDirection: .horizontal,
-          itemCount: songList.length ~/ 3 + 2,
+          itemCount: (songList.length + 2) ~/ 3 + 1,
           itemBuilder: (context, index) {
             if (index == 0) {
               return SizedBox(width: 20);
