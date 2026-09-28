@@ -27,6 +27,16 @@ class _ArtistMetadataState extends State<ArtistMetadata> {
   bool _expanded = false;
 
   @override
+  void initState() {
+    super.initState();
+    // An artist whose songs are already in the library never had its server
+    // metadata requested, because that request used to ride along with the song
+    // load. This block is where every artist view shows the biography, so it is
+    // where the request belongs.
+    widget.artist.loadInfo();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
 

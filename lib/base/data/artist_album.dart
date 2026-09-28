@@ -1,7 +1,6 @@
 import 'package:lpinyin/lpinyin.dart';
 import 'dart:async';
 
-
 import 'package:sylvakru/base/app.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sylvakru/base/data/library.dart';
@@ -10,6 +9,7 @@ import 'package:sylvakru/base/services/picture_service.dart';
 import 'package:sylvakru/base/my_audio_metadata.dart';
 import 'package:sylvakru/base/utils/metadata_utils.dart';
 import 'package:sylvakru/base/services/stream_client.dart';
+import 'package:sylvakru/base/services/logger.dart';
 import 'package:sylvakru/layer/layers_manager.dart';
 
 final artistAlbumManager = ArtistAlbumManager();
@@ -17,6 +17,7 @@ final artistAlbumManager = ArtistAlbumManager();
 class ArtistAlbumManager {
   List<Artist> artistList = [];
   Map<String, Artist> artistMap = {};
+
   /// Artists the server reported in [loadArtists], keyed by name.
   ///
   /// A server artist knows its id, cover art, album count and biography but
@@ -419,7 +420,12 @@ abstract class ArtistAlbumBase {
     return _picture = MyPicture.form(name);
   }
 
-  ArtistAlbumBase({required this.name, required this.isArtist, this.id, String? coverArtId}) {
+  ArtistAlbumBase({
+    required this.name,
+    required this.isArtist,
+    this.id,
+    String? coverArtId,
+  }) {
     id ??= name;
     compareName = PinyinHelper.getPinyinE(name);
     if (isStreamSource) {
@@ -428,7 +434,6 @@ abstract class ArtistAlbumBase {
   }
 
   bool get isEmpty => songList.isEmpty;
-
 
   /// Fills this entry from its source (server or local library).
   Future<void> load();
@@ -446,7 +451,6 @@ class Artist extends ArtistAlbumBase {
 
   Set<Album> albumSet = {};
 
-
   List<Album> albumList = [];
 
   /// Short description supplied by the server (Navidrome/Emby). Local and
@@ -460,9 +464,14 @@ class Artist extends ArtistAlbumBase {
   /// Album count reported by the server, used only until [albumList] is filled.
   int? serverAlbumCount;
 
-  /// Whether [load] already asked the server for [biography].
+  /// Whether the server already told us about this artist.
+  ///
+  /// Written by [loadInfo], which is what every artist view calls, so nothing
+  /// depends on the songs having been fetched first.
   bool biographyLoaded = false;
 
+  /// Guards [loadInfo] so the server is asked once at a time per artist.
+  Completer<void>? infoCompleter;
 
   /// Guards [load] so the server is only asked once per artist.
   Completer<void>? completer;
@@ -495,10 +504,7 @@ class Artist extends ArtistAlbumBase {
   ///
   /// Derived from the album years, which every source already provides.
   String? get yearRange {
-    final years = albumList
-        .map((album) => album.year)
-        .whereType<int>()
-        .toList()
+    final years = albumList.map((album) => album.year).whereType<int>().toList()
       ..sort();
     if (years.isEmpty) {
       return null;
@@ -550,6 +556,49 @@ class Artist extends ArtistAlbumBase {
     serverAlbumCount ??= server.serverAlbumCount;
   }
 
+  /// Asks the server who this artist is: the biography, the metadata provider's
+  /// portrait, and whatever else the endpoint carries.
+  ///
+  /// Kept apart from [load] because the two answer different questions. An
+  /// artist whose songs are already in the library never needed [load] — the
+  /// page had its songs straight from the sync — so the biography was never
+  /// requested, and the artist page showed a name and a song count with nothing
+  /// about the artist. Anything that displays artist metadata calls this.
+  ///
+  /// Asked once at a time per artist; the flag is only kept when something
+  /// arrived, so an offline start does not lose the biography for good.
+  Future<void> loadInfo() async {
+    if (sourceType == .local) {
+      return;
+    }
+
+    final running = infoCompleter;
+    if (running != null) {
+      return running.future;
+    }
+    infoCompleter = Completer<void>();
+
+    if (biographyLoaded) {
+      infoCompleter!.complete();
+      return;
+    }
+
+    try {
+      await streamClient?.getArtistInfo(this);
+      biographyLoaded = biography != null;
+    } catch (error) {
+      logger.output('Failed to load artist info for $name: $error');
+    }
+
+    changeNotifier.value++;
+    infoCompleter!.complete();
+    if (!biographyLoaded) {
+      // Let a later visit try again: the first attempt can happen before the
+      // server is reachable.
+      infoCompleter = null;
+    }
+  }
+
   @override
   Future<void> load() async {
     if (completer == null) {
@@ -557,9 +606,7 @@ class Artist extends ArtistAlbumBase {
 
       // the biography lives behind a separate endpoint; start it now so it
       // arrives while the albums below are still loading
-      final biographyFuture = biographyLoaded
-          ? null
-          : streamClient?.getArtistInfo(this);
+      final infoFuture = loadInfo();
 
       if (sourceType == .navidrome || sourceType == .feiniu) {
         final albums = await streamClient?.getArtistAlbumList(id!);
@@ -582,17 +629,7 @@ class Artist extends ArtistAlbumBase {
         changeNotifier.value++;
       }
 
-      if (biographyFuture != null) {
-        try {
-          await biographyFuture;
-        } catch (_) {
-          // a missing biography must not break the artist page
-        }
-        // only remember the attempt once it succeeded, so an offline start
-        // does not permanently lose the biography
-        biographyLoaded = biography != null;
-        changeNotifier.value++;
-      }
+      await infoFuture;
 
       completer!.complete();
       return;
