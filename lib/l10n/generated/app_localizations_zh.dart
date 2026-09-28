@@ -917,6 +917,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get downloadTagsDescription => '把歌名、歌手、专辑等写进下载的文件，离开本应用也能正常显示';
 
   @override
+  String get downloadSettings => '下载';
+
+  @override
+  String get downloadTagsOn => '写入标签';
+
+  @override
+  String get downloadTagsOff => '不写标签';
+
+  @override
   String get downloadCancel => '取消下载';
 
   @override

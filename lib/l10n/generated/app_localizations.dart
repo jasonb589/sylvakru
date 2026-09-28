@@ -1850,6 +1850,24 @@ abstract class AppLocalizations {
   /// **'Write the title, artist and album into the downloaded file so other players show them'**
   String get downloadTagsDescription;
 
+  /// No description provided for @downloadSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloads'**
+  String get downloadSettings;
+
+  /// No description provided for @downloadTagsOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags written'**
+  String get downloadTagsOn;
+
+  /// No description provided for @downloadTagsOff.
+  ///
+  /// In en, this message translates to:
+  /// **'No tags'**
+  String get downloadTagsOff;
+
   /// No description provided for @downloadCancel.
   ///
   /// In en, this message translates to:

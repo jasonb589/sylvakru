@@ -403,6 +403,9 @@
   },
   "downloadTags": "Tag Downloads",
   "downloadTagsDescription": "Write the title, artist and album into the downloaded file so other players show them",
+  "downloadSettings": "Downloads",
+  "downloadTagsOn": "Tags written",
+  "downloadTagsOff": "No tags",
   "downloadCancel": "Cancel download",
   "downloadRetry": "Retry",
   "downloadInUse": "This one is playing with nothing to move on to; switch songs first"

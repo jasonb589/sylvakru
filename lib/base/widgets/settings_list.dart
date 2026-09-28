@@ -140,15 +140,7 @@ class _SettingsListState extends State<SettingsList> {
         // Downloads: where the listener's own copies live. It sits with the
         // library rows because that is what it belongs to, and because the
         // temporary cache right above it must not be confused with it.
-        sliverBox(
-          paddingIfNeed(isLandscape, downloadFolderListTile(context, l10n)),
-        ),
-        sliverBox(
-          paddingIfNeed(isLandscape, downloadNamingListTile(context, l10n)),
-        ),
-        sliverBox(
-          paddingIfNeed(isLandscape, downloadTaggingListTile(context, l10n)),
-        ),
+        sliverBox(paddingIfNeed(isLandscape, downloadListTile(context, l10n))),
 
         // Appearance: how the client looks and speaks.
         sliverBox(groupHeader(l10n.appearance, isLandscape)),
@@ -1194,8 +1186,12 @@ class _SettingsListState extends State<SettingsList> {
   }
 }
 
-/// Settings row for the download folder: the folder in use, and a picker.
-Widget downloadFolderListTile(
+/// One row for everything about downloads.
+///
+/// The folder, the file names and tagging used to be three rows carrying the
+/// same icon in a list where every other entry is a single thing. All three
+/// choices live behind this row now.
+Widget downloadListTile(
   BuildContext context,
   AppLocalizations l10n, {
 
@@ -1203,14 +1199,101 @@ Widget downloadFolderListTile(
   double iconSize = 30,
 }) {
   final custom = downloadRootDir;
+  final folder = custom == null || custom.isEmpty
+      ? l10n.downloadFolderDefault
+      : custom;
+
   return ListTile(
     leading: ImageIcon(downloadImage, size: iconSize),
-    title: Text(l10n.downloadDirectory),
-    subtitle: Text(
-      custom == null || custom.isEmpty ? l10n.downloadFolderDefault : custom,
-      overflow: TextOverflow.ellipsis,
+    title: Text(l10n.downloadSettings),
+    subtitle: ValueListenableBuilder(
+      valueListenable: writeDownloadTagsNotifier,
+      builder: (context, tags, _) {
+        return ValueListenableBuilder(
+          valueListenable: downloadNamingNotifier,
+          builder: (context, naming, _) {
+            return Text(
+              [
+                folder,
+                downloadNamingLabel(l10n, naming),
+                tags ? l10n.downloadTagsOn : l10n.downloadTagsOff,
+              ].join(' · '),
+              overflow: TextOverflow.ellipsis,
+            );
+          },
+        );
+      },
     ),
-    onTap: () => pickDownloadFolder(context),
+    onTap: () => showDownloadSettingsDialog(context),
+  );
+}
+
+/// The download choices: where files go, what they are called, and whether the
+/// tags are written into them.
+///
+/// Each row closes the panel before it opens its own picker: the folder picker
+/// and the naming picker ask their own follow-up question, and a question on
+/// top of a panel on top of the settings page is two dialogs too many.
+Future<void> showDownloadSettingsDialog(BuildContext context) async {
+  final l10n = AppLocalizations.of(context);
+  final custom = downloadRootDir;
+  final folder = custom == null || custom.isEmpty
+      ? l10n.downloadFolderDefault
+      : custom;
+
+  await showAnimationDialog(
+    context: context,
+    child: Builder(
+      builder: (sheetContext) {
+        return SizedBox(
+          width: 340,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: ImageIcon(downloadImage, size: 24),
+                title: Text(l10n.downloadDirectory),
+                subtitle: Text(folder, overflow: TextOverflow.ellipsis),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  pickDownloadFolder(context);
+                },
+              ),
+              ListTile(
+                leading: ImageIcon(downloadImage, size: 24),
+                title: Text(l10n.downloadNaming),
+                subtitle: Text(
+                  downloadNamingLabel(l10n, downloadNamingNotifier.value),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  pickDownloadNaming(context);
+                },
+              ),
+              ListTile(
+                leading: ImageIcon(downloadImage, size: 24),
+                title: Text(l10n.downloadTags),
+                subtitle: Text(
+                  l10n.downloadTagsDescription,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                trailing: SizedBox(
+                  width: 50,
+                  child: MySwitch(
+                    valueNotifier: writeDownloadTagsNotifier,
+                    onToggleCallBack: () {
+                      setting.save();
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    ),
   );
 }
 
@@ -1286,25 +1369,6 @@ Future<bool?> showDownloadMoveDialog(
         ),
       ),
     ),
-  );
-}
-
-/// Settings row for how downloads are named, and the picker behind it.
-Widget downloadNamingListTile(
-  BuildContext context,
-  AppLocalizations l10n, {
-
-  /// Matches the icon size the surrounding settings rows use.
-  double iconSize = 30,
-}) {
-  return ListTile(
-    leading: ImageIcon(downloadImage, size: iconSize),
-    title: Text(l10n.downloadNaming),
-    subtitle: Text(
-      downloadNamingLabel(l10n, downloadNamingNotifier.value),
-      overflow: TextOverflow.ellipsis,
-    ),
-    onTap: () => pickDownloadNaming(context),
   );
 }
 
@@ -1414,33 +1478,6 @@ Future<DownloadNaming?> showDownloadNamingDialog(
             ),
           const SizedBox(height: 10),
         ],
-      ),
-    ),
-  );
-}
-
-/// Settings row for tagging finished downloads.
-Widget downloadTaggingListTile(
-  BuildContext context,
-  AppLocalizations l10n, {
-
-  /// Matches the icon size the surrounding settings rows use.
-  double iconSize = 30,
-}) {
-  return ListTile(
-    leading: ImageIcon(downloadImage, size: iconSize),
-    title: Text(l10n.downloadTags),
-    subtitle: Text(
-      l10n.downloadTagsDescription,
-      overflow: TextOverflow.ellipsis,
-    ),
-    trailing: SizedBox(
-      width: 50,
-      child: MySwitch(
-        valueNotifier: writeDownloadTagsNotifier,
-        onToggleCallBack: () {
-          setting.save();
-        },
       ),
     ),
   );

@@ -936,6 +936,15 @@ class AppLocalizationsEn extends AppLocalizations {
       'Write the title, artist and album into the downloaded file so other players show them';
 
   @override
+  String get downloadSettings => 'Downloads';
+
+  @override
+  String get downloadTagsOn => 'Tags written';
+
+  @override
+  String get downloadTagsOff => 'No tags';
+
+  @override
   String get downloadCancel => 'Cancel download';
 
   @override
