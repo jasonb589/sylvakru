@@ -35,6 +35,7 @@ import 'package:sylvakru/layer/premium_layer.dart';
 import 'package:sylvakru/portrait_view/portrait_view.dart';
 import 'package:sylvakru/portrait_view/sleep_timer.dart';
 import 'package:sylvakru/l10n/generated/app_localizations.dart';
+import 'package:sylvakru/base/widgets/my_select_field.dart';
 import 'package:sylvakru/base/widgets/my_switch.dart';
 import 'package:smooth_corner/smooth_corner.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -1521,105 +1522,180 @@ String translationSummary(AppLocalizations l10n) {
 Future<void> showTranslationSettingsDialog(BuildContext context) async {
   final l10n = AppLocalizations.of(context);
 
+  String providerLabel(TranslationProviderPreset provider) =>
+      provider.id == 'custom' ? l10n.translationCustom : provider.name;
+
   await showAnimationDialog(
     context: context,
-    child: SizedBox(
-      width: 360,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ListTile(
-            leading: ImageIcon(languageImage, size: 24),
-            title: Text(l10n.translationEnabled),
-            subtitle: Text(l10n.translationNotice, maxLines: 3),
-            trailing: SizedBox(
-              width: 50,
-              child: MySwitch(
-                valueNotifier: translationEnabledNotifier,
-                onToggleCallBack: () {
-                  setting.save();
-                },
-              ),
+    child: StatefulBuilder(
+      builder: (context, setSheetState) {
+        final providerId = translationProviderNotifier.value.isEmpty
+            ? translationProviderForUrl(translationBaseUrlNotifier.value).id
+            : translationProviderNotifier.value;
+        final provider = translationProviderFor(providerId);
+        final currentModel = translationModelNotifier.value;
+
+        return SizedBox(
+          width: 380,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  title: Text(l10n.translationEnabled),
+                  subtitle: Text(l10n.translationNotice, maxLines: 3),
+                  trailing: SizedBox(
+                    width: 50,
+                    child: MySwitch(
+                      valueNotifier: translationEnabledNotifier,
+                      onToggleCallBack: () => setting.save(),
+                    ),
+                  ),
+                ),
+                MySelectField<String>(
+                  label: l10n.translationProvider,
+                  value: providerId,
+                  options: [
+                    for (final item in translationProviders)
+                      MySelectOption(
+                        value: item.id,
+                        label: providerLabel(item),
+                        description: item.baseUrl.isEmpty ? null : item.baseUrl,
+                      ),
+                  ],
+                  onChanged: (id) {
+                    final chosen = translationProviderFor(id);
+                    translationProviderNotifier.value = id;
+                    if (chosen.baseUrl.isNotEmpty) {
+                      translationBaseUrlNotifier.value = chosen.baseUrl;
+                    }
+                    if (chosen.models.isNotEmpty) {
+                      translationModelNotifier.value = chosen.models.first;
+                    }
+                    setting.save();
+                    setSheetState(() {});
+                  },
+                ),
+                MySelectField<TranslationEndpointStyle>(
+                  label: l10n.translationFormat,
+                  value: translationEndpointStyleNotifier.value,
+                  description:
+                      translationEndpointStyleNotifier.value ==
+                          TranslationEndpointStyle.exactUrl
+                      ? l10n.translationFormatExactHint
+                      : null,
+                  options: [
+                    MySelectOption(
+                      value: TranslationEndpointStyle.chatCompletions,
+                      label: l10n.translationFormatChat,
+                    ),
+                    MySelectOption(
+                      value: TranslationEndpointStyle.exactUrl,
+                      label: l10n.translationFormatExact,
+                    ),
+                  ],
+                  onChanged: (style) {
+                    translationEndpointStyleNotifier.value = style;
+                    setting.save();
+                    setSheetState(() {});
+                  },
+                ),
+                ListTile(
+                  leading: Icon(Icons.link_rounded, size: 24),
+                  title: Text(l10n.translationBaseUrl),
+                  subtitle: Text(
+                    translationBaseUrlNotifier.value.isEmpty
+                        ? l10n.translationUnset
+                        : translationBaseUrlNotifier.value,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  onTap: () async {
+                    final value = await getInputTextDialog(
+                      context,
+                      l10n.translationBaseUrl,
+                    );
+                    if (value.trim().isEmpty) {
+                      return;
+                    }
+                    translationBaseUrlNotifier.value = value.trim();
+                    translationProviderNotifier.value =
+                        translationProviderForUrl(value).id;
+                    setting.save();
+                    setSheetState(() {});
+                  },
+                ),
+                MySelectField<String>(
+                  label: l10n.translationModel,
+                  value: currentModel,
+                  options: [
+                    for (final model in provider.models)
+                      MySelectOption(value: model, label: model),
+                    if (currentModel.isNotEmpty &&
+                        !provider.models.contains(currentModel))
+                      MySelectOption(value: currentModel, label: currentModel),
+                    MySelectOption(
+                      value: '',
+                      label: l10n.translationModelCustom,
+                    ),
+                  ],
+                  onChanged: (model) async {
+                    if (model.isEmpty) {
+                      final value = await getInputTextDialog(
+                        context,
+                        l10n.translationModel,
+                      );
+                      if (value.trim().isEmpty) {
+                        return;
+                      }
+                      translationModelNotifier.value = value.trim();
+                    } else {
+                      translationModelNotifier.value = model;
+                    }
+                    setting.save();
+                    setSheetState(() {});
+                  },
+                ),
+                ListTile(
+                  leading: Icon(Icons.key_rounded, size: 24),
+                  title: Text(l10n.translationApiKey),
+                  subtitle: Text(
+                    (config.translationApiKey ?? '').isEmpty
+                        ? l10n.translationUnset
+                        : l10n.translationKeySaved,
+                  ),
+                  onTap: () async {
+                    final value = await getInputTextDialog(
+                      context,
+                      l10n.translationApiKey,
+                    );
+                    if (value.trim().isEmpty) {
+                      return;
+                    }
+                    config.translationApiKey = value.trim();
+                    await config.save();
+                    setSheetState(() {});
+                  },
+                ),
+                ListTile(
+                  leading: Icon(Icons.cleaning_services_rounded, size: 24),
+                  title: Text(l10n.translationClearCache),
+                  subtitle: Text(
+                    l10n.translationCachedCount(translator.cachedCount),
+                  ),
+                  onTap: () async {
+                    await translator.clearCache();
+                    if (context.mounted) {
+                      showCenterMessage(l10n.translationCacheCleared);
+                    }
+                    setSheetState(() {});
+                  },
+                ),
+                const SizedBox(height: 8),
+              ],
             ),
           ),
-          ListTile(
-            leading: Icon(Icons.link_rounded, size: 24),
-            title: Text(l10n.translationBaseUrl),
-            subtitle: Text(
-              translationBaseUrlNotifier.value.isEmpty
-                  ? l10n.translationUnset
-                  : translationBaseUrlNotifier.value,
-              overflow: TextOverflow.ellipsis,
-            ),
-            onTap: () async {
-              final value = await getInputTextDialog(
-                context,
-                l10n.translationBaseUrl,
-              );
-              if (value.trim().isEmpty) {
-                return;
-              }
-              translationBaseUrlNotifier.value = value.trim();
-              setting.save();
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.memory_rounded, size: 24),
-            title: Text(l10n.translationModel),
-            subtitle: Text(
-              translationModelNotifier.value.isEmpty
-                  ? l10n.translationUnset
-                  : translationModelNotifier.value,
-              overflow: TextOverflow.ellipsis,
-            ),
-            onTap: () async {
-              final value = await getInputTextDialog(
-                context,
-                l10n.translationModel,
-              );
-              if (value.trim().isEmpty) {
-                return;
-              }
-              translationModelNotifier.value = value.trim();
-              setting.save();
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.key_rounded, size: 24),
-            title: Text(l10n.translationApiKey),
-            subtitle: Text(
-              (config.translationApiKey ?? '').isEmpty
-                  ? l10n.translationUnset
-                  : l10n.translationKeySaved,
-            ),
-            onTap: () async {
-              final value = await getInputTextDialog(
-                context,
-                l10n.translationApiKey,
-              );
-              if (value.trim().isEmpty) {
-                return;
-              }
-              // A secret the listener pays for: it goes to the credential
-              // store, not into setting.json.
-              config.translationApiKey = value.trim();
-              await config.save();
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.cleaning_services_rounded, size: 24),
-            title: Text(l10n.translationClearCache),
-            subtitle: Text(l10n.translationCachedCount(translator.cachedCount)),
-            onTap: () async {
-              await translator.clearCache();
-              if (context.mounted) {
-                showCenterMessage(l10n.translationCacheCleared);
-              }
-            },
-          ),
-          const SizedBox(height: 8),
-        ],
-      ),
+        );
+      },
     ),
   );
 }

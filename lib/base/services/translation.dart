@@ -2,13 +2,112 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:sylvakru/base/data/setting.dart';
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:sylvakru/base/app.dart';
 import 'package:sylvakru/base/data/config.dart';
-import 'package:sylvakru/base/data/setting.dart';
 import 'package:sylvakru/base/services/logger.dart';
 import 'package:sylvakru/base/utils/path.dart';
+
+/// A service whose OpenAI-compatible endpoint is well known.
+///
+/// Picking one fills the address and offers its usual models, so nobody has to
+/// look either up; 自定义 leaves both fields to the listener.
+class TranslationProviderPreset {
+  const TranslationProviderPreset({
+    required this.id,
+    required this.name,
+    required this.baseUrl,
+    required this.models,
+  });
+
+  final String id;
+  final String name;
+  final String baseUrl;
+  final List<String> models;
+}
+
+const translationProviders = <TranslationProviderPreset>[
+  TranslationProviderPreset(
+    id: 'deepseek',
+    name: 'DeepSeek',
+    baseUrl: 'https://api.deepseek.com/v1',
+    models: ['deepseek-chat', 'deepseek-reasoner'],
+  ),
+  TranslationProviderPreset(
+    id: 'zhipu',
+    name: '智谱 GLM',
+    baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
+    models: ['glm-4-flash', 'glm-4-plus'],
+  ),
+  TranslationProviderPreset(
+    id: 'dashscope',
+    name: '通义千问',
+    baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    models: ['qwen-plus', 'qwen-turbo', 'qwen-max'],
+  ),
+  TranslationProviderPreset(
+    id: 'moonshot',
+    name: 'Moonshot',
+    baseUrl: 'https://api.moonshot.cn/v1',
+    models: ['moonshot-v1-8k'],
+  ),
+  TranslationProviderPreset(
+    id: 'openai',
+    name: 'OpenAI',
+    baseUrl: 'https://api.openai.com/v1',
+    models: ['gpt-4o-mini', 'gpt-4o'],
+  ),
+  TranslationProviderPreset(
+    id: 'ollama',
+    name: '本地 Ollama',
+    baseUrl: 'http://localhost:11434/v1',
+    models: ['qwen2.5', 'llama3.1'],
+  ),
+  TranslationProviderPreset(id: 'custom', name: '自定义', baseUrl: '', models: []),
+];
+
+/// The preset [id] names, or 自定义 when it is unknown or empty.
+TranslationProviderPreset translationProviderFor(String id) {
+  for (final provider in translationProviders) {
+    if (provider.id == id) {
+      return provider;
+    }
+  }
+  return translationProviders.last;
+}
+
+/// The preset whose address matches [baseUrl], so a picker filled by hand still
+/// shows the right service.
+TranslationProviderPreset translationProviderForUrl(String baseUrl) {
+  String trim(String value) => value.trim().replaceAll(RegExp(r'/+$'), '');
+  for (final provider in translationProviders) {
+    if (provider.baseUrl.isNotEmpty &&
+        trim(provider.baseUrl) == trim(baseUrl)) {
+      return provider;
+    }
+  }
+  return translationProviders.last;
+}
+
+/// The URL a request goes to.
+///
+/// [TranslationEndpointStyle.chatCompletions] appends the path to a service
+/// root; [TranslationEndpointStyle.exactUrl] takes the address as it is, which
+/// is what providers documenting one full URL need.
+String translationEndpoint(TranslationSettings settings) {
+  final trimmed = settings.baseUrl.trim().replaceAll(RegExp(r'/+$'), '');
+  switch (settings.endpointStyle) {
+    case TranslationEndpointStyle.exactUrl:
+      return settings.baseUrl.trim();
+    case TranslationEndpointStyle.chatCompletions:
+      if (trimmed.endsWith('/chat/completions')) {
+        return trimmed;
+      }
+      return '$trimmed/chat/completions';
+  }
+}
 
 /// What a translation request needs to know about the chosen service.
 ///
@@ -19,6 +118,7 @@ class TranslationSettings {
     required this.baseUrl,
     required this.apiKey,
     required this.model,
+    required this.endpointStyle,
     required this.target,
   });
 
@@ -26,6 +126,9 @@ class TranslationSettings {
   final String apiKey;
   final String model;
   final String target;
+
+  /// Whether the address is a service root or the full endpoint.
+  final TranslationEndpointStyle endpointStyle;
 
   /// Whether there is enough here to make a request at all.
   bool get isConfigured =>
@@ -101,6 +204,7 @@ class Translator {
     apiKey: config.translationApiKey ?? '',
     model: translationModelNotifier.value,
     target: translationTargetNotifier.value,
+    endpointStyle: translationEndpointStyleNotifier.value,
   );
 
   bool get isEnabled =>
@@ -188,7 +292,7 @@ class Translator {
     );
 
     final response = await dio.post(
-      _endpoint(current.baseUrl),
+      translationEndpoint(current),
       data: buildTranslationRequest(text: text, settings: current),
       options: Options(
         headers: {
@@ -199,16 +303,6 @@ class Translator {
     );
 
     return parseTranslationResponse(response.data);
-  }
-
-  /// Accepts either the service root or a full chat completions URL, so a
-  /// listener can paste whichever their provider documents.
-  String _endpoint(String baseUrl) {
-    final trimmed = baseUrl.trim().replaceAll(RegExp(r'/+$'), '');
-    if (trimmed.endsWith('/chat/completions')) {
-      return trimmed;
-    }
-    return '$trimmed/chat/completions';
   }
 
   String _cacheKey(String text, TranslationSettings current) {

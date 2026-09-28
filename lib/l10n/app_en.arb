@@ -428,6 +428,13 @@
   "translationCacheCleared": "Translation cache cleared",
   "translationShowOriginal": "Show original",
   "translationShowTranslated": "Show translation",
+  "translationProvider": "Provider",
+  "translationFormat": "Interface format",
+  "translationFormatChat": "OpenAI Chat Completions",
+  "translationFormatExact": "Exact request URL",
+  "translationFormatExactHint": "The address already ends in /chat/completions and is used as it is",
+  "translationCustom": "Custom",
+  "translationModelCustom": "Custom model…",
   "downloadCancel": "Cancel download",
   "downloadRetry": "Retry",
   "downloadInUse": "This one is playing with nothing to move on to; switch songs first"

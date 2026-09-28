@@ -351,6 +351,13 @@
   "translationCacheCleared": "翻译缓存已清空",
   "translationShowOriginal": "显示原文",
   "translationShowTranslated": "显示译文",
+  "translationProvider": "服务商",
+  "translationFormat": "接口格式",
+  "translationFormatChat": "OpenAI Chat Completions",
+  "translationFormatExact": "完整接口地址",
+  "translationFormatExactHint": "地址已包含 /chat/completions，按原样请求",
+  "translationCustom": "自定义",
+  "translationModelCustom": "自定义模型…",
   "downloadCancel": "取消下载",
   "downloadRetry": "重试",
   "downloadInUse": "这首歌正在播放且没有下一首可切换，请先切歌再移除"

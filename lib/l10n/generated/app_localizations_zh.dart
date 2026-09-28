@@ -973,6 +973,27 @@ class AppLocalizationsZh extends AppLocalizations {
   String get translationShowTranslated => '显示译文';
 
   @override
+  String get translationProvider => '服务商';
+
+  @override
+  String get translationFormat => '接口格式';
+
+  @override
+  String get translationFormatChat => 'OpenAI Chat Completions';
+
+  @override
+  String get translationFormatExact => '完整接口地址';
+
+  @override
+  String get translationFormatExactHint => '地址已包含 /chat/completions，按原样请求';
+
+  @override
+  String get translationCustom => '自定义';
+
+  @override
+  String get translationModelCustom => '自定义模型…';
+
+  @override
   String get downloadCancel => '取消下载';
 
   @override

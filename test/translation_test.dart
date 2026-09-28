@@ -41,6 +41,7 @@ void main() {
       apiKey: 'key',
       model: 'test-model',
       target: '简体中文',
+      endpointStyle: TranslationEndpointStyle.chatCompletions,
     );
 
     final body = buildTranslationRequest(
@@ -145,5 +146,45 @@ void main() {
 
     expect(find.textContaining('A singer from Seoul.'), findsOneWidget);
     expect(find.textContaining('翻译后的简介'), findsNothing);
+  });
+
+  test('the address and the format decide the endpoint', () {
+    const root = TranslationSettings(
+      baseUrl: 'https://api.example.test/v1/',
+      apiKey: 'key',
+      model: 'test-model',
+      target: '简体中文',
+      endpointStyle: TranslationEndpointStyle.chatCompletions,
+    );
+    expect(
+      translationEndpoint(root),
+      'https://api.example.test/v1/chat/completions',
+    );
+
+    const exact = TranslationSettings(
+      baseUrl: 'https://api.example.test/anything/here',
+      apiKey: 'key',
+      model: 'test-model',
+      target: '简体中文',
+      endpointStyle: TranslationEndpointStyle.exactUrl,
+    );
+    expect(
+      translationEndpoint(exact),
+      'https://api.example.test/anything/here',
+    );
+  });
+
+  test('picking a service brings its address and models with it', () {
+    expect(
+      translationProviderFor('deepseek').baseUrl,
+      'https://api.deepseek.com/v1',
+    );
+    expect(translationProviderFor('deepseek').models, isNotEmpty);
+    expect(translationProviderFor('nonsense').id, 'custom');
+    expect(
+      translationProviderForUrl('https://api.openai.com/v1/').id,
+      'openai',
+    );
+    expect(translationProviderForUrl('https://my.own.server/v1').id, 'custom');
   });
 }

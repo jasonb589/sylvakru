@@ -993,6 +993,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get translationShowTranslated => 'Show translation';
 
   @override
+  String get translationProvider => 'Provider';
+
+  @override
+  String get translationFormat => 'Interface format';
+
+  @override
+  String get translationFormatChat => 'OpenAI Chat Completions';
+
+  @override
+  String get translationFormatExact => 'Exact request URL';
+
+  @override
+  String get translationFormatExactHint =>
+      'The address already ends in /chat/completions and is used as it is';
+
+  @override
+  String get translationCustom => 'Custom';
+
+  @override
+  String get translationModelCustom => 'Custom model…';
+
+  @override
   String get downloadCancel => 'Cancel download';
 
   @override

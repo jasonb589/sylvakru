@@ -1958,6 +1958,48 @@ abstract class AppLocalizations {
   /// **'Show translation'**
   String get translationShowTranslated;
 
+  /// No description provided for @translationProvider.
+  ///
+  /// In en, this message translates to:
+  /// **'Provider'**
+  String get translationProvider;
+
+  /// No description provided for @translationFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Interface format'**
+  String get translationFormat;
+
+  /// No description provided for @translationFormatChat.
+  ///
+  /// In en, this message translates to:
+  /// **'OpenAI Chat Completions'**
+  String get translationFormatChat;
+
+  /// No description provided for @translationFormatExact.
+  ///
+  /// In en, this message translates to:
+  /// **'Exact request URL'**
+  String get translationFormatExact;
+
+  /// No description provided for @translationFormatExactHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The address already ends in /chat/completions and is used as it is'**
+  String get translationFormatExactHint;
+
+  /// No description provided for @translationCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get translationCustom;
+
+  /// No description provided for @translationModelCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom model…'**
+  String get translationModelCustom;
+
   /// No description provided for @downloadCancel.
   ///
   /// In en, this message translates to:

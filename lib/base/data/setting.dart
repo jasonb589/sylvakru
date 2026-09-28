@@ -40,6 +40,29 @@ final downloadNamingNotifier = ValueNotifier<DownloadNaming>(
 /// file still makes sense in a player that never heard of this app.
 final writeDownloadTagsNotifier = ValueNotifier<bool>(true);
 
+/// How the address is turned into a request URL.
+///
+/// Providers document one of two shapes: a service root that the client
+/// appends `/chat/completions` to, or the full endpoint in one string. Both
+/// are accepted; this says which one the address is.
+final translationEndpointStyleNotifier =
+    ValueNotifier<TranslationEndpointStyle>(
+      TranslationEndpointStyle.chatCompletions,
+    );
+
+/// The service the listener picked, remembered so the panel can show it again.
+/// Only the id: the address and the model stay separate settings they can edit.
+final translationProviderNotifier = ValueNotifier<String>('');
+
+/// How an OpenAI-compatible endpoint is addressed.
+enum TranslationEndpointStyle {
+  /// The address is a service root; `/chat/completions` is appended.
+  chatCompletions,
+
+  /// The address is the complete request URL, used unchanged.
+  exactUrl,
+}
+
 /// Translation of the text a server sends — today the artist biography.
 ///
 /// Off by default: switching it on sends that text to a service the listener
