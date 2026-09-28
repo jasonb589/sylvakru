@@ -189,4 +189,17 @@ abstract final class AppLyrics {
   /// A gap between reports larger than this is a seek, not drift: the fill
   /// takes the reported position instead of easing towards it.
   static const int seekSnapMs = 400;
+
+  /// A tap on a line: a short acknowledgement, not a bounce.
+  static const Duration tapPulse = Duration(milliseconds: 240);
+
+  /// The bar that marks the line under the pointer, instead of a tint over the
+  /// whole row.
+  static const double hoverBarWidth = 2;
+  static const double hoverBarAlpha = 0.55;
+
+  /// How far a line far from the one being sung is blurred, when the listener
+  /// asked for it: enough at the edge of the view to read as depth rather than
+  /// as damage.
+  static const double farBlurSigma = 0.45;
 }

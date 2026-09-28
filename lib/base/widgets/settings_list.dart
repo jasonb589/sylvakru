@@ -26,6 +26,7 @@ import 'package:sylvakru/base/utils/path.dart';
 import 'package:sylvakru/base/utils/source_type.dart';
 import 'package:sylvakru/base/widgets/connect_client_widget.dart';
 import 'package:sylvakru/base/widgets/equalizer.dart';
+import 'package:sylvakru/base/widgets/lyric_list_view.dart';
 import 'package:sylvakru/base/widgets/my_divider.dart';
 import 'package:sylvakru/base/data/setting.dart';
 import 'package:sylvakru/layer/layers_manager.dart';
@@ -868,6 +869,20 @@ class _SettingsListState extends State<SettingsList> {
                               ],
                             );
                           },
+                        ),
+                      ),
+                      sliverBox(
+                        ListTile(
+                          title: Text(
+                            AppLocalizations.of(context).lyricsFarBlur,
+                          ),
+                          trailing: SizedBox(
+                            width: 50,
+                            child: MySwitch(
+                              valueNotifier: lyricsFarBlurNotifier,
+                              onToggleCallBack: () => setting.save(),
+                            ),
+                          ),
                         ),
                       ),
                     ],

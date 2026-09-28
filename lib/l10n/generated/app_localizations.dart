@@ -2221,6 +2221,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not get the album'**
   String get getAlbumFailed;
+
+  /// No description provided for @lyricsFarBlur.
+  ///
+  /// In en, this message translates to:
+  /// **'Blur distant lyrics'**
+  String get lyricsFarBlur;
 }
 
 class _AppLocalizationsDelegate

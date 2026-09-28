@@ -149,6 +149,24 @@ FontWeight lyricLineWeight(FontWeight base, double distance) {
   return FontWeight.lerp(lighter, base, 1 - distance.clamp(0.0, 1.0))!;
 }
 
+/// How much a line [distance] lines from the one being sung is blurred, when
+/// the listener asked for it: nothing while a line is still readable beside the
+/// current one, then a little more further out.
+double lyricFarBlurSigma(double distance) =>
+    AppLyrics.farBlurSigma * (distance - 2).clamp(0.0, 2.0);
+
+/// The emphasis of a tap on a line, 0..1, over the course of the pulse.
+///
+/// Up quickly and back down slowly, so a tap reads as "this one" rather than as
+/// a bounce; it is deliberately short, because the seek it starts is the answer.
+double lyricTapPulse(double progress) {
+  final t = progress.clamp(0.0, 1.0);
+  if (t < 0.35) {
+    return t / 0.35;
+  }
+  return 1 - (t - 0.35) / 0.65;
+}
+
 /// How long the list should take to travel [lines] lines.
 int lyricScrollMs(int lines) {
   final distance = lines.clamp(0, 32);

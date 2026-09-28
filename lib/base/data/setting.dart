@@ -190,6 +190,9 @@ class Setting {
         (json['lyricsTimeOffsetMs'] as num?)?.toInt() ??
         lyricsTimeOffsetNotifier.value;
 
+    lyricsFarBlurNotifier.value =
+        json['lyricsFarBlur'] as bool? ?? lyricsFarBlurNotifier.value;
+
     downloadRootDir = json['downloadDir'] as String? ?? downloadRootDir;
 
     downloadNamingNotifier.value = DownloadNaming.values.firstWhere(
@@ -252,6 +255,7 @@ class Setting {
         'cacheLimitMb': offlineMusicLimitMbNotifier.value,
         'playbackRate': playbackRateNotifier.value,
         'lyricsTimeOffsetMs': lyricsTimeOffsetNotifier.value,
+        'lyricsFarBlur': lyricsFarBlurNotifier.value,
         'downloadDir': downloadRootDir,
         'downloadSplitRepaired': downloadSplitRepaired,
         'downloadNaming': downloadNamingNotifier.value.name,

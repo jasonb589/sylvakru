@@ -1132,4 +1132,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get getAlbumFailed => 'Could not get the album';
+
+  @override
+  String get lyricsFarBlur => 'Blur distant lyrics';
 }

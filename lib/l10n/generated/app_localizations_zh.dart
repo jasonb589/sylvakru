@@ -1107,4 +1107,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get getAlbumFailed => '获取专辑失败';
+
+  @override
+  String get lyricsFarBlur => '歌词远景模糊';
 }

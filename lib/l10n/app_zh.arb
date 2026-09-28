@@ -415,5 +415,6 @@
   "playlistDeleteFailed": "删除歌单失败",
   "playlistUpdateFailed": "更新歌单失败",
   "playlistBusy": "歌单正在更新，请稍后再试",
-  "getAlbumFailed": "获取专辑失败"
+  "getAlbumFailed": "获取专辑失败",
+  "lyricsFarBlur": "歌词远景模糊"
 }

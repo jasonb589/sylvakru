@@ -294,4 +294,54 @@ void main() {
       expect(find.byType(CustomPaint), findsWidgets);
     });
   });
+
+  group('pointer and tap', () {
+    test('a tap rises quickly and settles slowly', () {
+      expect(lyricTapPulse(0), 0);
+      expect(lyricTapPulse(0.35), 1);
+      expect(lyricTapPulse(1), 0);
+      // The rise is over sooner than the settle: a tap, not a bounce.
+      expect(lyricTapPulse(0.2), greaterThan(lyricTapPulse(0.7)));
+    });
+
+    test('blur starts past the lines beside the current one', () {
+      expect(lyricFarBlurSigma(0), 0);
+      expect(lyricFarBlurSigma(1), 0);
+      expect(lyricFarBlurSigma(2), 0);
+      expect(lyricFarBlurSigma(3), greaterThan(0));
+      expect(lyricFarBlurSigma(9), AppLyrics.farBlurSigma * 2);
+    });
+
+    testWidgets('a far line is blurred when the listener asked for it', (
+      tester,
+    ) async {
+      lyricsFarBlurNotifier.value = true;
+      addTearDown(() => lyricsFarBlurNotifier.value = false);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Center(
+            child: SizedBox(
+              width: 300,
+              child: LyricLineWidget(
+                index: 5,
+                line: line(1000, 'a line far from the one being sung', [
+                  token(1000, 'a line far from the one being sung', 2000),
+                ]),
+                currentIndexNotifier: ValueNotifier<int>(0),
+                expanded: true,
+                isKaraoke: false,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byType(ImageFiltered), findsOneWidget);
+      expect(
+        tester.getSize(find.byType(LyricLineWidget)).height,
+        greaterThan(0),
+      );
+    });
+  });
 }
