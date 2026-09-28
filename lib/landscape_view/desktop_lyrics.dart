@@ -4,12 +4,15 @@ import 'dart:io';
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:screen_retriever/screen_retriever.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:sylvakru/base/audio_handler.dart';
 import 'package:sylvakru/base/app.dart';
 import 'package:sylvakru/base/data/desktop_lyrics_setting.dart';
 import 'package:sylvakru/base/extensions/window_controller_extension.dart';
 import 'package:sylvakru/base/services/color_manager.dart';
 import 'package:sylvakru/base/services/lyric.dart';
 import 'package:sylvakru/base/utils/contrast_color_generator.dart';
+import 'package:sylvakru/base/utils/lyric_motion.dart';
 import 'package:sylvakru/base/widgets/lyric_list_view.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -21,6 +24,16 @@ Duration desktopLyricsCurrentPosition = Duration.zero;
 LyricLine? currentLyricLine;
 bool currentLyricLineIsKaraoke = false;
 final updateDesktopLyricsNotifier = ValueNotifier(0);
+
+/// The position the fill in this window is drawn at.
+///
+/// Written by the window's own clock, which carries the position the main
+/// window sends forward between reports; the fill listens to this so a report
+/// repaints the line instead of rebuilding the window and re-measuring it.
+final desktopLyricsClock = ValueNotifier<Duration>(Duration.zero);
+
+/// Where position reports land while the window is built; null once it is gone.
+void Function(Duration position)? desktopLyricsPositionSink;
 
 /// The initial native window size. It is only a hidden startup size; the first
 /// rendered lyric line immediately resizes the window to its own bounds.
@@ -124,6 +137,9 @@ Future<void> toggleDesktopLyrics() async {
 
   await updateDesktopLyrics();
   await controller.sendColor(currentCoverArtColor);
+  // The child engine keeps its own play state; handing it over now means the
+  // reveal starts moving on the first line rather than after the next pause.
+  await controller.sendPlaying(isPlayingNotifier.value);
 
   // The secondary engine positions and sizes itself after its first frame. Do
   // not reveal it while it is still sitting at the native startup coordinate.
@@ -149,7 +165,8 @@ class DesktopLyrics extends StatefulWidget {
   State<DesktopLyrics> createState() => _DesktopLyricsState();
 }
 
-class _DesktopLyricsState extends State<DesktopLyrics> {
+class _DesktopLyricsState extends State<DesktopLyrics>
+    with SingleTickerProviderStateMixin {
   static const double _minWidth = 180;
   static const double _maxWidth = 1200;
   static const double _minHeight = 48;
@@ -163,17 +180,61 @@ class _DesktopLyricsState extends State<DesktopLyrics> {
   bool _positionResolved = false;
   Size? _windowSize;
 
+  /// The window's own clock. The main window sends a position many times per
+  /// line, but only every so often; this carries the fill across the gaps on
+  /// real time so the reveal is smooth instead of stepping, and it never runs
+  /// further ahead of the last report than the shared lead allows.
+  late final Ticker _clock;
+  Duration _reported = Duration.zero;
+  Duration _draw = Duration.zero;
+  DateTime _lastSync = DateTime.now();
+
   @override
   void initState() {
     super.initState();
     updateDesktopLyricsNotifier.addListener(_onContentChanged);
+    isPlayingNotifier.addListener(_onPlayStateChanged);
+    desktopLyricsPositionSink = _onPosition;
+    _clock = createTicker((_) => _advance());
+    if (isPlayingNotifier.value) {
+      _clock.start();
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) => _onContentChanged());
   }
 
   @override
   void dispose() {
     updateDesktopLyricsNotifier.removeListener(_onContentChanged);
+    isPlayingNotifier.removeListener(_onPlayStateChanged);
+    desktopLyricsPositionSink = null;
+    _clock.dispose();
     super.dispose();
+  }
+
+  void _onPlayStateChanged() {
+    if (isPlayingNotifier.value) {
+      _lastSync = DateTime.now();
+      if (!_clock.isActive) {
+        _clock.start();
+      }
+    } else if (_clock.isActive) {
+      _clock.stop();
+    }
+  }
+
+  /// The main window spoke: that position is the truth from here on.
+  void _onPosition(Duration position) {
+    _reported = position;
+    _lastSync = DateTime.now();
+    _advance();
+  }
+
+  void _advance() {
+    final now = DateTime.now();
+    final elapsed = now.difference(_lastSync);
+    _lastSync = now;
+    _draw = lyricDrawPosition(reported: _reported, smoothed: _draw + elapsed);
+    desktopLyricsClock.value = _draw;
   }
 
   void _onContentChanged() {
@@ -328,23 +389,19 @@ class _DesktopLyricsState extends State<DesktopLyrics> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            if (currentLyricLineIsKaraoke)
-              ValueListenableBuilder(
-                valueListenable: updateLyricsNotifier,
-                builder: (context, value, child) {
-                  return KaraokeText(
-                    key: ValueKey(currentLyricLine!.start),
-                    line: currentLyricLine!,
-                    position: desktopLyricsCurrentPosition,
-                    fontSize: isMobile ? 20 : 30,
-                    expanded: false,
-                    isDesktopLyrics: true,
-                    colour: color,
-                  );
-                },
-              )
-            else
-              _plainText(currentLyricLine!.text, color, isMobile ? 20 : 30),
+            // Every line gets the fill, not only the ones that carry word
+            // timings: a plain line sweeps across its own span, so the words
+            // arrive with the voice instead of all at once.
+            LyricFillText(
+              key: ValueKey(currentLyricLine!.start),
+              line: currentLyricLine!,
+              position: desktopLyricsCurrentPosition,
+              clock: desktopLyricsClock,
+              fontSize: isMobile ? 20 : 30,
+              expanded: false,
+              isDesktopLyrics: true,
+              colour: color,
+            ),
             for (final translate in currentLyricLine!.translates)
               _plainText(
                 translate,

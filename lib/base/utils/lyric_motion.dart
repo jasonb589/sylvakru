@@ -81,8 +81,13 @@ class LyricFill {
 /// which the parser set to the next line's start, so even a line without word
 /// timings sweeps with the voice instead of switching on.
 LyricFill lyricFillFor(LyricLine line, Duration position) {
-  if (line.text.isEmpty || line.tokens.isEmpty) {
+  if (line.text.isEmpty) {
     return LyricFill.empty;
+  }
+  if (line.tokens.isEmpty) {
+    // A line with no timings at all - unsynced lyrics, or the placeholder that
+    // says there are none - has nothing to sweep: it is there to be read.
+    return LyricFill(line.text.length, 0);
   }
 
   final offsets = lyricTokenOffsets(line);

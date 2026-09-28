@@ -19,7 +19,6 @@ final lyricsFontSizeOffsetNotifier = ValueNotifier(0.0);
 final lyricsTimeOffsetNotifier = ValueNotifier(0);
 final lyricsFontWeightNotifier = ValueNotifier(FontWeight.bold);
 
-final updateLyricsNotifier = ValueNotifier(0);
 
 /// Whether lines far from the one being sung are blurred, for depth at the
 /// edges of the view. Off by default: it costs a layer per line.
@@ -842,38 +841,47 @@ class KaraokeTextState extends State<LyricFillText>
             ? miniViewHighlightTextColor.value
             : lyricsPageHighlightTextColor.value);
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final maxWidth = constraints.hasBoundedWidth
-            ? constraints.maxWidth
-            : MediaQuery.sizeOf(context).width;
-        final painter = LyricFillPainter(
-          line: widget.line,
-          position: widget.clock ?? drawPosition,
-          playedColor: played,
-          // What has not been sung yet is the same colour, held back: the line
-          // reads as one line with a voice moving through it, rather than as a
-          // bright half and a grey half.
-          pendingColor: played.withValues(alpha: 0.6),
-          style: TextStyle(
-            fontSize: widget.fontSize,
-            fontWeight: lyricsFontWeightNotifier.value,
-          ),
-          textAlign: widget.expanded ? TextAlign.left : TextAlign.center,
-          offsetMs: lyricsTimeOffsetNotifier.value,
-          maxWidth: maxWidth,
-          shadows: widget.isDesktopLyrics
-              ? const [
-                  Shadow(
-                    offset: Offset(2, 2),
-                    blurRadius: 1,
-                    color: Colors.black54,
-                  ),
-                ]
-              : null,
-        );
-        return CustomPaint(size: painter.size, painter: painter);
-      },
+    final lineStyle = TextStyle(
+      fontSize: widget.fontSize,
+      fontWeight: lyricsFontWeightNotifier.value,
+    );
+    final painter = LyricFillPainter(
+      line: widget.line,
+      position: widget.clock ?? drawPosition,
+      playedColor: played,
+      // What has not been sung yet is the same colour, held back: the line
+      // reads as one line with a voice moving through it, rather than as a
+      // bright half and a grey half. The desktop window recedes further,
+      // because there the reveal is the only thing moving.
+      pendingColor: played.withValues(
+        alpha: widget.isDesktopLyrics ? 0.35 : 0.6,
+      ),
+      style: lineStyle,
+      textAlign: widget.expanded ? TextAlign.left : TextAlign.center,
+      offsetMs: lyricsTimeOffsetNotifier.value,
+      shadows: widget.isDesktopLyrics
+          ? const [
+              Shadow(
+                offset: Offset(2, 2),
+                blurRadius: 1,
+                color: Colors.black54,
+              ),
+            ]
+          : null,
+    );
+    // The transparent copy of the line is the box the fill is drawn in, and it
+    // is what tells a window that sizes itself from intrinsics - the desktop
+    // lyrics window does - how wide the line wants to be. Without it, and with
+    // the LayoutBuilder that used to sit here, the line answered every intrinsic
+    // query with zero: the window closed itself to its minimum width and cut the
+    // rest of the line off.
+    return CustomPaint(
+      painter: painter,
+      child: Text(
+        widget.line.text,
+        textAlign: widget.expanded ? TextAlign.left : TextAlign.center,
+        style: lineStyle.copyWith(color: Colors.transparent),
+      ),
     );
   }
 }
@@ -897,11 +905,18 @@ class LyricFillPainter extends CustomPainter {
   final TextStyle style;
   final TextAlign textAlign;
   final int offsetMs;
-  final double maxWidth;
   final List<Shadow>? shadows;
 
-  late final TextPainter _pending = _layout(pendingColor);
-  late final TextPainter _played = _layout(playedColor);
+  /// The two layouts, rebuilt only when the width this line is drawn at changes.
+  ///
+  /// The width used to be handed in from a LayoutBuilder, which sizes the line
+  /// correctly but answers every intrinsic query with zero - and the desktop
+  /// lyrics window measures exactly that way, so it kept closing itself to its
+  /// minimum and cutting the tail off the line. The width now comes from the
+  /// box the line is painted in, which the transparent measuring child defines.
+  TextPainter? _pendingCache;
+  TextPainter? _playedCache;
+  double _laidOutWidth = -1;
 
   LyricFillPainter({
     required this.line,
@@ -911,11 +926,24 @@ class LyricFillPainter extends CustomPainter {
     required this.style,
     required this.textAlign,
     required this.offsetMs,
-    required this.maxWidth,
     this.shadows,
   }) : super(repaint: position);
 
-  TextPainter _layout(Color colour) {
+  void _ensureLaidOut(double width) {
+    final target = width.isFinite && width > 0 ? width : double.infinity;
+    if (_laidOutWidth == target && _pendingCache != null) {
+      return;
+    }
+    _laidOutWidth = target;
+    _pendingCache = _layout(pendingColor, target);
+    _playedCache = _layout(playedColor, target);
+  }
+
+  TextPainter get _pending => _pendingCache!;
+
+  TextPainter get _played => _playedCache!;
+
+  TextPainter _layout(Color colour, double width) {
     return TextPainter(
       text: TextSpan(
         text: line.text,
@@ -923,13 +951,12 @@ class LyricFillPainter extends CustomPainter {
       ),
       textDirection: TextDirection.ltr,
       textAlign: textAlign,
-    )..layout(maxWidth: maxWidth);
+    )..layout(maxWidth: width);
   }
-
-  Size get size => Size(_pending.width, _pending.height);
 
   @override
   void paint(Canvas canvas, Size size) {
+    _ensureLaidOut(size.width);
     _pending.paint(canvas, Offset.zero);
 
     final fill = lyricFillFor(
@@ -1005,7 +1032,6 @@ class LyricFillPainter extends CustomPainter {
         oldDelegate.style != style ||
         oldDelegate.textAlign != textAlign ||
         oldDelegate.offsetMs != offsetMs ||
-        oldDelegate.maxWidth != maxWidth ||
         oldDelegate.shadows != shadows;
   }
 }

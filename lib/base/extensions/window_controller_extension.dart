@@ -22,6 +22,9 @@ extension WindowControllerExtension on WindowController {
         case 'set_color':
           setDesktopLyricsColor(call.arguments as int);
           break;
+        case 'desktop_lyrics_position':
+          getDesktopLyricPosition(call.arguments);
+          break;
         default:
           throw MissingPluginException('Not implemented: ${call.method}');
       }
@@ -70,6 +73,15 @@ extension WindowControllerExtension on WindowController {
       'lyric_line': lyricline?.toMap(),
       'isKaraoke': isKaraoke,
     });
+  }
+
+  /// Sends only the position.
+  ///
+  /// The line is pushed when it changes; the position has to keep coming, all
+  /// through the line, or the fill in that window has nothing to sweep with and
+  /// the line would sit there unsung from beginning to end.
+  Future<void> sendPosition(int microseconds) {
+    return invokeMethod('desktop_lyrics_position', microseconds);
   }
 
   Future<void> sendPlaying(bool playing) {

@@ -246,6 +246,21 @@ void getDesktopLyricFromMap(dynamic data) {
       ? LyricLine.fromMap(lyricLineMap)
       : null;
 
+  // The line push carries a position too: hand it to the window's clock, so a
+  // new line starts its reveal from where the voice actually is.
+  desktopLyricsPositionSink?.call(desktopLyricsCurrentPosition);
+
   currentLyricLineIsKaraoke = map['isKaraoke'] as bool;
   updateDesktopLyricsNotifier.value++;
 }
+
+/// The position alone, arriving many times per line.
+///
+/// It deliberately does not touch [updateDesktopLyricsNotifier]: that would
+/// rebuild the window and re-measure its geometry on every position report.
+/// The fill listens to [desktopLyricsClock] instead, so only its painting
+/// follows.
+void getDesktopLyricPosition(dynamic data) {
+  desktopLyricsPositionSink?.call(Duration(microseconds: data as int));
+}
+

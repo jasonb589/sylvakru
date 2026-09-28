@@ -130,8 +130,14 @@ void main() {
       expect(lyricFillFor(lyrics, ms(10)), const LyricFill(3, 0));
     });
 
-    test('no tokens, nothing to fill', () {
-      expect(lyricFillFor(line(0, 'plain text', []), ms(500)), LyricFill.empty);
+    test('a line with no timings at all is there to be read', () {
+      // Unsynced lyrics, or the line that says there are none. Nothing can
+      // sweep, so the whole line is shown: leaving it unrevealed would put the
+      // text on screen at the colour of something not yet sung, for good.
+      expect(
+        lyricFillFor(line(0, 'plain text', []), ms(500)),
+        const LyricFill(10, 0),
+      );
     });
   });
 
@@ -368,6 +374,39 @@ void main() {
       await tester.pump();
 
       expect(tester.getSize(find.byType(LyricFillText)).height, greaterThan(0));
+    });
+
+    testWidgets('says how wide the line wants to be, for a window sizing to it', (
+      tester,
+    ) async {
+      Future<double> intrinsicWidthOf(String text) async {
+        await tester.pumpWidget(
+          wrap(
+            LyricFillText(
+              line: line(0, text, [token(0, text, 1000)]),
+              position: ms(500),
+              fontSize: 30,
+              expanded: false,
+              isDesktopLyrics: true,
+            ),
+          ),
+        );
+        final box = tester.renderObject<RenderBox>(find.byType(LyricFillText));
+        return box.getMaxIntrinsicWidth(double.infinity);
+      }
+
+      final short = await intrinsicWidthOf('short');
+      final long = await intrinsicWidthOf(
+        'a line long enough that a window sized to the short one cuts it off',
+      );
+
+      // The desktop lyrics window measures exactly this to size itself. A zero
+      // here - what a LayoutBuilder answers, and what a CustomPaint without a
+      // child answers past the size it happened to be given - closed the window
+      // to its minimum and cut the tail off every line.
+      expect(short, greaterThan(0));
+      expect(long, greaterThan(short));
+      expect(long, greaterThan(300));
     });
   });
 

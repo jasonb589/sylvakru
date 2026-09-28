@@ -19,7 +19,6 @@ import 'package:sylvakru/base/services/lyric.dart';
 import 'package:sylvakru/base/utils/dynamic_lyrics_page_route.dart';
 import 'package:sylvakru/base/utils/path.dart';
 import 'package:sylvakru/base/widgets/equalizer.dart';
-import 'package:sylvakru/base/widgets/lyric_list_view.dart';
 import 'package:sylvakru/base/data/history.dart';
 import 'package:sylvakru/base/data/setting.dart';
 import 'package:sylvakru/landscape_view/desktop_lyrics.dart';
@@ -152,6 +151,10 @@ class MyAudioHandler extends BaseAudioHandler {
     });
   }
 
+  /// The position last handed to the desktop lyrics window, so the reports do
+  /// not become one method call per playback tick.
+  Duration _lastDesktopLyricsPush = Duration.zero;
+
   void _tryUpdateDesktopLyrics(Duration position) {
     final currentSong = currentSongNotifier.value;
     if (currentSong == null || currentSong.parsedLyrics == null) {
@@ -178,9 +181,24 @@ class MyAudioHandler extends BaseAudioHandler {
     currentLyricLine = lines[current];
     currentLyricLineIsKaraoke = parsedLyrics.isKaraoke;
 
-    if (lyricsWindowVisible && currentLyricLine != tmpLyricLine) {
-      updateDesktopLyrics();
+    if (!lyricsWindowVisible) {
+      return;
     }
+    if (currentLyricLine != tmpLyricLine) {
+      _lastDesktopLyricsPush = position;
+      updateDesktopLyrics();
+      return;
+    }
+    // The line goes over when it changes; the position has to keep coming all
+    // through it, or the reveal in that window has nothing to move with and the
+    // line would sit unsung from beginning to end. 80 ms of song time is below
+    // the gap the window smooths over, and far cheaper than per-tick traffic.
+    if ((position - _lastDesktopLyricsPush).abs() <
+        const Duration(milliseconds: 80)) {
+      return;
+    }
+    _lastDesktopLyricsPush = position;
+    lyricsWindowController?.sendPosition(position.inMicroseconds);
   }
 
   void updateIsPlaying(bool isPlaying) {
@@ -834,7 +852,6 @@ class MyAudioHandler extends BaseAudioHandler {
     await _player.seek(position);
     // ensure position is updated
     await Future.delayed(Duration(milliseconds: 50));
-    updateLyricsNotifier.value++;
     _positionState.writeAsString(getPosition().inMilliseconds.toString());
   }
 
