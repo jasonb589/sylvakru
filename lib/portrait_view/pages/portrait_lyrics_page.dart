@@ -14,6 +14,7 @@ import 'package:sylvakru/base/utils/dynamic_lyrics_page_route.dart';
 import 'package:sylvakru/base/widgets/buttons.dart';
 import 'package:sylvakru/base/widgets/cover_art_widget.dart';
 import 'package:sylvakru/base/widgets/my_divider.dart';
+import 'package:sylvakru/base/widgets/playback_rate_button.dart';
 import 'package:sylvakru/base/widgets/playlist_widgets.dart';
 import 'package:sylvakru/base/data/setting.dart';
 import 'package:sylvakru/base/widgets/song_info.dart';
@@ -679,6 +680,7 @@ class _PortraitLyricsPageState extends State<PortraitLyricsPage> {
                         color: value,
                         onPressed: () {
                           lyricsTimeOffsetNotifier.value -= 100;
+                          setting.save();
                         },
                         icon: ImageIcon(minimizeImage),
                       ),
@@ -699,9 +701,11 @@ class _PortraitLyricsPageState extends State<PortraitLyricsPage> {
                         color: value,
                         onPressed: () {
                           lyricsTimeOffsetNotifier.value += 100;
+                          setting.save();
                         },
                         icon: Icon(Icons.add),
                       ),
+                      PlaybackRateButton(color: value),
 
                       SizedBox(width: 20),
                     ],

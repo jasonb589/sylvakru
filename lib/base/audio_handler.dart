@@ -21,6 +21,7 @@ import 'package:sylvakru/base/utils/path.dart';
 import 'package:sylvakru/base/widgets/equalizer.dart';
 import 'package:sylvakru/base/widgets/lyric_list_view.dart';
 import 'package:sylvakru/base/data/history.dart';
+import 'package:sylvakru/base/data/setting.dart';
 import 'package:sylvakru/landscape_view/desktop_lyrics.dart';
 import 'package:sylvakru/base/extensions/window_controller_extension.dart';
 import 'package:sylvakru/layer/layers_manager.dart';
@@ -670,6 +671,9 @@ class MyAudioHandler extends BaseAudioHandler {
     currentSongNotifier.value = currentSong;
 
     isLoading = true;
+    // Speed belongs to the player rather than to a file, but backends differ on
+    // whether they keep it across a track change, so it is re-asserted here.
+    await _player.setRate(playbackRateNotifier.value);
     try {
       final downloadFile = currentSong.downloadPath == null
           ? null
@@ -864,6 +868,14 @@ class MyAudioHandler extends BaseAudioHandler {
 
   Stream<Duration> getDurationStream() {
     return _player.stream.duration;
+  }
+
+  /// Changes the playback speed and remembers it for the next launch.
+  Future<void> setPlaybackRate(double rate) async {
+    final clamped = clampPlaybackRate(rate);
+    playbackRateNotifier.value = clamped;
+    setting.save();
+    await _player.setRate(clamped);
   }
 
   Duration getPosition() {

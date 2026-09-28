@@ -15,6 +15,7 @@ import 'package:sylvakru/landscape_view/speaker.dart';
 import 'package:sylvakru/landscape_view/desktop_lyrics.dart';
 import 'package:sylvakru/landscape_view/title_bar.dart';
 import 'package:sylvakru/landscape_view/volume_bar.dart';
+import 'package:sylvakru/base/widgets/playback_rate_button.dart';
 import 'package:sylvakru/base/widgets/lyric_list_view.dart';
 import 'package:sylvakru/base/widgets/seekbar.dart';
 import 'package:sylvakru/base/my_audio_metadata.dart';
@@ -234,6 +235,9 @@ class _LandscapeLyricsPageState extends State<LandscapeLyricsPage> {
                           setting.save();
                         },
                         icon: Icon(Icons.text_decrease_rounded, size: 18),
+                      ),
+                      PlaybackRateButton(
+                        color: lyricsPageForegroundColor.value,
                       ),
                     ];
                     return Offstage(

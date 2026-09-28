@@ -28,6 +28,17 @@ final exitOnCloseNotifier = ValueNotifier(false);
 /// The persisted key remains `cacheLimitMb` for settings migration compatibility.
 final offlineMusicLimitMbNotifier = ValueNotifier<int>(0);
 
+/// Playback speed for the whole client; 1.0 is untouched. The player is asked
+/// for this on every track change, so a speed set once survives the next song.
+final playbackRateNotifier = ValueNotifier<double>(1.0);
+
+/// The speeds the picker offers. Clamping to this range keeps a corrupt setting
+/// file from asking the player for something it cannot do.
+const playbackRateOptions = <double>[0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3];
+
+double clampPlaybackRate(double rate) =>
+    rate.clamp(playbackRateOptions.first, playbackRateOptions.last).toDouble();
+
 final setting = Setting();
 
 const offlineMusicLimitOptionsMb = [0, 1024, 2048, 5120, 10240];
@@ -111,6 +122,14 @@ class Setting {
     offlineMusicLimitMbNotifier.value =
         (json['cacheLimitMb'] as num?)?.toInt() ??
         offlineMusicLimitMbNotifier.value;
+
+    playbackRateNotifier.value = clampPlaybackRate(
+      json['playbackRate'] as double? ?? playbackRateNotifier.value,
+    );
+
+    lyricsTimeOffsetNotifier.value =
+        (json['lyricsTimeOffsetMs'] as num?)?.toInt() ??
+        lyricsTimeOffsetNotifier.value;
   }
 
   void save() {
@@ -142,6 +161,8 @@ class Setting {
 
         'recursiveScan': recursiveScanNotifier.value,
         'cacheLimitMb': offlineMusicLimitMbNotifier.value,
+        'playbackRate': playbackRateNotifier.value,
+        'lyricsTimeOffsetMs': lyricsTimeOffsetNotifier.value,
       }),
     );
   }
