@@ -19,6 +19,7 @@ import 'package:sylvakru/base/services/picture_service.dart';
 import 'package:sylvakru/base/utils/metadata_utils.dart';
 import 'package:sylvakru/base/data/library.dart';
 import 'package:sylvakru/base/services/download_queue.dart';
+import 'package:sylvakru/base/utils/download_info.dart';
 import 'package:sylvakru/base/utils/zoom_page_route.dart';
 import 'package:sylvakru/base/widgets/cover_art_widget.dart';
 import 'package:sylvakru/base/widgets/custom_text_field.dart';
@@ -486,10 +487,21 @@ void tryVibrate() {
 class MenuItem {
   final IconData? iconData;
   final String? text;
+
+  /// A second, smaller line: what a download is going to be, for instance.
+  /// The native menus on iOS and macOS show only [text].
+  final String? subtitle;
+
   final void Function()? callback;
   final bool isDivider;
 
-  MenuItem({this.iconData, this.text, this.callback, this.isDivider = false});
+  MenuItem({
+    this.iconData,
+    this.text,
+    this.subtitle,
+    this.callback,
+    this.isDivider = false,
+  });
 }
 
 void showContextMenu(
@@ -603,11 +615,32 @@ void showContextMenu(
                                             ),
                                             const SizedBox(width: 10),
                                           ],
-                                          Text(
-                                            item.text!,
-                                            style: .new(
-                                              color: colorManager
-                                                  .getSpecificTextColor(),
+                                          ConstrainedBox(
+                                            constraints: const BoxConstraints(
+                                              maxWidth: 260,
+                                            ),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Text(
+                                                  item.text!,
+                                                  style: .new(
+                                                    color: colorManager
+                                                        .getSpecificTextColor(),
+                                                  ),
+                                                ),
+                                                if (item.subtitle != null)
+                                                  Text(
+                                                    item.subtitle!,
+                                                    style: .new(
+                                                      color: colorManager
+                                                          .getSpecificTextColor(),
+                                                      fontSize: 11,
+                                                    ),
+                                                  ),
+                                              ],
                                             ),
                                           ),
                                         ],
@@ -841,10 +874,12 @@ Widget _optionItem({
   required String text,
   required Widget leading,
   required Function() onTap,
+  String? subtitle,
 }) {
   return ListTile(
     leading: leading,
     title: Text(text, style: TextStyle(fontWeight: FontWeight.bold)),
+    subtitle: subtitle == null ? null : Text(subtitle),
     visualDensity: const VisualDensity(horizontal: 0, vertical: -4),
     onTap: onTap,
   );
@@ -981,6 +1016,9 @@ void showSongOptions({
                             : song.downloadExist
                             ? l10n.removeDownload
                             : l10n.downloadForOffline,
+                        subtitle: song.downloadExist
+                            ? null
+                            : describeDownloadQuality(song),
                         onTap: () async {
                           Navigator.pop(context);
                           if (isDownloading) return;
@@ -1273,6 +1311,7 @@ void showSongListOptions(BuildContext context, List<MyAudioMetadata> songList) {
                 ListTile(
                   leading: const Icon(Icons.download_rounded),
                   title: Text(l10n.downloadAll),
+                  subtitle: Text(describeBatchQuality(songList) ?? ''),
                   onTap: () {
                     Navigator.pop(context);
                     downloadSongs(songList, l10n);

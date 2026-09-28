@@ -10,6 +10,7 @@ import 'package:sylvakru/base/services/color_manager.dart';
 import 'package:sylvakru/base/services/interaction.dart';
 import 'package:sylvakru/base/utils/media_query.dart';
 import 'package:sylvakru/base/utils/metadata_utils.dart';
+import 'package:sylvakru/base/utils/download_info.dart';
 import 'package:sylvakru/base/widgets/cover_art_widget.dart';
 import 'package:sylvakru/base/widgets/my_navigator.dart';
 import 'package:sylvakru/l10n/generated/app_localizations.dart';
@@ -281,7 +282,7 @@ class _DownloadLayerState extends State<DownloadLayer> {
       ),
       title: Text(getTitle(song), maxLines: 1, overflow: TextOverflow.ellipsis),
       subtitle: Text(
-        getArtist(song),
+        [getArtist(song), ?describeDownloadQuality(song)].join(' · '),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
@@ -350,7 +351,9 @@ class _DownloadLayerState extends State<DownloadLayer> {
                 minHeight: 3,
               ),
             )
-          : Text(l10n.downloading),
+          : Text(
+              [l10n.downloading, ?describeDownloadQuality(song)].join(' · '),
+            ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

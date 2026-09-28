@@ -957,6 +957,7 @@ extension _SongListPanel on _SongListState {
             MenuItem(
               iconData: Icons.download_rounded,
               text: l10n.downloadAll,
+              subtitle: describeBatchQuality(selectedSongList),
               callback: () => downloadSongs(selectedSongList, l10n),
             ),
           );

@@ -26,6 +26,7 @@ import 'package:sylvakru/base/data/library.dart';
 import 'package:sylvakru/base/my_audio_metadata.dart';
 import 'package:sylvakru/base/data/playlist.dart';
 import 'package:sylvakru/base/utils/metadata_utils.dart';
+import 'package:sylvakru/base/utils/download_info.dart';
 import 'package:sylvakru/base/utils/advanced_song_search.dart';
 import 'package:sylvakru/base/widgets/advanced_song_search_dialog.dart';
 import 'package:sylvakru/base/widgets/edit_metadata.dart';
