@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sylvakru/base/data/artist_album.dart';
 import 'package:sylvakru/l10n/generated/app_localizations.dart';
+import 'package:sylvakru/base/utils/genre_names.dart';
 
 /// The metadata block shown on an artist page.
 ///
@@ -47,7 +48,7 @@ class _ArtistMetadataState extends State<ArtistMetadata> {
         final facts = <String>[
           if (artist.albumCount > 0) l10n.albumCount(artist.albumCount),
           if (artist.yearRange != null) artist.yearRange!,
-          if (artist.genres.isNotEmpty) artist.genres.take(3).join(' / '),
+          if (artist.genres.isNotEmpty) genreNamesLabel(artist.genres.take(3)),
         ];
         final biography = artist.biography?.trim();
 

@@ -1,3 +1,4 @@
+import 'package:sylvakru/base/utils/genre_names.dart';
 import 'package:sylvakru/base/data/artist_album.dart';
 import 'package:sylvakru/base/my_audio_metadata.dart';
 import 'package:path/path.dart';
@@ -61,7 +62,7 @@ String getGenre(MyAudioMetadata? song) {
   if (song.genre == null || song.genre == '') {
     return 'Unknown Genre';
   }
-  return song.genre!;
+  return genreNamesLabel([song.genre!]);
 }
 
 Duration getDuration(MyAudioMetadata? song) {
