@@ -503,7 +503,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get clearCache => '清除临时缓存';
 
   @override
-  String get offlineMusicLimit => '离线音乐上限';
+  String get offlineMusicLimit => '下载上限';
 
   @override
   String get offlineMusicLimitUnlimited => '不限制';
@@ -515,10 +515,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cacheUsage => '临时缓存占用';
 
   @override
-  String get temporaryCacheDescription => '播放过程中产生的临时音频，可随时清理，不影响离线音乐';
+  String get temporaryCacheDescription => '播放时自动保存的音频，可随时清理，不影响已下载的音乐';
 
   @override
-  String get offlineMusicStorage => '离线音乐占用';
+  String get offlineMusicStorage => '下载占用';
 
   @override
   String get tapAgain => '再按一次退出';

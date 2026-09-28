@@ -1061,7 +1061,7 @@ abstract class AppLocalizations {
   /// No description provided for @offlineMusicLimit.
   ///
   /// In en, this message translates to:
-  /// **'Offline Music Limit'**
+  /// **'Download Limit'**
   String get offlineMusicLimit;
 
   /// No description provided for @offlineMusicLimitUnlimited.
@@ -1085,13 +1085,13 @@ abstract class AppLocalizations {
   /// No description provided for @temporaryCacheDescription.
   ///
   /// In en, this message translates to:
-  /// **'Temporary audio created during playback; safe to clear and separate from offline music'**
+  /// **'Audio saved automatically while playing; safe to clear, and kept apart from your downloads'**
   String get temporaryCacheDescription;
 
   /// No description provided for @offlineMusicStorage.
   ///
   /// In en, this message translates to:
-  /// **'Offline Music Storage'**
+  /// **'Download Storage'**
   String get offlineMusicStorage;
 
   /// No description provided for @tapAgain.

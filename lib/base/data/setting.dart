@@ -28,6 +28,10 @@ final exitOnCloseNotifier = ValueNotifier(false);
 /// The persisted key remains `cacheLimitMb` for settings migration compatibility.
 final offlineMusicLimitMbNotifier = ValueNotifier<int>(0);
 
+/// Set once the pass that moves playback cache out of the downloads folder has
+/// run, so a file the listener never downloaded cannot be mistaken for theirs.
+bool downloadSplitRepaired = false;
+
 /// Playback speed for the whole client; 1.0 is untouched. The player is asked
 /// for this on every track change, so a speed set once survives the next song.
 final playbackRateNotifier = ValueNotifier<double>(1.0);
@@ -44,10 +48,12 @@ final setting = Setting();
 const offlineMusicLimitOptionsMb = [0, 1024, 2048, 5120, 10240];
 
 class Setting {
-  late final File file;
+  /// Resolved from [appSupportDir] on every access: loading twice has to be
+  /// harmless (a second run, or a test that points the app somewhere else),
+  /// which a `late final` field cannot promise.
+  File get file => File("${appSupportDir.path}/setting.json");
 
   Future<void> load() async {
-    file = File("${appSupportDir.path}/setting.json");
     initFile(file, false);
 
     final json = await readJsonMapFile(file);
@@ -132,6 +138,9 @@ class Setting {
         lyricsTimeOffsetNotifier.value;
 
     downloadRootDir = json['downloadDir'] as String? ?? downloadRootDir;
+
+    downloadSplitRepaired =
+        json['downloadSplitRepaired'] as bool? ?? downloadSplitRepaired;
   }
 
   void save() {
@@ -166,6 +175,7 @@ class Setting {
         'playbackRate': playbackRateNotifier.value,
         'lyricsTimeOffsetMs': lyricsTimeOffsetNotifier.value,
         'downloadDir': downloadRootDir,
+        'downloadSplitRepaired': downloadSplitRepaired,
       }),
     );
   }

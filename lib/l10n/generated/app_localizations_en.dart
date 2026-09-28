@@ -504,7 +504,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clearCache => 'Clear Temporary Cache';
 
   @override
-  String get offlineMusicLimit => 'Offline Music Limit';
+  String get offlineMusicLimit => 'Download Limit';
 
   @override
   String get offlineMusicLimitUnlimited => 'Unlimited';
@@ -517,10 +517,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get temporaryCacheDescription =>
-      'Temporary audio created during playback; safe to clear and separate from offline music';
+      'Audio saved automatically while playing; safe to clear, and kept apart from your downloads';
 
   @override
-  String get offlineMusicStorage => 'Offline Music Storage';
+  String get offlineMusicStorage => 'Download Storage';
 
   @override
   String get tapAgain => 'Tap Again to Exit';

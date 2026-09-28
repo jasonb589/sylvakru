@@ -168,10 +168,9 @@ class Library {
       }
     } while (true);
 
-    // Legacy releases stored explicit offline copies in caches/. Only files
-    // whose md5 name belongs to a loaded song are eligible for migration;
-    // every other cache file remains temporary playback data.
-    await migrateLegacyOfflineCopies();
+    // Playing a song used to move its cache file into downloads/ and mark it a
+    // download. Put those files back where they belong, once.
+    await repairDownloadCacheMixUp();
 
     canModify = true;
     changeNotifier.value++;
@@ -345,66 +344,75 @@ class Library {
     return moved;
   }
 
-  /// Moves known legacy offline copies out of the temporary cache directory.
+  /// Moves playback cache that earlier builds promoted into downloads/ back
+  /// into caches/, once.
   ///
-  /// The source and destination have the same md5 filename. Unknown files are
-  /// deliberately untouched because they are temporary playback cache. The
-  /// operation is idempotent and never overwrites an existing destination.
-  Future<void> migrateLegacyOfflineCopies() async {
-    if (sourceType == .local) {
+  /// Until 4.15.1 every file in caches/ whose name belonged to a loaded song
+  /// was taken for an explicit download and renamed into downloads/, so simply
+  /// listening to a song could turn it into a "download": the centre filled up
+  /// with music nobody downloaded while the temporary cache fell to 0 MB. Only
+  /// [downloadForOffline] writes downloads/ and only [tryAddCache] writes
+  /// caches/, so a file in downloads/ without a cache copy next to it is one
+  /// this build would not have put there. A song that has both copies keeps its
+  /// download: the cache copy is the playback one, the download is the
+  /// listener's.
+  ///
+  /// The marker in setting.json keeps the pass from running a second time, and
+  /// a crash half-way through is harmless because it is idempotent.
+  Future<void> repairDownloadCacheMixUp() async {
+    if (sourceType == .local || downloadSplitRepaired) {
       return;
     }
 
     final cacheDir = Directory(getCachesPath(sourceType));
-    if (!await cacheDir.exists()) {
-      return;
-    }
+    var moved = 0;
 
-    final downloadsDir = Directory(getDownloadsPath(sourceType));
     for (final song in id2Song.values) {
-      final oldPath = song.cachePath;
-      final newPath = song.downloadPath;
-      if (oldPath == null || newPath == null) {
+      final downloadPath = song.downloadPath;
+      final cachePath = song.cachePath;
+      if (downloadPath == null || cachePath == null) {
         continue;
       }
 
-      final oldFile = File(oldPath);
-      final newFile = File(newPath);
-      if (!await oldFile.exists() || await newFile.exists()) {
+      final downloadFile = File(downloadPath);
+      if (!await downloadFile.exists() || await File(cachePath).exists()) {
         continue;
       }
 
       try {
-        await downloadsDir.create(recursive: true);
-        var moved = false;
+        await cacheDir.create(recursive: true);
+        var relocated = false;
         try {
-          await oldFile.rename(newPath);
-          moved = true;
+          await downloadFile.rename(cachePath);
+          relocated = true;
         } on FileSystemException {
-          // A rename can fail on a different filesystem. Copy first and only
-          // remove the old cache after the destination is known to exist.
-          if (!await newFile.exists()) {
-            await oldFile.copy(newPath);
-          }
-          moved = await newFile.exists();
-          if (moved && await oldFile.exists()) {
-            await oldFile.delete();
+          // A rename fails across volumes: copy first and only drop the
+          // download once the cache copy is known to be there.
+          await downloadFile.copy(cachePath);
+          relocated = await File(cachePath).exists();
+          if (relocated && await downloadFile.exists()) {
+            await downloadFile.delete();
           }
         }
 
-        if (moved && await newFile.exists()) {
-          song.cacheExist = false;
-          song.downloadExist = true;
+        if (relocated) {
+          song.downloadExist = false;
+          song.cacheExist = true;
           song.updateNotifier.value++;
+          moved++;
         }
       } catch (error) {
-        logger.output(
-          'Failed to migrate legacy offline copy for ${song.id}: $error',
-        );
+        logger.output('Failed to move ${song.id} back to the cache: $error');
       }
     }
+
+    downloadSplitRepaired = true;
+    setting.save();
     await _accumulateCache();
     await _accumulateDownloads();
+    if (moved > 0) {
+      changeNotifier.value++;
+    }
   }
 
   Future<bool> _downloadToPath(

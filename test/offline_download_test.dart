@@ -25,7 +25,7 @@ void main() {
     await logger.init();
   });
 
-  setUp(() {
+  setUp(() async {
     sourceType = SourceType.navidrome;
     isStreamSource = true;
     isNotStreamSource = false;
@@ -33,6 +33,9 @@ void main() {
     downloadSizeNotifier.value = 0;
     downloadingSongIdsNotifier.value = {};
     offlineMusicLimitMbNotifier.value = 0;
+    // The one-time cache/download repair records that it ran in setting.json.
+    await setting.load();
+    downloadSplitRepaired = false;
     library.id2Song.clear();
     for (final path in [
       getCachesPath(sourceType),
@@ -82,31 +85,32 @@ void main() {
     );
   });
 
-  test(
-    'migrates known legacy copies and leaves unknown cache files alone',
-    () async {
-      final known = _song('known-legacy');
-      library.id2Song[known.id] = known;
-      final oldFile = File(known.cachePath!)..createSync(recursive: true);
-      oldFile.writeAsStringSync('legacy audio');
-      final unknown = File('${getCachesPath(sourceType)}/temporary-file')
-        ..createSync(recursive: true);
-      unknown.writeAsStringSync('temporary audio');
+  test('a song that was only played is cache, not a download', () async {
+    final played = _song('played-only');
+    library.id2Song[played.id] = played;
+    final cacheFile = File(played.cachePath!)..createSync(recursive: true);
+    cacheFile.writeAsStringSync('playback audio');
+    // tryAddCache would have marked the copy when it wrote it.
+    played.cacheExist = true;
+    final unknown = File('${getCachesPath(sourceType)}/temporary-file')
+      ..createSync(recursive: true);
+    unknown.writeAsStringSync('temporary audio');
 
-      await library.migrateLegacyOfflineCopies();
+    // The startup pass used to be migrateLegacyOfflineCopies(): it renamed a
+    // loaded song's cache file into downloads/ and counted it as a download.
+    await library.repairDownloadCacheMixUp();
 
-      expect(File(known.downloadPath!).readAsStringSync(), 'legacy audio');
-      expect(File(known.cachePath!).existsSync(), isFalse);
-      expect(known.cacheExist, isFalse);
-      expect(known.downloadExist, isTrue);
-      expect(unknown.existsSync(), isTrue);
-      expect(downloadSizeNotifier.value, greaterThan(0));
+    expect(File(played.cachePath!).readAsStringSync(), 'playback audio');
+    expect(File(played.downloadPath!).existsSync(), isFalse);
+    expect(played.cacheExist, isTrue);
+    expect(played.downloadExist, isFalse);
+    expect(library.offlineMusicSongs, isEmpty);
+    expect(unknown.existsSync(), isTrue);
 
-      await library.migrateLegacyOfflineCopies();
-      expect(unknown.existsSync(), isTrue);
-      expect(File(known.downloadPath!).existsSync(), isTrue);
-    },
-  );
+    await library.repairDownloadCacheMixUp();
+    expect(unknown.existsSync(), isTrue);
+    expect(File(played.downloadPath!).existsSync(), isFalse);
+  });
 
   test('keeps queued copies while the limit can still be met', () async {
     final playing = _song('playing');
