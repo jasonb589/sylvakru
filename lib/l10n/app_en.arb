@@ -460,5 +460,31 @@
   "groupArtist": "By artist",
   "downloadCancel": "Cancel download",
   "downloadRetry": "Retry",
-  "downloadInUse": "This one is playing with nothing to move on to; switch songs first"
+  "downloadInUse": "This one is playing with nothing to move on to; switch songs first",
+  "diskSpaceWarn": "Low space reminder",
+  "diskSpaceWarnOff": "Off",
+  "diskFreeSpace": "Free on disk",
+  "diskFreeSpaceUnknown": "Unknown",
+  "diskSpaceLow": "Only {free} free, below the {threshold} line",
+  "@diskSpaceLow": {
+    "placeholders": {
+      "free": {
+        "type": "String"
+      },
+      "threshold": {
+        "type": "String"
+      }
+    }
+  },
+  "diskSpaceLowQueued": "{count} queued, only {free} free on disk",
+  "@diskSpaceLowQueued": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "free": {
+        "type": "String"
+      }
+    }
+  }
 }

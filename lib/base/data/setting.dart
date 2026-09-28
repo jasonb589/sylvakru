@@ -40,6 +40,15 @@ final downloadNamingNotifier = ValueNotifier<DownloadNaming>(
 /// file still makes sense in a player that never heard of this app.
 final writeDownloadTagsNotifier = ValueNotifier<bool>(true);
 
+/// Below this much free space the reminder shows up, in MB.
+///
+/// Zero turns it off. It is a reminder and nothing more: a download the
+/// listener asked for is never blocked by a line they drew themselves.
+final diskSpaceWarnMbNotifier = ValueNotifier<int>(1024);
+
+/// The values the reminder picker offers.
+const diskSpaceWarnOptionsMb = [0, 512, 1024, 2048, 5120, 10240];
+
 /// How the address is turned into a request URL.
 ///
 /// Providers document one of two shapes: a service root that the client
@@ -191,6 +200,10 @@ class Setting {
     writeDownloadTagsNotifier.value =
         json['writeDownloadTags'] as bool? ?? writeDownloadTagsNotifier.value;
 
+    diskSpaceWarnMbNotifier.value =
+        (json['diskSpaceWarnMb'] as num?)?.toInt() ??
+        diskSpaceWarnMbNotifier.value;
+
     translationEnabledNotifier.value =
         json['translationEnabled'] as bool? ?? translationEnabledNotifier.value;
 
@@ -243,6 +256,7 @@ class Setting {
         'downloadSplitRepaired': downloadSplitRepaired,
         'downloadNaming': downloadNamingNotifier.value.name,
         'writeDownloadTags': writeDownloadTagsNotifier.value,
+        'diskSpaceWarnMb': diskSpaceWarnMbNotifier.value,
         'translationEnabled': translationEnabledNotifier.value,
         'translationBaseUrl': translationBaseUrlNotifier.value,
         'translationModel': translationModelNotifier.value,

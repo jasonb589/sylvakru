@@ -383,5 +383,31 @@
   "groupArtist": "按艺术家",
   "downloadCancel": "取消下载",
   "downloadRetry": "重试",
-  "downloadInUse": "这首歌正在播放且没有下一首可切换，请先切歌再移除"
+  "downloadInUse": "这首歌正在播放且没有下一首可切换，请先切歌再移除",
+  "diskSpaceWarn": "磁盘余量提醒",
+  "diskSpaceWarnOff": "关闭",
+  "diskFreeSpace": "磁盘剩余",
+  "diskFreeSpaceUnknown": "未知",
+  "diskSpaceLow": "磁盘剩余 {free}，已低于提醒线 {threshold}",
+  "@diskSpaceLow": {
+    "placeholders": {
+      "free": {
+        "type": "String"
+      },
+      "threshold": {
+        "type": "String"
+      }
+    }
+  },
+  "diskSpaceLowQueued": "已加入下载队列（{count} 首），磁盘剩余 {free}",
+  "@diskSpaceLowQueued": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "free": {
+        "type": "String"
+      }
+    }
+  }
 }

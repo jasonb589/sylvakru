@@ -14,6 +14,8 @@ import 'package:sylvakru/base/utils/download_info.dart';
 import 'package:sylvakru/base/widgets/cover_art_widget.dart';
 import 'package:path/path.dart' as p;
 import 'package:sylvakru/base/utils/reveal_in_file_manager.dart';
+import 'package:sylvakru/base/services/disk_space_service.dart';
+import 'package:sylvakru/base/utils/disk_space.dart';
 import 'package:sylvakru/base/widgets/my_navigator.dart';
 import 'package:sylvakru/l10n/generated/app_localizations.dart';
 import 'package:sylvakru/landscape_view/title_bar.dart';
@@ -66,6 +68,9 @@ class _DownloadLayerState extends State<DownloadLayer> {
       return;
     }
     library.repointDownloads();
+    // The volume is asked again every time the page comes up: downloads and
+    // everything else on the machine keep changing it.
+    refreshDiskFreeSpace();
   }
 
   @override
@@ -116,6 +121,8 @@ class _DownloadLayerState extends State<DownloadLayer> {
         downloadRunningNotifier,
         downloadProgressNotifier,
         downloadErrorsNotifier,
+        diskFreeSpaceBytesNotifier,
+        diskSpaceWarnMbNotifier,
       ]),
       builder: (context, _) {
         final songs = library.offlineMusicSongs;
@@ -173,6 +180,37 @@ class _DownloadLayerState extends State<DownloadLayer> {
                       l10n.offlineMusicCount(songs.length),
                       style: TextStyle(color: iconColor.value, fontSize: 12),
                     ),
+                    if (isDiskSpaceLow(
+                      freeBytes: diskFreeSpaceBytesNotifier.value,
+                      thresholdMb: diskSpaceWarnMbNotifier.value,
+                    ))
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.warning_amber_rounded,
+                              size: 15,
+                              color: Colors.orange,
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                l10n.diskSpaceLow(
+                                  formatBytes(
+                                    diskFreeSpaceBytesNotifier.value!,
+                                  ),
+                                  '${diskSpaceWarnMbNotifier.value} MB',
+                                ),
+                                style: const TextStyle(
+                                  color: Colors.orange,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -254,6 +292,12 @@ class _DownloadLayerState extends State<DownloadLayer> {
     return '$used$limitText$otherText';
   }
 
+  /// What the download volume has left, or that nobody can say.
+  String _freeSpaceLabel(AppLocalizations l10n) {
+    final bytes = diskFreeSpaceBytesNotifier.value;
+    return bytes == null ? l10n.diskFreeSpaceUnknown : formatBytes(bytes);
+  }
+
   void _showOfflineLimitPicker(BuildContext context, AppLocalizations l10n) {
     showAnimationDialog(
       context: context,
@@ -312,6 +356,10 @@ class _DownloadLayerState extends State<DownloadLayer> {
         : Offset.zero;
 
     showContextMenu(context, [
+      MenuItem(
+        text: '${l10n.diskFreeSpace} · ${_freeSpaceLabel(l10n)}',
+        callback: () => refreshDiskFreeSpace(force: true),
+      ),
       MenuItem(
         text: l10n.offlineMusicLimit,
         callback: () => _showOfflineLimitPicker(context, l10n),

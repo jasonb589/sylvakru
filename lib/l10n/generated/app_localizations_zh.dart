@@ -1067,4 +1067,26 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get downloadRetry => '重试';
+
+  @override
+  String get diskSpaceWarn => '磁盘余量提醒';
+
+  @override
+  String get diskSpaceWarnOff => '关闭';
+
+  @override
+  String get diskFreeSpace => '磁盘剩余';
+
+  @override
+  String get diskFreeSpaceUnknown => '未知';
+
+  @override
+  String diskSpaceLow(String free, String threshold) {
+    return '磁盘剩余 $free，已低于提醒线 $threshold';
+  }
+
+  @override
+  String diskSpaceLowQueued(int count, String free) {
+    return '已加入下载队列（$count 首），磁盘剩余 $free';
+  }
 }

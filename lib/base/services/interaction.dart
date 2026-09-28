@@ -20,6 +20,9 @@ import 'package:sylvakru/base/utils/metadata_utils.dart';
 import 'package:sylvakru/base/data/library.dart';
 import 'package:sylvakru/base/services/download_queue.dart';
 import 'package:sylvakru/base/utils/download_info.dart';
+import 'package:sylvakru/base/data/setting.dart';
+import 'package:sylvakru/base/services/disk_space_service.dart';
+import 'package:sylvakru/base/utils/disk_space.dart';
 import 'package:sylvakru/base/utils/zoom_page_route.dart';
 import 'package:sylvakru/base/widgets/cover_art_widget.dart';
 import 'package:sylvakru/base/widgets/custom_text_field.dart';
@@ -1243,10 +1246,32 @@ void downloadSongs(List<MyAudioMetadata> songs, AppLocalizations l10n) {
       .map((song) => song.id)
       .toSet();
   downloadQueue.add(songs);
+  unawaited(_reportQueueAdd(pending.length, l10n));
+}
+
+/// Says what the queue took, and adds the disk reminder when the volume is
+/// nearly full.
+///
+/// The reminder never blocks a download: the line is one the listener drew
+/// themselves, and refusing a 3 MB song over it would be worse than the
+/// warning it replaces. The figure is asked fresh, because this is the moment
+/// it matters. The message is composed after that answer rather than before:
+/// the centre message throttles, so a second call would never be seen.
+Future<void> _reportQueueAdd(int count, AppLocalizations l10n) async {
+  if (count == 0) {
+    showCenterMessage(l10n.downloadAllDone);
+    return;
+  }
+  final thresholdMb = diskSpaceWarnMbNotifier.value;
+  final free = thresholdMb <= 0
+      ? null
+      : await refreshDiskFreeSpace(force: true);
+  final low = isDiskSpaceLow(freeBytes: free, thresholdMb: thresholdMb);
   showCenterMessage(
-    pending.isEmpty
-        ? l10n.downloadAllDone
-        : l10n.queuedForDownload(pending.length),
+    low
+        ? l10n.diskSpaceLowQueued(count, formatBytes(free!))
+        : l10n.queuedForDownload(count),
+    duration: low ? 3000 : 2000,
   );
 }
 

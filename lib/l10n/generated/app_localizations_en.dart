@@ -1092,4 +1092,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get downloadRetry => 'Retry';
+
+  @override
+  String get diskSpaceWarn => 'Low space reminder';
+
+  @override
+  String get diskSpaceWarnOff => 'Off';
+
+  @override
+  String get diskFreeSpace => 'Free on disk';
+
+  @override
+  String get diskFreeSpaceUnknown => 'Unknown';
+
+  @override
+  String diskSpaceLow(String free, String threshold) {
+    return 'Only $free free, below the $threshold line';
+  }
+
+  @override
+  String diskSpaceLowQueued(int count, String free) {
+    return '$count queued, only $free free on disk';
+  }
 }

@@ -2149,6 +2149,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Retry'**
   String get downloadRetry;
+
+  /// No description provided for @diskSpaceWarn.
+  ///
+  /// In en, this message translates to:
+  /// **'Low space reminder'**
+  String get diskSpaceWarn;
+
+  /// No description provided for @diskSpaceWarnOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get diskSpaceWarnOff;
+
+  /// No description provided for @diskFreeSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'Free on disk'**
+  String get diskFreeSpace;
+
+  /// No description provided for @diskFreeSpaceUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get diskFreeSpaceUnknown;
+
+  /// No description provided for @diskSpaceLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Only {free} free, below the {threshold} line'**
+  String diskSpaceLow(String free, String threshold);
+
+  /// No description provided for @diskSpaceLowQueued.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} queued, only {free} free on disk'**
+  String diskSpaceLowQueued(int count, String free);
 }
 
 class _AppLocalizationsDelegate

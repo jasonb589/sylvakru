@@ -1,9 +1,30 @@
 #include "flutter_window.h"
 
 #include <optional>
+#include <string>
 
 #include "flutter/generated_plugin_registrant.h"
 #include "desktop_multi_window/desktop_multi_window_plugin.h"
+
+namespace {
+
+/* The method channel carries UTF-8; the Windows API wants UTF-16. */
+std::wstring WideFromUtf8(const std::string &text) {
+  if (text.empty()) {
+    return std::wstring();
+  }
+  const int length = static_cast<int>(text.size());
+  const int size =
+      MultiByteToWideChar(CP_UTF8, 0, text.c_str(), length, nullptr, 0);
+  if (size <= 0) {
+    return std::wstring();
+  }
+  std::wstring wide(static_cast<size_t>(size), L'\0');
+  MultiByteToWideChar(CP_UTF8, 0, text.c_str(), length, wide.data(), size);
+  return wide;
+}
+
+}  // namespace
 
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
     : project_(project) {}
@@ -26,6 +47,50 @@ bool FlutterWindow::OnCreate() {
     return false;
   }
   RegisterPlugins(flutter_controller_->engine());
+
+  /* Free space is the one question Dart cannot answer for itself, so the app
+     asks the platform. The channel lives as long as the window does. */
+  disk_space_channel_ =
+      std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
+          flutter_controller_->engine()->messenger(), "sylvakru/disk_space",
+          &flutter::StandardMethodCodec::GetInstance());
+  disk_space_channel_->SetMethodCallHandler(
+      [](const flutter::MethodCall<flutter::EncodableValue> &call,
+         std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>>
+             result) {
+        if (call.method_name() != "freeSpace") {
+          result->NotImplemented();
+          return;
+        }
+        std::wstring path;
+        if (const auto *arguments =
+                std::get_if<flutter::EncodableMap>(call.arguments())) {
+          const auto entry = arguments->find(flutter::EncodableValue("path"));
+          if (entry != arguments->end()) {
+            if (const auto *value = std::get_if<std::string>(&entry->second)) {
+              path = WideFromUtf8(*value);
+            }
+          }
+        }
+        ULARGE_INTEGER free_bytes{};
+        ULARGE_INTEGER total_bytes{};
+        ULARGE_INTEGER total_free_bytes{};
+        BOOL answered = GetDiskFreeSpaceExW(path.c_str(), &free_bytes,
+                                            &total_bytes, &total_free_bytes);
+        /* A downloads folder that is not there yet still sits on a volume: the
+           root of the path answers for it just as well. */
+        if (!answered && path.size() > 3) {
+          answered = GetDiskFreeSpaceExW(path.substr(0, 3).c_str(), &free_bytes,
+                                         &total_bytes, &total_free_bytes);
+        }
+        if (!answered) {
+          /* Unknown rather than zero: a zero would read as a full disk. */
+          result->Success(flutter::EncodableValue());
+          return;
+        }
+        result->Success(flutter::EncodableValue(
+            static_cast<int64_t>(free_bytes.QuadPart)));
+      });
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
   DesktopMultiWindowSetWindowCreatedCallback([](void *controller) {
     auto *flutter_view_controller =

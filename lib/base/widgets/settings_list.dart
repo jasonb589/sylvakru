@@ -18,6 +18,7 @@ import 'package:sylvakru/base/services/logger.dart';
 import 'package:sylvakru/base/services/navidrome_client.dart';
 import 'package:sylvakru/base/services/stream_client.dart';
 import 'package:sylvakru/base/services/translation.dart';
+import 'package:sylvakru/base/services/disk_space_service.dart';
 import 'package:sylvakru/base/services/system_ui_service.dart';
 import 'package:sylvakru/base/utils/common_utils.dart';
 import 'package:sylvakru/base/utils/media_query.dart';
@@ -1265,6 +1266,18 @@ Future<void> showDownloadSettingsDialog(BuildContext context) async {
                   ),
                 ),
               ),
+              ListTile(
+                leading: ImageIcon(downloadImage, size: 24),
+                title: Text(l10n.diskSpaceWarn),
+                subtitle: Text(
+                  diskSpaceWarnLabel(l10n, diskSpaceWarnMbNotifier.value),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  pickDiskSpaceWarn(context);
+                },
+              ),
               const SizedBox(height: 8),
             ],
           ),
@@ -1399,6 +1412,49 @@ Future<void> pickDownloadNaming(BuildContext context) async {
       renameFiles ? l10n.downloadsRenamed(renamed) : l10n.downloadsNewOnly,
     );
   }
+}
+
+/// "Off", or the line the reminder compares against.
+String diskSpaceWarnLabel(AppLocalizations l10n, int mb) {
+  return mb <= 0 ? l10n.diskSpaceWarnOff : '$mb MB';
+}
+
+/// Asks below how much free space the download center should warn about, and
+/// keeps the answer.
+///
+/// A reminder and nothing more: no download is ever refused because of it.
+Future<void> pickDiskSpaceWarn(BuildContext context) async {
+  final l10n = AppLocalizations.of(context);
+  final chosen = await showAnimationDialog<int>(
+    context: context,
+    child: SizedBox(
+      width: 300,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final option in diskSpaceWarnOptionsMb)
+            ListTile(
+              leading: Icon(
+                option == diskSpaceWarnMbNotifier.value
+                    ? Icons.check_circle_rounded
+                    : Icons.circle_outlined,
+              ),
+              title: Text(option <= 0 ? l10n.diskSpaceWarnOff : '$option MB'),
+              onTap: () => Navigator.of(context).pop(option),
+            ),
+          const SizedBox(height: 10),
+        ],
+      ),
+    ),
+  );
+  if (chosen == null || chosen == diskSpaceWarnMbNotifier.value) {
+    return;
+  }
+  diskSpaceWarnMbNotifier.value = chosen;
+  setting.save();
+  // A line drawn higher than the volume's current free space warns right
+  // away, so the page agrees with the setting without waiting for a restart.
+  await refreshDiskFreeSpace(force: true);
 }
 
 /// `true` renames what is already there, `false` only affects new downloads,
