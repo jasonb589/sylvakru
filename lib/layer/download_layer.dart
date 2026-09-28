@@ -12,6 +12,8 @@ import 'package:sylvakru/base/utils/media_query.dart';
 import 'package:sylvakru/base/utils/metadata_utils.dart';
 import 'package:sylvakru/base/utils/download_info.dart';
 import 'package:sylvakru/base/widgets/cover_art_widget.dart';
+import 'package:path/path.dart' as p;
+import 'package:sylvakru/base/utils/reveal_in_file_manager.dart';
 import 'package:sylvakru/base/widgets/my_navigator.dart';
 import 'package:sylvakru/l10n/generated/app_localizations.dart';
 import 'package:sylvakru/landscape_view/title_bar.dart';
@@ -34,9 +36,27 @@ class _DownloadLayerState extends State<DownloadLayer> {
   final scrollController = ScrollController();
 
   @override
+  void initState() {
+    super.initState();
+    // Files can be deleted in Explorer while the app is running: re-read the
+    // folder whenever the page comes into view, so a row never keeps claiming a
+    // download that is no longer there.
+    downloadVisibleNotifier.addListener(_recheckDownloads);
+    _recheckDownloads();
+  }
+
+  @override
   void dispose() {
+    downloadVisibleNotifier.removeListener(_recheckDownloads);
     scrollController.dispose();
     super.dispose();
+  }
+
+  void _recheckDownloads() {
+    if (!downloadVisibleNotifier.value) {
+      return;
+    }
+    library.repointDownloads();
   }
 
   @override
@@ -133,6 +153,20 @@ class _DownloadLayerState extends State<DownloadLayer> {
                             icon: const Icon(Icons.tune, size: 16),
                             label: Text(storageLabel(l10n)),
                           ),
+                        ),
+                        ValueListenableBuilder(
+                          valueListenable: otherDownloadSizeNotifier,
+                          builder: (context, other, _) {
+                            if (other <= 0) {
+                              return const SizedBox.shrink();
+                            }
+                            return TextButton(
+                              onPressed: () => _showOtherFiles(context, l10n),
+                              child: Text(
+                                '${l10n.otherFiles} ${other.toStringAsFixed(1)}MB',
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -260,6 +294,140 @@ class _DownloadLayerState extends State<DownloadLayer> {
     );
   }
 
+  /// Removes one download, moving off it first when it is the playing file.
+  ///
+  /// Shared by the row's delete button and its menu, so the two cannot drift.
+  Future<void> _removeDownload(
+    BuildContext context,
+    MyAudioMetadata song,
+    AppLocalizations l10n,
+  ) async {
+    // A playing file cannot be deleted, so this case moves on first instead of
+    // refusing and asking the listener to pause.
+    if (currentSongNotifier.value?.id == song.id && isPlayingNotifier.value) {
+      await audioHandler.skipToNext();
+      if (currentSongNotifier.value?.id == song.id) {
+        // Nothing to move on to: the file is still in use.
+        if (context.mounted) {
+          showCenterMessage(l10n.downloadInUse);
+        }
+        return;
+      }
+    }
+    final removed = await library.removeOfflineCopy(song);
+    if (!removed && context.mounted) {
+      showCenterMessage(l10n.downloadInUse);
+    }
+  }
+
+  /// The menu a downloaded row offers: where the file is, and removing it.
+  void _showOfflineRowMenu(
+    BuildContext context,
+    MyAudioMetadata song,
+    AppLocalizations l10n,
+    Offset? position,
+  ) {
+    final path = song.downloadPath;
+    if (path == null) {
+      return;
+    }
+    showContextMenu(context, [
+      MenuItem(
+        text: l10n.revealInFolder,
+        callback: () => revealInFileManager(path),
+      ),
+      MenuItem(
+        text: l10n.removeDownload,
+        callback: () => _removeDownload(context, song, l10n),
+      ),
+    ], position ?? Offset.zero);
+  }
+
+  /// The files in the downloads folder that belong to no song.
+  ///
+  /// Listed rather than deleted: they may be anything, so the listener looks
+  /// and decides, one file at a time.
+  Future<void> _showOtherFiles(
+    BuildContext context,
+    AppLocalizations l10n,
+  ) async {
+    final files = await library.otherDownloadFiles();
+    if (!context.mounted) {
+      return;
+    }
+
+    await showAnimationDialog(
+      context: context,
+      child: SizedBox(
+        width: 420,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (files.isEmpty)
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Text(l10n.otherFilesEmpty),
+              )
+            else ...[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 14, 20, 6),
+                child: Text(
+                  l10n.otherFilesHint,
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ),
+              Flexible(
+                child: ListView(
+                  shrinkWrap: true,
+                  children: [
+                    for (final file in files)
+                      ListTile(
+                        title: Text(
+                          p.basename(file.path),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        subtitle: Text(formatBytes(file.bytes)),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              tooltip: l10n.revealInFolder,
+                              icon: const Icon(Icons.folder_open_rounded),
+                              onPressed: () => revealInFileManager(file.path),
+                            ),
+                            IconButton(
+                              tooltip: l10n.deleteFile,
+                              icon: const Icon(Icons.delete_outline),
+                              onPressed: () async {
+                                final confirmed = await showConfirmDialog(
+                                  context,
+                                  l10n.deleteFile,
+                                );
+                                if (!confirmed) {
+                                  return;
+                                }
+                                await library.deleteOtherDownload(file.path);
+                                if (context.mounted) {
+                                  Navigator.pop(context);
+                                  _showOtherFiles(context, l10n);
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget offlineRow(
     BuildContext context,
     MyAudioMetadata song,
@@ -268,50 +436,41 @@ class _DownloadLayerState extends State<DownloadLayer> {
   ) {
     final l10n = AppLocalizations.of(context);
 
-    return ListTile(
-      contentPadding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-      // The row that is playing right now, so tapping through the list gives
-      // the same "you are here" cue the song lists use.
-      selected: currentSongNotifier.value?.id == song.id,
-      selectedColor: highlightTextColor.value,
-      selectedTileColor: selectedItemColor.value,
-      leading: CoverArtWidget(
-        size: 42,
-        borderRadius: AppRadius.coverTiny,
-        picture: song.picture,
-      ),
-      title: Text(getTitle(song), maxLines: 1, overflow: TextOverflow.ellipsis),
-      subtitle: Text(
-        [getArtist(song), ?describeDownloadQuality(song)].join(' · '),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-      trailing: IconButton(
-        icon: const Icon(Icons.delete_outline),
-        tooltip: l10n.removeDownload,
-        onPressed: () async {
-          // A playing file cannot be deleted, so this case moves on first
-          // instead of refusing and asking the listener to pause.
-          if (currentSongNotifier.value?.id == song.id &&
-              isPlayingNotifier.value) {
-            await audioHandler.skipToNext();
-            if (currentSongNotifier.value?.id == song.id) {
-              // Nothing to move on to: the file is still in use.
-              if (context.mounted) {
-                showCenterMessage(l10n.downloadInUse);
-              }
-              return;
-            }
-          }
-          final removed = await library.removeOfflineCopy(song);
-          if (!removed && context.mounted) {
-            showCenterMessage(l10n.downloadInUse);
-          }
+    return GestureDetector(
+      onSecondaryTapDown: (details) =>
+          _showOfflineRowMenu(context, song, l10n, details.globalPosition),
+      child: ListTile(
+        contentPadding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+        // The row that is playing right now, so tapping through the list gives
+        // the same "you are here" cue the song lists use.
+        selected: currentSongNotifier.value?.id == song.id,
+        selectedColor: highlightTextColor.value,
+        selectedTileColor: selectedItemColor.value,
+        leading: CoverArtWidget(
+          size: 42,
+          borderRadius: AppRadius.coverTiny,
+          picture: song.picture,
+        ),
+        title: Text(
+          getTitle(song),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        subtitle: Text(
+          [getArtist(song), ?describeDownloadQuality(song)].join(' · '),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        trailing: IconButton(
+          icon: const Icon(Icons.delete_outline),
+          tooltip: l10n.removeDownload,
+          onPressed: () => _removeDownload(context, song, l10n),
+        ),
+        onLongPress: () => _showOfflineRowMenu(context, song, l10n, null),
+        onTap: () {
+          audioHandler.setPlayQueue(songs, 0, targetIndex: songs.indexOf(song));
         },
       ),
-      onTap: () {
-        audioHandler.setPlayQueue(songs, 0, targetIndex: songs.indexOf(song));
-      },
     );
   }
 

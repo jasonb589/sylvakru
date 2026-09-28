@@ -577,6 +577,77 @@ class Library {
     return song.downloadExist;
   }
 
+  /// Files in the downloads folder that belong to no song.
+  ///
+  /// Everything the library did not put there — dropped in by hand, or left
+  /// behind by a song that is gone — with its size, so the centre can show the
+  /// listener what they have and let them decide what to do with it.
+  Future<List<({String path, int bytes})>> otherDownloadFiles() async {
+    if (sourceType == .local) {
+      return [];
+    }
+
+    final claimed = <String>{};
+    for (final song in id2Song.values) {
+      final path = song.downloadPath;
+      if (path != null) {
+        claimed.add(_fileNameOf(path));
+      }
+    }
+
+    final directory = Directory(getDownloadsPath(sourceType));
+    if (!await directory.exists()) {
+      return [];
+    }
+
+    final files = <({String path, int bytes})>[];
+    await for (final entity in directory.list(recursive: true)) {
+      if (entity is! File || claimed.contains(_fileNameOf(entity.path))) {
+        continue;
+      }
+      files.add((path: entity.path, bytes: await entity.length()));
+    }
+    files.sort((a, b) => b.bytes.compareTo(a.bytes));
+    return files;
+  }
+
+  /// Deletes one of [otherDownloadFiles] — and only one of those.
+  ///
+  /// This is the one place in the centre that removes a file by path instead of
+  /// by song, so it refuses anything the library put there and anything outside
+  /// the downloads folder. Whether to delete at all stays the listener's call;
+  /// nothing calls this on its own.
+  Future<bool> deleteOtherDownload(String path) async {
+    if (sourceType == .local) {
+      return false;
+    }
+
+    final folder = p.normalize(getDownloadsPath(sourceType));
+    final target = p.normalize(path);
+    if (!p.isWithin(folder, target)) {
+      return false;
+    }
+    for (final song in id2Song.values) {
+      final songPath = song.downloadPath;
+      if (songPath != null && p.equals(p.normalize(songPath), target)) {
+        return false;
+      }
+    }
+
+    try {
+      final file = File(target);
+      if (!await file.exists()) {
+        return false;
+      }
+      await file.delete();
+      await _accumulateDownloads();
+      return true;
+    } catch (error) {
+      logger.output('Failed to delete $target: $error');
+      return false;
+    }
+  }
+
   Future<bool> removeOfflineCopy(
     MyAudioMetadata song, {
     bool currentlyPlaying = false,

@@ -1006,6 +1006,30 @@ class AppLocalizationsZh extends AppLocalizations {
   String get translationTestFailed => '连接失败，请检查接口地址、模型与 API Key';
 
   @override
+  String get revealInFolder => '在文件夹中显示';
+
+  @override
+  String get otherFilesEmpty => '没有其它文件';
+
+  @override
+  String get otherFilesHint => '这些文件不属于曲库，可逐个查看或删除';
+
+  @override
+  String get deleteFile => '删除文件';
+
+  @override
+  String get unknownArtist => '未知艺术家';
+
+  @override
+  String get unknownAlbum => '未知专辑';
+
+  @override
+  String get unknownAlbumArtist => '未知专辑艺术家';
+
+  @override
+  String get unknownGenre => '未知流派';
+
+  @override
   String get downloadCancel => '取消下载';
 
   @override

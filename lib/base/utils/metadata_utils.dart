@@ -1,7 +1,12 @@
 import 'package:sylvakru/base/utils/genre_names.dart';
+import 'dart:ui';
+
 import 'package:sylvakru/base/data/artist_album.dart';
 import 'package:sylvakru/base/my_audio_metadata.dart';
 import 'package:path/path.dart';
+import 'package:sylvakru/base/app.dart';
+import 'package:sylvakru/l10n/generated/app_localizations_en.dart';
+import 'package:sylvakru/l10n/generated/app_localizations.dart';
 
 String getTitle(MyAudioMetadata? song) {
   if (song == null) {
@@ -18,7 +23,7 @@ String getArtist(MyAudioMetadata? song) {
     return '';
   }
   if (song.artist == null || song.artist == '') {
-    return 'Unknown Artist';
+    return _l10n.unknownArtist;
   }
   return song.artist!;
 }
@@ -40,7 +45,7 @@ String getAlbum(MyAudioMetadata? song) {
     return '';
   }
   if (song.album == null || song.album == '') {
-    return 'Unknown Album';
+    return _l10n.unknownAlbum;
   }
   return song.album!;
 }
@@ -50,7 +55,7 @@ String getAlbumArtist(MyAudioMetadata? song) {
     return '';
   }
   if (song.albumArtist == null || song.albumArtist == '') {
-    return 'Unknown Album Artist';
+    return _l10n.unknownAlbumArtist;
   }
   return song.albumArtist!;
 }
@@ -60,7 +65,7 @@ String getGenre(MyAudioMetadata? song) {
     return '';
   }
   if (song.genre == null || song.genre == '') {
-    return 'Unknown Genre';
+    return _l10n.unknownGenre;
   }
   return genreNamesLabel([song.genre!]);
 }
@@ -247,4 +252,20 @@ MyAudioMetadata? getFirstSong(List<MyAudioMetadata> songList) {
     return null;
   }
   return songList.first;
+}
+
+/// Display strings for the fallbacks used when a tag is missing.
+///
+/// They are produced in the data layer, where there is no BuildContext, so the
+/// lookup goes through the app's own locale setting — the same one the UI uses.
+/// A locale the app does not ship falls back to English, exactly like the tray
+/// menu does.
+AppLocalizations get _l10n {
+  final configured = localeNotifier.value;
+  final locale = configured ?? PlatformDispatcher.instance.locale;
+  try {
+    return lookupAppLocalizations(Locale(locale.languageCode));
+  } catch (_) {
+    return AppLocalizationsEn();
+  }
 }

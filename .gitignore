@@ -50,3 +50,6 @@ app.*.map.json
 .workbuddy-ai/
 # Reasonix local session data (chat attachments, caches)
 .reasonix/
+
+# Local agent notes (goal files, scratch): part of neither the app nor a release.
+.pi/

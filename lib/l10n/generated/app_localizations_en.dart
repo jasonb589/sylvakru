@@ -1030,6 +1030,31 @@ class AppLocalizationsEn extends AppLocalizations {
       'Failed; check the address, model and API key';
 
   @override
+  String get revealInFolder => 'Show in folder';
+
+  @override
+  String get otherFilesEmpty => 'No other files';
+
+  @override
+  String get otherFilesHint =>
+      'These files belong to no song; look at or delete them one by one';
+
+  @override
+  String get deleteFile => 'Delete file';
+
+  @override
+  String get unknownArtist => 'Unknown Artist';
+
+  @override
+  String get unknownAlbum => 'Unknown Album';
+
+  @override
+  String get unknownAlbumArtist => 'Unknown Album Artist';
+
+  @override
+  String get unknownGenre => 'Unknown Genre';
+
+  @override
   String get downloadCancel => 'Cancel download';
 
   @override

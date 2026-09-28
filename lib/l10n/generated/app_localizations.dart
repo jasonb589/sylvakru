@@ -2024,6 +2024,54 @@ abstract class AppLocalizations {
   /// **'Failed; check the address, model and API key'**
   String get translationTestFailed;
 
+  /// No description provided for @revealInFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Show in folder'**
+  String get revealInFolder;
+
+  /// No description provided for @otherFilesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No other files'**
+  String get otherFilesEmpty;
+
+  /// No description provided for @otherFilesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'These files belong to no song; look at or delete them one by one'**
+  String get otherFilesHint;
+
+  /// No description provided for @deleteFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete file'**
+  String get deleteFile;
+
+  /// No description provided for @unknownArtist.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown Artist'**
+  String get unknownArtist;
+
+  /// No description provided for @unknownAlbum.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown Album'**
+  String get unknownAlbum;
+
+  /// No description provided for @unknownAlbumArtist.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown Album Artist'**
+  String get unknownAlbumArtist;
+
+  /// No description provided for @unknownGenre.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown Genre'**
+  String get unknownGenre;
+
   /// No description provided for @downloadCancel.
   ///
   /// In en, this message translates to:
