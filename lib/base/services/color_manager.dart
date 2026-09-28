@@ -325,11 +325,14 @@ class ColorManager {
     }
   }
 
+  /// The colour painted behind a cover art tile in a list row.
+  ///
+  /// Opaque grey here put a flat grey slab behind every song that has no
+  /// artwork at all; leaving it transparent lets the row's own surface show,
+  /// which is what the note icon is meant to sit on.
   Color? getSpecificMainPageCoverArtBaseColorForm(MyPicture? picture) {
     return mainPageThemeNotifier.value == .vivid
-        ? picture == null
-              ? Colors.grey
-              : picture.color
+        ? picture?.color
         : isMobile
         ? pageBackgroundColor.value
         : panelColor.value;

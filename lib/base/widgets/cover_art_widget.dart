@@ -121,9 +121,14 @@ class _FuturePictureState extends State<_FuturePicture> {
       future: loadPictureSafe(widget.picture, widgetId: widgetId),
       builder: (context, asyncSnapshot) {
         if (asyncSnapshot.connectionState == ConnectionState.waiting) {
-          return widget.size == null
-              ? const SkeletonBox()
-              : SkeletonBox.square(widget.size!);
+          // The pulse is what makes this read as a loading cover instead of an
+          // empty grey tile. Every other skeleton in the client has it; without
+          // it a row of covers waiting on the network looked broken.
+          return SkeletonPulse(
+            child: widget.size == null
+                ? const SkeletonBox()
+                : SkeletonBox.square(widget.size!),
+          );
         }
 
         if (asyncSnapshot.hasError) {
