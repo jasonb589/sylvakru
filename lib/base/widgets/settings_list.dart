@@ -1472,7 +1472,7 @@ Widget translationListTile(
   double iconSize = 30,
 }) {
   return ListTile(
-    leading: ImageIcon(languageImage, size: iconSize),
+    leading: ImageIcon(translateImage, size: iconSize),
     title: Text(l10n.translation),
     trailing: SizedBox(
       width: 50,

@@ -96,6 +96,7 @@ const AssetImage speakerImage = AssetImage('assets/images/speaker.png');
 const AssetImage themeImage = AssetImage('assets/images/theme.png');
 const AssetImage timerImage = AssetImage('assets/images/timer.png');
 const AssetImage topArrowImage = AssetImage('assets/images/top_arrow.png');
+const AssetImage translateImage = AssetImage('assets/images/translate.png');
 const AssetImage unmaximizeImage = AssetImage('assets/images/unmaximize.png');
 const AssetImage vibrationImage = AssetImage('assets/images/vibration.png');
 const AssetImage webdavImage = AssetImage('assets/images/webdav.png');
