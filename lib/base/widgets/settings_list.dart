@@ -143,6 +143,9 @@ class _SettingsListState extends State<SettingsList> {
         sliverBox(
           paddingIfNeed(isLandscape, downloadFolderListTile(context, l10n)),
         ),
+        sliverBox(
+          paddingIfNeed(isLandscape, downloadNamingListTile(context, l10n)),
+        ),
 
         // Appearance: how the client looks and speaks.
         sliverBox(groupHeader(l10n.appearance, isLandscape)),
@@ -1278,6 +1281,136 @@ Future<bool?> showDownloadMoveDialog(
             ),
           ],
         ),
+      ),
+    ),
+  );
+}
+
+/// Settings row for how downloads are named, and the picker behind it.
+Widget downloadNamingListTile(
+  BuildContext context,
+  AppLocalizations l10n, {
+
+  /// Matches the icon size the surrounding settings rows use.
+  double iconSize = 30,
+}) {
+  return ListTile(
+    leading: ImageIcon(downloadImage, size: iconSize),
+    title: Text(l10n.downloadNaming),
+    subtitle: Text(
+      downloadNamingLabel(l10n, downloadNamingNotifier.value),
+      overflow: TextOverflow.ellipsis,
+    ),
+    onTap: () => pickDownloadNaming(context),
+  );
+}
+
+String downloadNamingLabel(AppLocalizations l10n, DownloadNaming naming) {
+  switch (naming) {
+    case DownloadNaming.hash:
+      return l10n.downloadNamingHash;
+    case DownloadNaming.artistTitle:
+      return l10n.downloadNamingArtistTitle;
+    case DownloadNaming.artistAlbumTrack:
+      return l10n.downloadNamingArtistAlbumTrack;
+  }
+}
+
+/// Asks which naming to use, then what to do with what is already downloaded.
+///
+/// Cancelling the second question leaves the setting untouched, exactly like
+/// the download folder picker: the choice is the setting, moving gigabytes is
+/// a separate decision.
+Future<void> pickDownloadNaming(BuildContext context) async {
+  final l10n = AppLocalizations.of(context);
+  final chosen = await showDownloadNamingDialog(context, l10n);
+  if (chosen == null || chosen == downloadNamingNotifier.value) {
+    return;
+  }
+
+  final previous = downloadNamingNotifier.value;
+  downloadNamingNotifier.value = chosen;
+
+  var renameFiles = true;
+  if (library.offlineMusicSongs.isNotEmpty) {
+    if (!context.mounted) {
+      return;
+    }
+    final choice = await showDownloadRenameDialog(context, l10n);
+    if (choice == null) {
+      downloadNamingNotifier.value = previous;
+      return;
+    }
+    renameFiles = choice;
+  }
+
+  var renamed = 0;
+  if (renameFiles) {
+    renamed = await library.renameDownloadsToNaming();
+  }
+  setting.save();
+
+  if (context.mounted) {
+    showCenterMessage(
+      renameFiles ? l10n.downloadsRenamed(renamed) : l10n.downloadsNewOnly,
+    );
+  }
+}
+
+/// `true` renames what is already there, `false` only affects new downloads,
+/// null cancels the change.
+Future<bool?> showDownloadRenameDialog(
+  BuildContext context,
+  AppLocalizations l10n,
+) {
+  return showAnimationDialog<bool>(
+    context: context,
+    child: Padding(
+      padding: const EdgeInsets.all(20),
+      child: SizedBox(
+        width: 300,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(l10n.downloadsNewOnly),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(l10n.downloadsRenameExisting),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+/// The naming options, as a list the listener picks from.
+Future<DownloadNaming?> showDownloadNamingDialog(
+  BuildContext context,
+  AppLocalizations l10n,
+) {
+  return showAnimationDialog<DownloadNaming>(
+    context: context,
+    child: SizedBox(
+      width: 300,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final naming in DownloadNaming.values)
+            ListTile(
+              leading: Icon(
+                naming == downloadNamingNotifier.value
+                    ? Icons.check_circle_rounded
+                    : Icons.circle_outlined,
+              ),
+              title: Text(downloadNamingLabel(l10n, naming)),
+              onTap: () => Navigator.of(context).pop(naming),
+            ),
+          const SizedBox(height: 10),
+        ],
       ),
     ),
   );

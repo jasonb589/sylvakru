@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:audio_tags_lofty/audio_tags_lofty.dart';
 import 'package:drift/drift.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:path/path.dart' as p;
 import 'package:sylvakru/base/app.dart';
 import 'package:sylvakru/base/data/database.dart';
 import 'package:sylvakru/base/extensions/metadata_extension.dart';
@@ -309,11 +310,17 @@ class Library {
         if (entity is! File) {
           continue;
         }
-        final target = '${newDirectory.path}/${_fileNameOf(entity.path)}';
+        // Keep the folder part of the name: a naming template can put files in
+        // per-artist folders, and flattening them here would lose the layout.
+        final target = p.join(
+          newDirectory.path,
+          p.relative(entity.path, from: oldDirectory.path),
+        );
         try {
           if (await File(target).exists()) {
             continue;
           }
+          await File(target).parent.create(recursive: true);
           try {
             await entity.rename(target);
           } on FileSystemException {
@@ -329,20 +336,67 @@ class Library {
       }
     }
 
-    for (final song in id2Song.values) {
-      final path = song.downloadPath;
-      if (path == null) {
-        continue;
-      }
-      final target = '$newFolder/${_fileNameOf(path)}';
-      song.downloadPath = target;
-      song.downloadExist = File(target).existsSync();
-      song.updateNotifier.value++;
-    }
+    await repointDownloads(renameFiles: true);
 
     await refreshStorageStats();
     return moved;
   }
+
+  /// Points every song at the path the naming setting asks for.
+  ///
+  /// With [renameFiles] the files on disk are moved to those names as well: the
+  /// library is the only thing that knows where a download went, so switching
+  /// templates has to take the files along. A file that cannot be moved, or
+  /// whose new name is already taken, keeps its old path — the one the listener
+  /// can still play and remove. Nothing here deletes anything.
+  Future<int> repointDownloads({bool renameFiles = false}) async {
+    var renamed = 0;
+    for (final song in id2Song.values) {
+      final current = song.downloadPath;
+      final target = song.computeDownloadPath();
+      if (target == null) {
+        continue;
+      }
+
+      if (renameFiles && current != null && current != target) {
+        final file = File(current);
+        if (await file.exists()) {
+          try {
+            final destination = File(target);
+            await destination.parent.create(recursive: true);
+            if (await destination.exists()) {
+              logger.output('$target is taken; keeping ${file.path}');
+            } else {
+              try {
+                await file.rename(target);
+              } on FileSystemException {
+                await file.copy(target);
+                if (await destination.exists()) {
+                  await file.delete();
+                }
+              }
+              if (await destination.exists()) {
+                renamed++;
+              }
+            }
+          } catch (error) {
+            logger.output('Failed to rename ${song.id}: $error');
+          }
+        }
+      }
+
+      final path = File(target).existsSync() ? target : current;
+      song.downloadPath = path;
+      song.downloadExist = path != null && File(path).existsSync();
+      song.updateNotifier.value++;
+    }
+
+    await refreshStorageStats();
+    return renamed;
+  }
+
+  /// Applies the naming setting to downloads that are already on disk.
+  Future<int> renameDownloadsToNaming() => repointDownloads(renameFiles: true);
 
   /// Moves playback cache that earlier builds promoted into downloads/ back
   /// into caches/, once.

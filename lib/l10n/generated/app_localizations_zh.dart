@@ -891,6 +891,26 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get downloadNaming => '下载命名';
+
+  @override
+  String get downloadNamingHash => '哈希名（与旧版本一致）';
+
+  @override
+  String get downloadNamingArtistTitle => '歌手 - 标题';
+
+  @override
+  String get downloadNamingArtistAlbumTrack => '歌手 / 专辑 / 序号 标题';
+
+  @override
+  String get downloadsRenameExisting => '重命名现有文件';
+
+  @override
+  String downloadsRenamed(int count) {
+    return '已重命名 $count 个文件';
+  }
+
+  @override
   String get downloadCancel => '取消下载';
 
   @override

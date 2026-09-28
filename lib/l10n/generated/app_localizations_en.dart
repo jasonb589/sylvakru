@@ -909,6 +909,26 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get downloadNaming => 'Download Names';
+
+  @override
+  String get downloadNamingHash => 'Hash (as before)';
+
+  @override
+  String get downloadNamingArtistTitle => 'Artist - Title';
+
+  @override
+  String get downloadNamingArtistAlbumTrack => 'Artist / Album / Track Title';
+
+  @override
+  String get downloadsRenameExisting => 'Rename existing files';
+
+  @override
+  String downloadsRenamed(int count) {
+    return 'Renamed $count files';
+  }
+
+  @override
   String get downloadCancel => 'Cancel download';
 
   @override

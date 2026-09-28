@@ -5,8 +5,10 @@ import 'package:audio_tags_lofty/audio_tags_lofty.dart';
 import 'package:crypto/crypto.dart';
 import 'package:lpinyin/lpinyin.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:path/path.dart' as p;
 import 'package:sylvakru/base/app.dart';
 import 'package:sylvakru/base/data/library.dart';
+import 'package:sylvakru/base/data/setting.dart';
 import 'package:sylvakru/base/services/lyric.dart';
 import 'package:sylvakru/base/services/picture_service.dart';
 import 'package:sylvakru/base/utils/metadata_utils.dart';
@@ -60,15 +62,37 @@ class MyAudioMetadata {
 
     final md5Hash = md5.convert(utf8.encode(id)).toString();
     if (sourceType != .local) {
-      cachePath = '${getCachesPath(sourceType)}/$md5Hash';
+      cachePath = p.join(getCachesPath(sourceType), md5Hash);
       cacheExist = File(cachePath!).existsSync();
-      downloadPath = '${getDownloadsPath(sourceType)}/$md5Hash';
+      downloadPath = computeDownloadPath();
       downloadExist = File(downloadPath!).existsSync();
     }
 
     compareTitle = PinyinHelper.getPinyinE(getTitle(this));
     compareArtist = PinyinHelper.getPinyinE(getArtist(this));
     compareAlbum = PinyinHelper.getPinyinE(getAlbum(this));
+  }
+
+  /// Where this song's download lives under the current naming setting.
+  ///
+  /// Derived rather than stored, exactly like the cache path: a naming change
+  /// then only has to rename files, and a restart recomputes the same name.
+  String? computeDownloadPath() {
+    if (sourceType == .local) {
+      return null;
+    }
+    return p.join(
+      getDownloadsPath(sourceType),
+      downloadRelativePath(
+        id: id,
+        naming: downloadNamingNotifier.value,
+        artist: getArtist(this),
+        title: getTitle(this),
+        album: getAlbum(this),
+        track: track,
+        format: format,
+      ),
+    );
   }
 
   String? get format => _audioMetadata.format;

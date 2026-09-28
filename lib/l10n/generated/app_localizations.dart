@@ -1802,6 +1802,42 @@ abstract class AppLocalizations {
   /// **'Moved {count} files'**
   String downloadsMoved(int count);
 
+  /// No description provided for @downloadNaming.
+  ///
+  /// In en, this message translates to:
+  /// **'Download Names'**
+  String get downloadNaming;
+
+  /// No description provided for @downloadNamingHash.
+  ///
+  /// In en, this message translates to:
+  /// **'Hash (as before)'**
+  String get downloadNamingHash;
+
+  /// No description provided for @downloadNamingArtistTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Artist - Title'**
+  String get downloadNamingArtistTitle;
+
+  /// No description provided for @downloadNamingArtistAlbumTrack.
+  ///
+  /// In en, this message translates to:
+  /// **'Artist / Album / Track Title'**
+  String get downloadNamingArtistAlbumTrack;
+
+  /// No description provided for @downloadsRenameExisting.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename existing files'**
+  String get downloadsRenameExisting;
+
+  /// No description provided for @downloadsRenamed.
+  ///
+  /// In en, this message translates to:
+  /// **'Renamed {count} files'**
+  String downloadsRenamed(int count);
+
   /// No description provided for @downloadCancel.
   ///
   /// In en, this message translates to:

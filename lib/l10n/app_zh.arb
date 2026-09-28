@@ -311,6 +311,19 @@
       }
     }
   },
+  "downloadNaming": "下载命名",
+  "downloadNamingHash": "哈希名（与旧版本一致）",
+  "downloadNamingArtistTitle": "歌手 - 标题",
+  "downloadNamingArtistAlbumTrack": "歌手 / 专辑 / 序号 标题",
+  "downloadsRenameExisting": "重命名现有文件",
+  "downloadsRenamed": "已重命名 {count} 个文件",
+  "@downloadsRenamed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "downloadCancel": "取消下载",
   "downloadRetry": "重试",
   "downloadInUse": "这首歌正在播放且没有下一首可切换，请先切歌再移除"

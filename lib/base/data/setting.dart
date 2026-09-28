@@ -28,6 +28,14 @@ final exitOnCloseNotifier = ValueNotifier(false);
 /// The persisted key remains `cacheLimitMb` for settings migration compatibility.
 final offlineMusicLimitMbNotifier = ValueNotifier<int>(0);
 
+/// How downloads are named inside the downloads folder.
+///
+/// The name is derived from the song rather than stored, so switching the
+/// setting renames files instead of losing track of what is downloaded.
+final downloadNamingNotifier = ValueNotifier<DownloadNaming>(
+  DownloadNaming.hash,
+);
+
 /// Set once the pass that moves playback cache out of the downloads folder has
 /// run, so a file the listener never downloaded cannot be mistaken for theirs.
 bool downloadSplitRepaired = false;
@@ -139,6 +147,11 @@ class Setting {
 
     downloadRootDir = json['downloadDir'] as String? ?? downloadRootDir;
 
+    downloadNamingNotifier.value = DownloadNaming.values.firstWhere(
+      (naming) => naming.name == json['downloadNaming'],
+      orElse: () => DownloadNaming.hash,
+    );
+
     downloadSplitRepaired =
         json['downloadSplitRepaired'] as bool? ?? downloadSplitRepaired;
   }
@@ -176,6 +189,7 @@ class Setting {
         'lyricsTimeOffsetMs': lyricsTimeOffsetNotifier.value,
         'downloadDir': downloadRootDir,
         'downloadSplitRepaired': downloadSplitRepaired,
+        'downloadNaming': downloadNamingNotifier.value.name,
       }),
     );
   }

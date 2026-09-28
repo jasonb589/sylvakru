@@ -388,6 +388,19 @@
       }
     }
   },
+  "downloadNaming": "Download Names",
+  "downloadNamingHash": "Hash (as before)",
+  "downloadNamingArtistTitle": "Artist - Title",
+  "downloadNamingArtistAlbumTrack": "Artist / Album / Track Title",
+  "downloadsRenameExisting": "Rename existing files",
+  "downloadsRenamed": "Renamed {count} files",
+  "@downloadsRenamed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "downloadCancel": "Cancel download",
   "downloadRetry": "Retry",
   "downloadInUse": "This one is playing with nothing to move on to; switch songs first"
