@@ -486,5 +486,11 @@
         "type": "String"
       }
     }
-  }
+  },
+  "playlistExists": "Playlist already exists",
+  "playlistCreateFailed": "Could not create the playlist",
+  "playlistDeleteFailed": "Could not delete the playlist",
+  "playlistUpdateFailed": "Could not update the playlist",
+  "playlistBusy": "The playlist is updating; try again in a moment",
+  "getAlbumFailed": "Could not get the album"
 }

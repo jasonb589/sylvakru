@@ -10,6 +10,7 @@ import 'package:sylvakru/base/services/stream_client.dart';
 import 'package:sylvakru/base/utils/path.dart';
 import 'package:sylvakru/base/utils/advanced_song_search.dart';
 import 'package:sylvakru/base/utils/metadata_utils.dart';
+import 'package:sylvakru/base/utils/localizations.dart';
 import 'package:sylvakru/layer/layers_manager.dart';
 import 'package:sylvakru/base/data/library.dart';
 import 'package:sylvakru/base/my_audio_metadata.dart';
@@ -160,7 +161,7 @@ class PlaylistManager {
   Future<bool> createPlaylist(String name) async {
     for (final playlist in playlists) {
       if (name == playlist.name) {
-        showCenterMessage('Playlist exists');
+        showCenterMessage(appLocalizations.playlistExists);
         return false;
       }
     }
@@ -169,7 +170,7 @@ class PlaylistManager {
     if (isStreamSource) {
       playlist.id = await streamClient?.createPlaylist(name);
       if (playlist.id == null) {
-        showCenterMessage('Create playlist failed');
+        showCenterMessage(appLocalizations.playlistCreateFailed);
         return false;
       }
     }
@@ -189,7 +190,7 @@ class PlaylistManager {
     playlist.songListFile.deleteSync();
     if (playlist.id != null && streamClient != null) {
       if (!await streamClient!.deletePlaylist(playlist.id!)) {
-        showCenterMessage('Delete playlist failed');
+        showCenterMessage(appLocalizations.playlistDeleteFailed);
         return;
       }
     }
@@ -344,7 +345,7 @@ class Playlist {
 
   Future<void> add(List<MyAudioMetadata> songList) async {
     if (isSmart || !canModify) {
-      showCenterMessage('Can not modify, it\'s updating');
+      showCenterMessage(appLocalizations.playlistBusy);
       return;
     }
     for (MyAudioMetadata song in songList) {
@@ -363,7 +364,7 @@ class Playlist {
 
   Future<void> remove(List<MyAudioMetadata> songList) async {
     if (isSmart || !canModify) {
-      showCenterMessage('Can not modify, it\'s updating');
+      showCenterMessage(appLocalizations.playlistBusy);
       return;
     }
     for (MyAudioMetadata song in songList) {
@@ -379,7 +380,7 @@ class Playlist {
 
   Future<void> update() async {
     if (isSmart || !canModify) {
-      showCenterMessage('Can not modify, it\'s updating');
+      showCenterMessage(appLocalizations.playlistBusy);
       return;
     }
     canModify = false;
@@ -398,7 +399,7 @@ class Playlist {
             await streamClient?.updatePlaylistSongs(id!, songIds) ?? false;
       }
       if (!success) {
-        showCenterMessage('Update playlist failed');
+        showCenterMessage(appLocalizations.playlistUpdateFailed);
       }
     }
     canModify = true;

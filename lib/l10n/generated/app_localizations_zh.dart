@@ -1089,4 +1089,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String diskSpaceLowQueued(int count, String free) {
     return '已加入下载队列（$count 首），磁盘剩余 $free';
   }
+
+  @override
+  String get playlistExists => '歌单已存在';
+
+  @override
+  String get playlistCreateFailed => '创建歌单失败';
+
+  @override
+  String get playlistDeleteFailed => '删除歌单失败';
+
+  @override
+  String get playlistUpdateFailed => '更新歌单失败';
+
+  @override
+  String get playlistBusy => '歌单正在更新，请稍后再试';
+
+  @override
+  String get getAlbumFailed => '获取专辑失败';
 }

@@ -21,6 +21,7 @@ import 'package:sylvakru/base/data/library.dart';
 import 'package:sylvakru/base/services/download_queue.dart';
 import 'package:sylvakru/base/utils/download_info.dart';
 import 'package:sylvakru/base/data/setting.dart';
+import 'package:sylvakru/base/utils/localizations.dart';
 import 'package:sylvakru/base/services/disk_space_service.dart';
 import 'package:sylvakru/base/utils/disk_space.dart';
 import 'package:sylvakru/base/utils/zoom_page_route.dart';
@@ -1481,7 +1482,7 @@ void goToAlbum(MyAudioMetadata song, {BuildContext? context}) async {
   Album? album;
   album = artistAlbumManager.albumMap[getAlbum(song)];
   if (album == null) {
-    showCenterMessage('Get album failed');
+    showCenterMessage(appLocalizations.getAlbumFailed);
     return;
   }
 
@@ -1508,7 +1509,7 @@ void goToAlbum(MyAudioMetadata song, {BuildContext? context}) async {
     final target = artistAlbumManager.albumMap[getAlbum(song)];
     if (target == null) {
       removeCenterLoading();
-      showCenterMessage('Get album failed');
+      showCenterMessage(appLocalizations.getAlbumFailed);
       return;
     }
     await layersManager.openAlbumDetail(target);

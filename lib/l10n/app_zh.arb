@@ -409,5 +409,11 @@
         "type": "String"
       }
     }
-  }
+  },
+  "playlistExists": "歌单已存在",
+  "playlistCreateFailed": "创建歌单失败",
+  "playlistDeleteFailed": "删除歌单失败",
+  "playlistUpdateFailed": "更新歌单失败",
+  "playlistBusy": "歌单正在更新，请稍后再试",
+  "getAlbumFailed": "获取专辑失败"
 }

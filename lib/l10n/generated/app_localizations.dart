@@ -2185,6 +2185,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} queued, only {free} free on disk'**
   String diskSpaceLowQueued(int count, String free);
+
+  /// No description provided for @playlistExists.
+  ///
+  /// In en, this message translates to:
+  /// **'Playlist already exists'**
+  String get playlistExists;
+
+  /// No description provided for @playlistCreateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not create the playlist'**
+  String get playlistCreateFailed;
+
+  /// No description provided for @playlistDeleteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not delete the playlist'**
+  String get playlistDeleteFailed;
+
+  /// No description provided for @playlistUpdateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not update the playlist'**
+  String get playlistUpdateFailed;
+
+  /// No description provided for @playlistBusy.
+  ///
+  /// In en, this message translates to:
+  /// **'The playlist is updating; try again in a moment'**
+  String get playlistBusy;
+
+  /// No description provided for @getAlbumFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not get the album'**
+  String get getAlbumFailed;
 }
 
 class _AppLocalizationsDelegate

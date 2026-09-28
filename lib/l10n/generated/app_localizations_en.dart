@@ -1114,4 +1114,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String diskSpaceLowQueued(int count, String free) {
     return '$count queued, only $free free on disk';
   }
+
+  @override
+  String get playlistExists => 'Playlist already exists';
+
+  @override
+  String get playlistCreateFailed => 'Could not create the playlist';
+
+  @override
+  String get playlistDeleteFailed => 'Could not delete the playlist';
+
+  @override
+  String get playlistUpdateFailed => 'Could not update the playlist';
+
+  @override
+  String get playlistBusy => 'The playlist is updating; try again in a moment';
+
+  @override
+  String get getAlbumFailed => 'Could not get the album';
 }
