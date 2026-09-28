@@ -9,6 +9,7 @@ import 'package:sylvakru/base/data/setting.dart';
 import 'package:sylvakru/base/services/translation.dart';
 import 'package:sylvakru/base/services/logger.dart';
 import 'package:sylvakru/base/widgets/artist_metadata.dart';
+import 'package:sylvakru/base/widgets/settings_list.dart';
 import 'package:sylvakru/l10n/generated/app_localizations.dart';
 
 /// Translation is best effort by design: it needs a service the listener
@@ -186,5 +187,117 @@ void main() {
       'openai',
     );
     expect(translationProviderForUrl('https://my.own.server/v1').id, 'custom');
+  });
+
+  test(
+    'the connection check really asks, and remembers why it failed',
+    () async {
+      var calls = 0;
+      translator.request = (text) async {
+        calls++;
+        return '你好。';
+      };
+
+      expect(await translator.checkConnection(), '你好。');
+      expect(await translator.checkConnection(), '你好。');
+      expect(calls, 2);
+      expect(translationErrorNotifier.value, isNull);
+
+      translator.request = (text) async => throw StateError('404');
+      expect(await translator.checkConnection(), isNull);
+      expect(translationErrorNotifier.value, contains('404'));
+    },
+  );
+
+  test('SiliconFlow is a preset, with the /v1 address its API needs', () {
+    final preset = translationProviderFor('siliconflow');
+
+    expect(preset.baseUrl, 'https://api.siliconflow.cn/v1');
+    expect(preset.models, contains('deepseek-ai/DeepSeek-V3.2'));
+  });
+
+  test('the settings row says what is missing, not just "not configured"', () {
+    final l10n = lookupAppLocalizations(const Locale('en'));
+
+    expect(
+      translationSummary(
+        l10n,
+        enabled: false,
+        baseUrl: 'https://x/v1',
+        model: 'm',
+        hasApiKey: true,
+      ),
+      l10n.translationOff,
+    );
+
+    expect(
+      translationSummary(
+        l10n,
+        enabled: true,
+        baseUrl: '',
+        model: 'm',
+        hasApiKey: true,
+      ),
+      l10n.translationNotConfigured,
+    );
+
+    expect(
+      translationSummary(
+        l10n,
+        enabled: true,
+        baseUrl: 'https://x/v1',
+        model: 'm',
+        hasApiKey: false,
+      ),
+      l10n.translationNotConfigured,
+    );
+
+    expect(
+      translationSummary(
+        l10n,
+        enabled: true,
+        baseUrl: 'https://x/v1',
+        model: 'm',
+        hasApiKey: true,
+      ),
+      'https://x/v1 · m',
+    );
+  });
+
+  testWidgets('configuring translation later still translates an open page', (
+    tester,
+  ) async {
+    translationEnabledNotifier.value = false;
+    translationBaseUrlNotifier.value = '';
+    translationModelNotifier.value = '';
+    config.setTranslationApiKey('');
+    translator.request = (text) async => '翻译后的简介';
+
+    final artist = Artist('Ejel', id: 'ar-1')
+      ..biography = 'A singer from Seoul.';
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(body: ArtistMetadata(artist: artist)),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.textContaining('翻译后的简介'), findsNothing);
+    expect(find.textContaining('A singer from Seoul.'), findsOneWidget);
+
+    translationBaseUrlNotifier.value = 'https://api.example.test/v1';
+    translationModelNotifier.value = 'test-model';
+    config.setTranslationApiKey('test-key');
+    translationEnabledNotifier.value = true;
+
+    for (var i = 0; i < 5; i++) {
+      await tester.pump(const Duration(milliseconds: 10));
+    }
+    await tester.pump();
+
+    expect(find.textContaining('翻译后的简介'), findsOneWidget);
   });
 }

@@ -3,6 +3,8 @@ import 'package:sylvakru/base/data/artist_album.dart';
 import 'package:sylvakru/l10n/generated/app_localizations.dart';
 import 'package:sylvakru/base/utils/genre_names.dart';
 import 'package:sylvakru/base/services/translation.dart';
+import 'package:sylvakru/base/data/config.dart';
+import 'package:sylvakru/base/data/setting.dart';
 
 /// The metadata block shown on an artist page.
 ///
@@ -42,6 +44,42 @@ class _ArtistMetadataState extends State<ArtistMetadata> {
     // load. This block is where every artist view shows the biography, so it is
     // where the request belongs.
     widget.artist.loadInfo().then((_) => _translateBiography());
+    translationEnabledNotifier.addListener(_onTranslationSettingsChanged);
+    translationBaseUrlNotifier.addListener(_onTranslationSettingsChanged);
+    translationModelNotifier.addListener(_onTranslationSettingsChanged);
+    config.translationApiKeyNotifier.addListener(_onTranslationSettingsChanged);
+  }
+
+  @override
+  void dispose() {
+    translationEnabledNotifier.removeListener(_onTranslationSettingsChanged);
+    translationBaseUrlNotifier.removeListener(_onTranslationSettingsChanged);
+    translationModelNotifier.removeListener(_onTranslationSettingsChanged);
+    config.translationApiKeyNotifier.removeListener(
+      _onTranslationSettingsChanged,
+    );
+    super.dispose();
+  }
+
+  /// Re-runs the translation when the service settings change.
+  ///
+  /// Without this, a page opened before translation was configured kept showing
+  /// the original text: it only ever asked once, when it was first built.
+  void _onTranslationSettingsChanged() {
+    final biography = widget.artist.biography?.trim();
+    if (biography == null || biography.isEmpty) {
+      return;
+    }
+    if (!translator.isEnabled) {
+      if (_translated != null) {
+        setState(() {
+          _translated = null;
+          _showOriginal = false;
+        });
+      }
+      return;
+    }
+    _translateBiography();
   }
 
   /// Asks the configured service for a translation of the biography.

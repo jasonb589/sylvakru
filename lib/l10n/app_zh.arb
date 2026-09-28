@@ -358,6 +358,10 @@
   "translationFormatExactHint": "地址已包含 /chat/completions，按原样请求",
   "translationCustom": "自定义",
   "translationModelCustom": "自定义模型…",
+  "translationTest": "测试连接",
+  "translationTestHint": "向服务发一条示例，确认地址、模型与 API Key 都可用",
+  "translationTestOk": "连接正常，服务已返回译文",
+  "translationTestFailed": "连接失败，请检查接口地址、模型与 API Key",
   "downloadCancel": "取消下载",
   "downloadRetry": "重试",
   "downloadInUse": "这首歌正在播放且没有下一首可切换，请先切歌再移除"

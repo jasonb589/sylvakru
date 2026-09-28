@@ -36,6 +36,17 @@ class Config {
   /// lives in the system credential store like the passwords do.
   String? translationApiKey;
 
+  /// Mirrors [translationApiKey] so a screen showing the key can listen for it:
+  /// the field itself is not observable, and a settings row that reads it once
+  /// would keep saying "not configured" after the key has been filled in.
+  final translationApiKeyNotifier = ValueNotifier<String>('');
+
+  /// Sets the key and tells whoever is watching.
+  void setTranslationApiKey(String value) {
+    translationApiKey = value;
+    translationApiKeyNotifier.value = value;
+  }
+
   static const _secureStorage = FlutterSecureStorage(
     mOptions: MacOsOptions(usesDataProtectionKeychain: false),
   );
@@ -164,6 +175,7 @@ class Config {
     translationApiKey ??= translationMap?['apiKey'] is String
         ? translationMap!['apiKey'] as String
         : null;
+    translationApiKeyNotifier.value = translationApiKey ?? '';
 
     final configuredSourceType = map['sourceType'];
     final tmpSourceType = configuredSourceType is String

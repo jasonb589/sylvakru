@@ -1015,6 +1015,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get translationModelCustom => 'Custom model…';
 
   @override
+  String get translationTest => 'Test connection';
+
+  @override
+  String get translationTestHint =>
+      'Sends one short sample to be sure the address, model and API key all work';
+
+  @override
+  String get translationTestOk =>
+      'Works — the service answered with a translation';
+
+  @override
+  String get translationTestFailed =>
+      'Failed; check the address, model and API key';
+
+  @override
   String get downloadCancel => 'Cancel download';
 
   @override

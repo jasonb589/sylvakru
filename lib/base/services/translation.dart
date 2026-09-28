@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 
 import 'package:sylvakru/base/data/setting.dart';
 import 'package:crypto/crypto.dart';
@@ -9,6 +10,16 @@ import 'package:sylvakru/base/app.dart';
 import 'package:sylvakru/base/data/config.dart';
 import 'package:sylvakru/base/services/logger.dart';
 import 'package:sylvakru/base/utils/path.dart';
+
+/// The last thing that went wrong while talking to the translation service.
+///
+/// Kept so the settings panel can say *why* nothing is being translated: the
+/// failure used to be a log line only, and a silent failure looks exactly like
+/// a setting that was never saved.
+final translationErrorNotifier = ValueNotifier<String?>(null);
+
+/// The sample 「测试连接」 sends. Short, plain, and about nothing in particular.
+const _connectionProbe = 'Hello there.';
 
 /// A service whose OpenAI-compatible endpoint is well known.
 ///
@@ -64,6 +75,16 @@ const translationProviders = <TranslationProviderPreset>[
     name: '本地 Ollama',
     baseUrl: 'http://localhost:11434/v1',
     models: ['qwen2.5', 'llama3.1'],
+  ),
+  TranslationProviderPreset(
+    id: 'siliconflow',
+    name: '硅基流动 SiliconFlow',
+    baseUrl: 'https://api.siliconflow.cn/v1',
+    models: [
+      'deepseek-ai/DeepSeek-V3.2',
+      'deepseek-ai/DeepSeek-V3',
+      'Qwen/Qwen2.5-7B-Instruct',
+    ],
   ),
   TranslationProviderPreset(id: 'custom', name: '自定义', baseUrl: '', models: []),
 ];
@@ -278,6 +299,7 @@ class Translator {
       unawaited(_saveCache());
       return translation;
     } catch (error) {
+      translationErrorNotifier.value = '$error';
       logger.output('Translation failed: $error');
       return null;
     }
@@ -303,6 +325,32 @@ class Translator {
     );
 
     return parseTranslationResponse(response.data);
+  }
+
+  /// Asks the service for a fixed sample, ignoring the cache.
+  ///
+  /// This is what 「测试连接」 uses: one real request is the only way to know the
+  /// address, the model and the key all work together, and the reason a failure
+  /// is remembered is that a silent one looks exactly like a setting that never
+  /// got saved.
+  Future<String?> checkConnection() async {
+    final current = settings;
+    if (!current.isConfigured) {
+      translationErrorNotifier.value = null;
+      return null;
+    }
+    try {
+      final answer = request != null
+          ? await request!(_connectionProbe)
+          : await _askService(_connectionProbe, current);
+      translationErrorNotifier.value = null;
+      return answer;
+    } catch (error) {
+      translationErrorNotifier.value =
+          '${translationEndpoint(current)} · $error';
+      logger.output('Translation check failed: $error');
+      return null;
+    }
   }
 
   String _cacheKey(String text, TranslationSettings current) {

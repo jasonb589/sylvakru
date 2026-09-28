@@ -1502,20 +1502,47 @@ Widget translationListTile(
   return ListTile(
     leading: ImageIcon(languageImage, size: iconSize),
     title: Text(l10n.translation),
-    subtitle: Text(translationSummary(l10n), overflow: TextOverflow.ellipsis),
+    subtitle: ListenableBuilder(
+      listenable: Listenable.merge([
+        translationEnabledNotifier,
+        translationBaseUrlNotifier,
+        translationModelNotifier,
+        config.translationApiKeyNotifier,
+      ]),
+      builder: (context, _) => Text(
+        translationSummary(
+          l10n,
+          enabled: translationEnabledNotifier.value,
+          baseUrl: translationBaseUrlNotifier.value,
+          model: translationModelNotifier.value,
+          hasApiKey: config.translationApiKeyNotifier.value.isNotEmpty,
+        ),
+        overflow: TextOverflow.ellipsis,
+      ),
+    ),
     onTap: () => showTranslationSettingsDialog(context),
   );
 }
 
-String translationSummary(AppLocalizations l10n) {
-  if (!translationEnabledNotifier.value) {
+/// The row's subtitle: what the translation setting is doing right now.
+///
+/// The values come in from the caller so the row can listen for them. Reading
+/// the notifiers in here once is what left the row saying "not configured"
+/// after it had been configured.
+String translationSummary(
+  AppLocalizations l10n, {
+  required bool enabled,
+  required String baseUrl,
+  required String model,
+  required bool hasApiKey,
+}) {
+  if (!enabled) {
     return l10n.translationOff;
   }
-  final settings = translator.settings;
-  if (!settings.isConfigured) {
+  if (baseUrl.trim().isEmpty || model.trim().isEmpty || !hasApiKey) {
     return l10n.translationNotConfigured;
   }
-  return '${settings.baseUrl} · ${settings.model}';
+  return '$baseUrl · $model';
 }
 
 /// The translation choices: the switch, the service, and the key it uses.
@@ -1671,8 +1698,33 @@ Future<void> showTranslationSettingsDialog(BuildContext context) async {
                     if (value.trim().isEmpty) {
                       return;
                     }
-                    config.translationApiKey = value.trim();
+                    config.setTranslationApiKey(value.trim());
                     await config.save();
+                    setSheetState(() {});
+                  },
+                ),
+                ListTile(
+                  leading: Icon(Icons.wifi_tethering_rounded, size: 24),
+                  title: Text(l10n.translationTest),
+                  subtitle: Text(
+                    translationErrorNotifier.value ??
+                        (translator.isEnabled
+                            ? l10n.translationTestHint
+                            : l10n.translationNotConfigured),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  onTap: () async {
+                    final answer = await translator.checkConnection();
+                    if (!context.mounted) {
+                      return;
+                    }
+                    showCenterMessage(
+                      answer != null
+                          ? l10n.translationTestOk
+                          : translationErrorNotifier.value ??
+                                l10n.translationTestFailed,
+                    );
                     setSheetState(() {});
                   },
                 ),

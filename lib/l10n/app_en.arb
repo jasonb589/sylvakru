@@ -435,6 +435,10 @@
   "translationFormatExactHint": "The address already ends in /chat/completions and is used as it is",
   "translationCustom": "Custom",
   "translationModelCustom": "Custom model…",
+  "translationTest": "Test connection",
+  "translationTestHint": "Sends one short sample to be sure the address, model and API key all work",
+  "translationTestOk": "Works — the service answered with a translation",
+  "translationTestFailed": "Failed; check the address, model and API key",
   "downloadCancel": "Cancel download",
   "downloadRetry": "Retry",
   "downloadInUse": "This one is playing with nothing to move on to; switch songs first"

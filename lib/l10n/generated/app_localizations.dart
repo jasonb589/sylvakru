@@ -2000,6 +2000,30 @@ abstract class AppLocalizations {
   /// **'Custom model…'**
   String get translationModelCustom;
 
+  /// No description provided for @translationTest.
+  ///
+  /// In en, this message translates to:
+  /// **'Test connection'**
+  String get translationTest;
+
+  /// No description provided for @translationTestHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Sends one short sample to be sure the address, model and API key all work'**
+  String get translationTestHint;
+
+  /// No description provided for @translationTestOk.
+  ///
+  /// In en, this message translates to:
+  /// **'Works — the service answered with a translation'**
+  String get translationTestOk;
+
+  /// No description provided for @translationTestFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed; check the address, model and API key'**
+  String get translationTestFailed;
+
   /// No description provided for @downloadCancel.
   ///
   /// In en, this message translates to:

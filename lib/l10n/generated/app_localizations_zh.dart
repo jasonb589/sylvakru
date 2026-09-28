@@ -994,6 +994,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get translationModelCustom => '自定义模型…';
 
   @override
+  String get translationTest => '测试连接';
+
+  @override
+  String get translationTestHint => '向服务发一条示例，确认地址、模型与 API Key 都可用';
+
+  @override
+  String get translationTestOk => '连接正常，服务已返回译文';
+
+  @override
+  String get translationTestFailed => '连接失败，请检查接口地址、模型与 API Key';
+
+  @override
   String get downloadCancel => '取消下载';
 
   @override
