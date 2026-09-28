@@ -249,10 +249,10 @@
   "maximum": "最大值",
   "applyFilters": "应用筛选",
   "invalidRange": "请输入有效范围，最小值不能大于最大值",
-  "offlineMusic": "离线音乐",
-  "offlineMusicDescription": "已下载到本地，无网络时也可播放；与临时缓存分开管理",
-  "noOfflineMusic": "暂无离线音乐",
-  "offlineMusicCount": "{count} 首离线音乐",
+  "offlineMusic": "下载中心",
+  "offlineMusicDescription": "已下载到本地，可自定义下载目录，随时离线播放",
+  "noOfflineMusic": "暂无下载",
+  "offlineMusicCount": "{count} 首下载",
   "@offlineMusicCount": {
     "placeholders": {
       "count": {
@@ -260,12 +260,12 @@
       }
     }
   },
-  "downloadForOffline": "下载到离线音乐",
-  "removeDownload": "移除离线音乐",
-  "downloading": "正在下载到离线音乐…",
+  "downloadForOffline": "下载",
+  "removeDownload": "移除下载",
+  "downloading": "正在下载…",
   "downloadFailed": "下载失败，请检查网络和存储空间",
-  "downloadInUse": "请先暂停播放，再移除此离线音乐",
-  "noOfflineMusicHint": "在歌曲菜单里选择「下载到离线音乐」，之后无网络也能播放",
+  "downloadInUse": "请先暂停播放，再移除这首下载",
+  "noOfflineMusicHint": "在歌曲菜单里选择「下载」，之后无网络也能播放",
   "browseSongs": "去浏览音乐",
   "playQueueEmptyHint": "在歌曲菜单里选择「添加到播放列表」，歌曲会出现在这里",
   "musicSource": "音乐来源",
@@ -284,6 +284,20 @@
     "placeholders": {
       "path": {
         "type": "String"
+      }
+    }
+  },
+  "downloadDirectory": "下载目录",
+  "downloadFolderDefault": "应用数据目录",
+  "chooseFolder": "选择",
+  "downloadsMigrateExisting": "迁移现有文件",
+  "downloadsNewOnly": "仅对新下载生效",
+  "otherFiles": "其它文件",
+  "downloadsMoved": "已迁移 {count} 个文件",
+  "@downloadsMoved": {
+    "placeholders": {
+      "count": {
+        "type": "int"
       }
     }
   }

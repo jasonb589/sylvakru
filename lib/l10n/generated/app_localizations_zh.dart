@@ -781,36 +781,36 @@ class AppLocalizationsZh extends AppLocalizations {
   String get invalidRange => '请输入有效范围，最小值不能大于最大值';
 
   @override
-  String get offlineMusic => '离线音乐';
+  String get offlineMusic => '下载中心';
 
   @override
-  String get offlineMusicDescription => '已下载到本地，无网络时也可播放；与临时缓存分开管理';
+  String get offlineMusicDescription => '已下载到本地，可自定义下载目录，随时离线播放';
 
   @override
-  String get noOfflineMusic => '暂无离线音乐';
+  String get noOfflineMusic => '暂无下载';
 
   @override
   String offlineMusicCount(int count) {
-    return '$count 首离线音乐';
+    return '$count 首下载';
   }
 
   @override
-  String get downloadForOffline => '下载到离线音乐';
+  String get downloadForOffline => '下载';
 
   @override
-  String get removeDownload => '移除离线音乐';
+  String get removeDownload => '移除下载';
 
   @override
-  String get downloading => '正在下载到离线音乐…';
+  String get downloading => '正在下载…';
 
   @override
   String get downloadFailed => '下载失败，请检查网络和存储空间';
 
   @override
-  String get downloadInUse => '请先暂停播放，再移除此离线音乐';
+  String get downloadInUse => '请先暂停播放，再移除这首下载';
 
   @override
-  String get noOfflineMusicHint => '在歌曲菜单里选择「下载到离线音乐」，之后无网络也能播放';
+  String get noOfflineMusicHint => '在歌曲菜单里选择「下载」，之后无网络也能播放';
 
   @override
   String get browseSongs => '去浏览音乐';
@@ -854,5 +854,28 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String exportTo(String path) {
     return '已导出到 $path';
+  }
+
+  @override
+  String get downloadDirectory => '下载目录';
+
+  @override
+  String get downloadFolderDefault => '应用数据目录';
+
+  @override
+  String get chooseFolder => '选择';
+
+  @override
+  String get downloadsMigrateExisting => '迁移现有文件';
+
+  @override
+  String get downloadsNewOnly => '仅对新下载生效';
+
+  @override
+  String get otherFiles => '其它文件';
+
+  @override
+  String downloadsMoved(int count) {
+    return '已迁移 $count 个文件';
   }
 }

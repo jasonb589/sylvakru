@@ -794,40 +794,39 @@ class AppLocalizationsEn extends AppLocalizations {
       'Enter valid values; minimum must not exceed maximum';
 
   @override
-  String get offlineMusic => 'Offline Music';
+  String get offlineMusic => 'Downloads';
 
   @override
   String get offlineMusicDescription =>
-      'Downloaded to this device for playback without a network; managed separately from temporary cache';
+      'Downloaded to this device, in a folder you choose, for playback without a network';
 
   @override
-  String get noOfflineMusic => 'No offline music';
+  String get noOfflineMusic => 'No downloads yet';
 
   @override
   String offlineMusicCount(int count) {
-    return '$count offline music tracks';
+    return '$count downloads';
   }
 
   @override
-  String get downloadForOffline => 'Download to Offline Music';
+  String get downloadForOffline => 'Download';
 
   @override
-  String get removeDownload => 'Remove from Offline Music';
+  String get removeDownload => 'Remove download';
 
   @override
-  String get downloading => 'Downloading to Offline Music…';
+  String get downloading => 'Downloading…';
 
   @override
   String get downloadFailed =>
       'Download failed; check the network and available storage';
 
   @override
-  String get downloadInUse =>
-      'Pause playback before removing this offline music';
+  String get downloadInUse => 'Pause playback before removing this download';
 
   @override
   String get noOfflineMusicHint =>
-      'Pick Download to Offline Music in a song menu and it plays here even without a network';
+      'Pick Download in a song menu and it plays here even without a network';
 
   @override
   String get browseSongs => 'Browse music';
@@ -872,5 +871,28 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String exportTo(String path) {
     return 'Exported to $path';
+  }
+
+  @override
+  String get downloadDirectory => 'Download folder';
+
+  @override
+  String get downloadFolderDefault => 'App data folder';
+
+  @override
+  String get chooseFolder => 'Choose';
+
+  @override
+  String get downloadsMigrateExisting => 'Move existing files';
+
+  @override
+  String get downloadsNewOnly => 'Only new downloads';
+
+  @override
+  String get otherFiles => 'Other files';
+
+  @override
+  String downloadsMoved(int count) {
+    return 'Moved $count files';
   }
 }

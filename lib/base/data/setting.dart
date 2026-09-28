@@ -130,6 +130,8 @@ class Setting {
     lyricsTimeOffsetNotifier.value =
         (json['lyricsTimeOffsetMs'] as num?)?.toInt() ??
         lyricsTimeOffsetNotifier.value;
+
+    downloadRootDir = json['downloadDir'] as String? ?? downloadRootDir;
   }
 
   void save() {
@@ -163,6 +165,7 @@ class Setting {
         'cacheLimitMb': offlineMusicLimitMbNotifier.value,
         'playbackRate': playbackRateNotifier.value,
         'lyricsTimeOffsetMs': lyricsTimeOffsetNotifier.value,
+        'downloadDir': downloadRootDir,
       }),
     );
   }

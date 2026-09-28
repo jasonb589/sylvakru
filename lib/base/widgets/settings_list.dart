@@ -20,6 +20,7 @@ import 'package:sylvakru/base/services/stream_client.dart';
 import 'package:sylvakru/base/services/system_ui_service.dart';
 import 'package:sylvakru/base/utils/common_utils.dart';
 import 'package:sylvakru/base/utils/media_query.dart';
+import 'package:sylvakru/base/utils/path.dart';
 import 'package:sylvakru/base/utils/source_type.dart';
 import 'package:sylvakru/base/widgets/connect_client_widget.dart';
 import 'package:sylvakru/base/widgets/equalizer.dart';
@@ -135,6 +136,13 @@ class _SettingsListState extends State<SettingsList> {
         sliverBox(paddingIfNeed(isLandscape, syncListTile(context, l10n))),
 
         sliverBox(paddingIfNeed(isLandscape, cacheListTile(context, l10n))),
+
+        // Downloads: where the listener's own copies live. It sits with the
+        // library rows because that is what it belongs to, and because the
+        // temporary cache right above it must not be confused with it.
+        sliverBox(
+          paddingIfNeed(isLandscape, downloadFolderListTile(context, l10n)),
+        ),
 
         // Appearance: how the client looks and speaks.
         sliverBox(groupHeader(l10n.appearance, isLandscape)),
@@ -1178,4 +1186,99 @@ class _SettingsListState extends State<SettingsList> {
       },
     );
   }
+}
+
+/// Settings row for the download folder: the folder in use, and a picker.
+Widget downloadFolderListTile(
+  BuildContext context,
+  AppLocalizations l10n, {
+
+  /// Matches the icon size the surrounding settings rows use.
+  double iconSize = 30,
+}) {
+  final custom = downloadRootDir;
+  return ListTile(
+    leading: ImageIcon(downloadImage, size: iconSize),
+    title: Text(l10n.downloadDirectory),
+    subtitle: Text(
+      custom == null || custom.isEmpty ? l10n.downloadFolderDefault : custom,
+      overflow: TextOverflow.ellipsis,
+    ),
+    onTap: () => pickDownloadFolder(context),
+  );
+}
+
+/// Asks for a folder, then what should happen to the files already downloaded.
+///
+/// Choosing a folder is the decision; moving gigabytes is not. The second
+/// question only appears when there is something to move, and cancelling it
+/// leaves the setting untouched.
+Future<void> pickDownloadFolder(BuildContext context) async {
+  final l10n = AppLocalizations.of(context);
+  final chosen = await FilePicker.getDirectoryPath();
+  if (chosen == null || chosen.isEmpty) {
+    return;
+  }
+
+  final oldFolder = getDownloadsPath(sourceType);
+  if (chosen == downloadRootDir) {
+    return;
+  }
+
+  final previous = downloadRootDir;
+  downloadRootDir = chosen;
+
+  var moveFiles = true;
+  final oldDirectory = Directory(oldFolder);
+  if (await oldDirectory.exists() && !await oldDirectory.list().isEmpty) {
+    if (!context.mounted) {
+      return;
+    }
+    final choice = await showDownloadMoveDialog(context, l10n);
+    if (choice == null) {
+      downloadRootDir = previous;
+      return;
+    }
+    moveFiles = choice;
+  }
+
+  final moved = await library.relocateDownloads(
+    oldFolder: oldFolder,
+    moveFiles: moveFiles,
+  );
+  setting.save();
+
+  if (context.mounted) {
+    showCenterMessage(l10n.downloadsMoved(moved));
+  }
+}
+
+/// `true` moves the existing files, `false` leaves them where they are,
+/// null cancels the folder change entirely.
+Future<bool?> showDownloadMoveDialog(
+  BuildContext context,
+  AppLocalizations l10n,
+) {
+  return showAnimationDialog<bool>(
+    context: context,
+    child: Padding(
+      padding: const EdgeInsets.all(20),
+      child: SizedBox(
+        width: 300,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(l10n.downloadsNewOnly),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(l10n.downloadsMigrateExisting),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }

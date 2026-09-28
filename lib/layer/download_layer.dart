@@ -77,6 +77,7 @@ class _DownloadLayerState extends State<DownloadLayer> {
       listenable: Listenable.merge([
         library.changeNotifier,
         downloadSizeNotifier,
+        otherDownloadSizeNotifier,
         offlineMusicLimitMbNotifier,
         downloadingSongIdsNotifier,
       ]),
@@ -123,7 +124,7 @@ class _DownloadLayerState extends State<DownloadLayer> {
                             onPressed: () =>
                                 _showOfflineLimitPicker(context, l10n),
                             icon: const Icon(Icons.tune, size: 16),
-                            label: Text(storageLabel()),
+                            label: Text(storageLabel(l10n)),
                           ),
                         ),
                       ],
@@ -186,10 +187,21 @@ class _DownloadLayerState extends State<DownloadLayer> {
   }
 
   /// How much space the offline copies take, against the offline music limit.
-  String storageLabel() {
+  /// How much space the downloaded files take, and how much of the folder
+  /// belongs to something else, against the configured limit.
+  ///
+  /// The two figures are shown apart because only the first one is the
+  /// library's: leftover or hand-copied files used to be folded into it, which
+  /// is why the number never matched the list beneath it.
+  String storageLabel(AppLocalizations l10n) {
     final used = '${downloadSizeNotifier.value.toStringAsFixed(1)}MB';
     final limit = offlineMusicLimitMbNotifier.value;
-    return limit <= 0 ? used : '$used / $limit MB';
+    final limitText = limit <= 0 ? '' : ' / $limit MB';
+    final other = otherDownloadSizeNotifier.value;
+    final otherText = other < 0.1
+        ? ''
+        : ' · ${l10n.otherFiles} ${other.toStringAsFixed(1)}MB';
+    return '$used$limitText$otherText';
   }
 
   void _showOfflineLimitPicker(BuildContext context, AppLocalizations l10n) {

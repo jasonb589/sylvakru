@@ -24,6 +24,10 @@ Library library = Library();
 final ValueNotifier<double> cacheSizeNotifier = ValueNotifier(0);
 final ValueNotifier<double> downloadSizeNotifier = ValueNotifier(0);
 
+/// Bytes of the downloads folder that no library song claims: files the
+/// listener dropped in, or leftovers of songs that are gone.
+final ValueNotifier<double> otherDownloadSizeNotifier = ValueNotifier(0);
+
 /// Songs currently being downloaded for offline playback or temporary cache.
 final ValueNotifier<Set<String>> downloadingSongIdsNotifier = ValueNotifier({});
 
@@ -183,7 +187,7 @@ class Library {
       return 0;
     }
     var total = 0;
-    await for (final entity in directory.list()) {
+    await for (final entity in directory.list(recursive: true)) {
       if (entity is File) {
         total += await entity.length();
       }
@@ -195,15 +199,123 @@ class Library {
     cacheSizeNotifier.value = await _directorySize(getCachesPath(sourceType));
   }
 
+  /// Splits the downloads folder into what belongs to the library and what
+  /// does not.
+  ///
+  /// The figure shown for "downloaded" used to be the raw folder size, which
+  /// also counted files the library knows nothing about: dropped in by hand, or
+  /// left behind by a song that is no longer in the library. That is why the
+  /// number never matched the list underneath it. Both figures come from one
+  /// walk, so claimed + other is always the folder.
   Future<void> _accumulateDownloads() async {
-    downloadSizeNotifier.value = await _directorySize(
-      getDownloadsPath(sourceType),
-    );
+    final sizes = await _fileSizes(getDownloadsPath(sourceType));
+
+    final claimedNames = <String>{};
+    var claimedBytes = 0;
+    for (final song in id2Song.values) {
+      final path = song.downloadPath;
+      if (path == null) {
+        continue;
+      }
+      final name = _fileNameOf(path);
+      if (!claimedNames.add(name)) {
+        continue;
+      }
+      claimedBytes += sizes[name] ?? 0;
+    }
+
+    var totalBytes = 0;
+    for (final size in sizes.values) {
+      totalBytes += size;
+    }
+
+    downloadSizeNotifier.value = claimedBytes / (1024 * 1024);
+    otherDownloadSizeNotifier.value =
+        (totalBytes - claimedBytes) / (1024 * 1024);
+  }
+
+  /// File name to size for every file under [path], subfolders included, so a
+  /// future per-album layout cannot fall out of the accounting.
+  Future<Map<String, int>> _fileSizes(String path) async {
+    final sizes = <String, int>{};
+    final directory = Directory(path);
+    if (!await directory.exists()) {
+      return sizes;
+    }
+    await for (final entity in directory.list(recursive: true)) {
+      if (entity is File) {
+        sizes[_fileNameOf(entity.path)] = await entity.length();
+      }
+    }
+    return sizes;
   }
 
   Future<void> refreshStorageStats() async {
     await _accumulateCache();
     await _accumulateDownloads();
+  }
+
+  /// Points every downloaded song at the folder the listener just picked, and
+  /// optionally moves the files there.
+  ///
+  /// Files keep their names, so this is a move per file with a copy fallback
+  /// for a different volume. The per-song paths are recomputed either way,
+  /// which is what makes the centre show the new folder immediately.
+  Future<int> relocateDownloads({
+    required String oldFolder,
+    required bool moveFiles,
+  }) async {
+    if (sourceType == .local) {
+      return 0;
+    }
+
+    final newFolder = getDownloadsPath(sourceType);
+    if (newFolder == oldFolder) {
+      return 0;
+    }
+
+    var moved = 0;
+    final oldDirectory = Directory(oldFolder);
+    if (moveFiles && await oldDirectory.exists()) {
+      final newDirectory = Directory(newFolder);
+      await newDirectory.create(recursive: true);
+      await for (final entity in oldDirectory.list(recursive: true)) {
+        if (entity is! File) {
+          continue;
+        }
+        final target = '${newDirectory.path}/${_fileNameOf(entity.path)}';
+        try {
+          if (await File(target).exists()) {
+            continue;
+          }
+          try {
+            await entity.rename(target);
+          } on FileSystemException {
+            await entity.copy(target);
+            if (await File(target).exists()) {
+              await entity.delete();
+            }
+          }
+          moved++;
+        } catch (error) {
+          logger.output('Failed to move ${entity.path}: $error');
+        }
+      }
+    }
+
+    for (final song in id2Song.values) {
+      final path = song.downloadPath;
+      if (path == null) {
+        continue;
+      }
+      final target = '$newFolder/${_fileNameOf(path)}';
+      song.downloadPath = target;
+      song.downloadExist = File(target).existsSync();
+      song.updateNotifier.value++;
+    }
+
+    await refreshStorageStats();
+    return moved;
   }
 
   /// Moves known legacy offline copies out of the temporary cache directory.

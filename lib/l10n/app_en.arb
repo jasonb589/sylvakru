@@ -326,10 +326,10 @@
   "maximum": "Maximum",
   "applyFilters": "Apply filters",
   "invalidRange": "Enter valid values; minimum must not exceed maximum",
-  "offlineMusic": "Offline Music",
-  "offlineMusicDescription": "Downloaded to this device for playback without a network; managed separately from temporary cache",
-  "noOfflineMusic": "No offline music",
-  "offlineMusicCount": "{count} offline music tracks",
+  "offlineMusic": "Downloads",
+  "offlineMusicDescription": "Downloaded to this device, in a folder you choose, for playback without a network",
+  "noOfflineMusic": "No downloads yet",
+  "offlineMusicCount": "{count} downloads",
   "@offlineMusicCount": {
     "placeholders": {
       "count": {
@@ -337,12 +337,12 @@
       }
     }
   },
-  "downloadForOffline": "Download to Offline Music",
-  "removeDownload": "Remove from Offline Music",
-  "downloading": "Downloading to Offline Music…",
+  "downloadForOffline": "Download",
+  "removeDownload": "Remove download",
+  "downloading": "Downloading…",
   "downloadFailed": "Download failed; check the network and available storage",
-  "downloadInUse": "Pause playback before removing this offline music",
-  "noOfflineMusicHint": "Pick Download to Offline Music in a song menu and it plays here even without a network",
+  "downloadInUse": "Pause playback before removing this download",
+  "noOfflineMusicHint": "Pick Download in a song menu and it plays here even without a network",
   "browseSongs": "Browse music",
   "playQueueEmptyHint": "Pick Add to Queue in a song menu and it shows up here",
   "musicSource": "Music Source",
@@ -361,6 +361,20 @@
     "placeholders": {
       "path": {
         "type": "String"
+      }
+    }
+  },
+  "downloadDirectory": "Download folder",
+  "downloadFolderDefault": "App data folder",
+  "chooseFolder": "Choose",
+  "downloadsMigrateExisting": "Move existing files",
+  "downloadsNewOnly": "Only new downloads",
+  "otherFiles": "Other files",
+  "downloadsMoved": "Moved {count} files",
+  "@downloadsMoved": {
+    "placeholders": {
+      "count": {
+        "type": "int"
       }
     }
   }

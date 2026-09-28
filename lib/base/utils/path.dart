@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:path/path.dart' as p;
 
 import 'package:http/http.dart' as http;
 import 'package:sylvakru/base/app.dart';
@@ -116,8 +117,23 @@ String getCachesPath(SourceType sourceType) {
   return '${appSupportDir.path}/${sourceType.name}/caches';
 }
 
+/// The root the listener picked for downloads, or null for the app's own
+/// folder. Kept here rather than in the settings file so that every path
+/// helper sees it without importing the data layer.
+String? downloadRootDir;
+
+/// Where a source's downloaded files live.
+///
+/// The default keeps each source in its own folder under the app's support
+/// directory. A user-picked root is still split per source, so two libraries
+/// never land in one folder and a file name collision cannot cross sources.
 String getDownloadsPath(SourceType sourceType) {
-  return '${appSupportDir.path}/${sourceType.name}/downloads';
+  final root = downloadRootDir;
+  // Joined rather than concatenated so Windows gets one consistent separator
+  // in the path the settings row shows.
+  return root == null || root.isEmpty
+      ? p.join(appSupportDir.path, sourceType.name, 'downloads')
+      : p.join(root, sourceType.name);
 }
 
 String getPicturesPath(SourceType sourceType) {

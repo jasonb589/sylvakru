@@ -1601,43 +1601,43 @@ abstract class AppLocalizations {
   /// No description provided for @offlineMusic.
   ///
   /// In en, this message translates to:
-  /// **'Offline Music'**
+  /// **'Downloads'**
   String get offlineMusic;
 
   /// No description provided for @offlineMusicDescription.
   ///
   /// In en, this message translates to:
-  /// **'Downloaded to this device for playback without a network; managed separately from temporary cache'**
+  /// **'Downloaded to this device, in a folder you choose, for playback without a network'**
   String get offlineMusicDescription;
 
   /// No description provided for @noOfflineMusic.
   ///
   /// In en, this message translates to:
-  /// **'No offline music'**
+  /// **'No downloads yet'**
   String get noOfflineMusic;
 
   /// No description provided for @offlineMusicCount.
   ///
   /// In en, this message translates to:
-  /// **'{count} offline music tracks'**
+  /// **'{count} downloads'**
   String offlineMusicCount(int count);
 
   /// No description provided for @downloadForOffline.
   ///
   /// In en, this message translates to:
-  /// **'Download to Offline Music'**
+  /// **'Download'**
   String get downloadForOffline;
 
   /// No description provided for @removeDownload.
   ///
   /// In en, this message translates to:
-  /// **'Remove from Offline Music'**
+  /// **'Remove download'**
   String get removeDownload;
 
   /// No description provided for @downloading.
   ///
   /// In en, this message translates to:
-  /// **'Downloading to Offline Music…'**
+  /// **'Downloading…'**
   String get downloading;
 
   /// No description provided for @downloadFailed.
@@ -1649,13 +1649,13 @@ abstract class AppLocalizations {
   /// No description provided for @downloadInUse.
   ///
   /// In en, this message translates to:
-  /// **'Pause playback before removing this offline music'**
+  /// **'Pause playback before removing this download'**
   String get downloadInUse;
 
   /// No description provided for @noOfflineMusicHint.
   ///
   /// In en, this message translates to:
-  /// **'Pick Download to Offline Music in a song menu and it plays here even without a network'**
+  /// **'Pick Download in a song menu and it plays here even without a network'**
   String get noOfflineMusicHint;
 
   /// No description provided for @browseSongs.
@@ -1741,6 +1741,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Exported to {path}'**
   String exportTo(String path);
+
+  /// No description provided for @downloadDirectory.
+  ///
+  /// In en, this message translates to:
+  /// **'Download folder'**
+  String get downloadDirectory;
+
+  /// No description provided for @downloadFolderDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'App data folder'**
+  String get downloadFolderDefault;
+
+  /// No description provided for @chooseFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose'**
+  String get chooseFolder;
+
+  /// No description provided for @downloadsMigrateExisting.
+  ///
+  /// In en, this message translates to:
+  /// **'Move existing files'**
+  String get downloadsMigrateExisting;
+
+  /// No description provided for @downloadsNewOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Only new downloads'**
+  String get downloadsNewOnly;
+
+  /// No description provided for @otherFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Other files'**
+  String get otherFiles;
+
+  /// No description provided for @downloadsMoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Moved {count} files'**
+  String downloadsMoved(int count);
 }
 
 class _AppLocalizationsDelegate
