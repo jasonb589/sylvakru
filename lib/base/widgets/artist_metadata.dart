@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:sylvakru/base/data/artist_album.dart';
 import 'package:sylvakru/l10n/generated/app_localizations.dart';
 import 'package:sylvakru/base/utils/genre_names.dart';
+import 'package:sylvakru/base/services/translation.dart';
 
 /// The metadata block shown on an artist page.
 ///
@@ -27,6 +28,12 @@ class ArtistMetadata extends StatefulWidget {
 class _ArtistMetadataState extends State<ArtistMetadata> {
   bool _expanded = false;
 
+  /// The translated biography, once the service answered.
+  String? _translated;
+
+  /// Which of the two the listener is reading.
+  bool _showOriginal = false;
+
   @override
   void initState() {
     super.initState();
@@ -34,7 +41,25 @@ class _ArtistMetadataState extends State<ArtistMetadata> {
     // metadata requested, because that request used to ride along with the song
     // load. This block is where every artist view shows the biography, so it is
     // where the request belongs.
-    widget.artist.loadInfo();
+    widget.artist.loadInfo().then((_) => _translateBiography());
+  }
+
+  /// Asks the configured service for a translation of the biography.
+  ///
+  /// Best effort: while the request is in flight the page shows the original,
+  /// and if no translation ever arrives the page keeps showing it.
+  Future<void> _translateBiography() async {
+    final biography = widget.artist.biography?.trim();
+    if (biography == null || biography.isEmpty) {
+      return;
+    }
+    final translated = await translator.translate(biography);
+    if (!mounted || translated == null) {
+      return;
+    }
+    setState(() {
+      _translated = translated;
+    });
   }
 
   @override
@@ -81,7 +106,9 @@ class _ArtistMetadataState extends State<ArtistMetadata> {
                   child: MouseRegion(
                     cursor: SystemMouseCursors.click,
                     child: Text(
-                      biography,
+                      _showOriginal || _translated == null
+                          ? biography
+                          : _translated!,
                       style: TextStyle(fontSize: 12, height: 1.4),
                       maxLines: _expanded ? null : widget.collapsedLines,
                       overflow: _expanded
@@ -108,6 +135,27 @@ class _ArtistMetadataState extends State<ArtistMetadata> {
                     ),
                   ),
                 ),
+                if (_translated != null)
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      setState(() {
+                        _showOriginal = !_showOriginal;
+                      });
+                    },
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(
+                          _showOriginal
+                              ? l10n.translationShowTranslated
+                              : l10n.translationShowOriginal,
+                          style: TextStyle(fontSize: 12),
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ],
           ),

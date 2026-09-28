@@ -1868,6 +1868,96 @@ abstract class AppLocalizations {
   /// **'No tags'**
   String get downloadTagsOff;
 
+  /// No description provided for @translation.
+  ///
+  /// In en, this message translates to:
+  /// **'Translation'**
+  String get translation;
+
+  /// No description provided for @translationOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get translationOff;
+
+  /// No description provided for @translationNotConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Service not configured'**
+  String get translationNotConfigured;
+
+  /// No description provided for @translationEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Translate artist biographies'**
+  String get translationEnabled;
+
+  /// No description provided for @translationNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Translations come from the service you configure; the original text is sent to it'**
+  String get translationNotice;
+
+  /// No description provided for @translationBaseUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'API base URL'**
+  String get translationBaseUrl;
+
+  /// No description provided for @translationModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Model'**
+  String get translationModel;
+
+  /// No description provided for @translationApiKey.
+  ///
+  /// In en, this message translates to:
+  /// **'API key'**
+  String get translationApiKey;
+
+  /// No description provided for @translationUnset.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get translationUnset;
+
+  /// No description provided for @translationKeySaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get translationKeySaved;
+
+  /// No description provided for @translationClearCache.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear translation cache'**
+  String get translationClearCache;
+
+  /// No description provided for @translationCachedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} translations cached'**
+  String translationCachedCount(int count);
+
+  /// No description provided for @translationCacheCleared.
+  ///
+  /// In en, this message translates to:
+  /// **'Translation cache cleared'**
+  String get translationCacheCleared;
+
+  /// No description provided for @translationShowOriginal.
+  ///
+  /// In en, this message translates to:
+  /// **'Show original'**
+  String get translationShowOriginal;
+
+  /// No description provided for @translationShowTranslated.
+  ///
+  /// In en, this message translates to:
+  /// **'Show translation'**
+  String get translationShowTranslated;
+
   /// No description provided for @downloadCancel.
   ///
   /// In en, this message translates to:

@@ -32,6 +32,10 @@ class Config {
   String? feiniuPassword;
   String? feiniuToken;
 
+  /// The key for the translation service: a secret the listener pays for, so it
+  /// lives in the system credential store like the passwords do.
+  String? translationApiKey;
+
   static const _secureStorage = FlutterSecureStorage(
     mOptions: MacOsOptions(usesDataProtectionKeychain: false),
   );
@@ -96,6 +100,7 @@ class Config {
       }
       return null;
     }
+
     final webdavMap = asConfigMap(map['webdav']);
     if (webdavMap != null &&
         webdavMap['baseUrl'] is String &&
@@ -153,6 +158,12 @@ class Config {
             : await _trySecureRead('feiniu_token');
       }
     }
+
+    final translationMap = asConfigMap(map['translation']);
+    translationApiKey = await _trySecureRead('translation_api_key');
+    translationApiKey ??= translationMap?['apiKey'] is String
+        ? translationMap!['apiKey'] as String
+        : null;
 
     final configuredSourceType = map['sourceType'];
     final tmpSourceType = configuredSourceType is String
@@ -230,6 +241,7 @@ class Config {
     bool embySecured = true;
     bool feiniuSecured = true;
     bool feiniuTokenSecured = true;
+    bool translationKeySecured = true;
 
     if (webdavClient != null) {
       webdavSecured = await _trySecureWrite(
@@ -262,6 +274,13 @@ class Config {
           'Failed to delete "feiniu_token" from secure storage: $e',
         );
       }
+    }
+
+    if (translationApiKey != null) {
+      translationKeySecured = await _trySecureWrite(
+        'translation_api_key',
+        translationApiKey!,
+      );
     }
 
     await file.writeAsString(
@@ -298,6 +317,8 @@ class Config {
             if (feiniuToken != null && !feiniuTokenSecured)
               'token': feiniuToken,
           },
+        if (translationApiKey != null && !translationKeySecured)
+          'translation': {'apiKey': translationApiKey},
       }),
     );
   }
@@ -322,9 +343,12 @@ class Config {
   }
 
   bool _hasPlainTextCredential(Map<String, dynamic> map) {
-    for (var key in ['webdav', 'navidrome', 'emby', 'feiniu']) {
+    for (var key in ['webdav', 'navidrome', 'emby', 'feiniu', 'translation']) {
       final sourceConfig = map[key];
       if (sourceConfig is Map && sourceConfig['password'] != null) {
+        return true;
+      }
+      if (sourceConfig is Map && sourceConfig['apiKey'] != null) {
         return true;
       }
     }

@@ -329,6 +329,28 @@
   "downloadSettings": "下载",
   "downloadTagsOn": "写入标签",
   "downloadTagsOff": "不写标签",
+  "translation": "翻译",
+  "translationOff": "未启用",
+  "translationNotConfigured": "服务未配置",
+  "translationEnabled": "翻译艺术家简介",
+  "translationNotice": "译文由你填写的服务生成，简介原文会上传到该服务",
+  "translationBaseUrl": "接口地址",
+  "translationModel": "模型",
+  "translationApiKey": "API Key",
+  "translationUnset": "未填写",
+  "translationKeySaved": "已保存",
+  "translationClearCache": "清空翻译缓存",
+  "translationCachedCount": "已缓存 {count} 条译文",
+  "@translationCachedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "translationCacheCleared": "翻译缓存已清空",
+  "translationShowOriginal": "显示原文",
+  "translationShowTranslated": "显示译文",
   "downloadCancel": "取消下载",
   "downloadRetry": "重试",
   "downloadInUse": "这首歌正在播放且没有下一首可切换，请先切歌再移除"

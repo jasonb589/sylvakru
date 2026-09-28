@@ -945,6 +945,54 @@ class AppLocalizationsEn extends AppLocalizations {
   String get downloadTagsOff => 'No tags';
 
   @override
+  String get translation => 'Translation';
+
+  @override
+  String get translationOff => 'Off';
+
+  @override
+  String get translationNotConfigured => 'Service not configured';
+
+  @override
+  String get translationEnabled => 'Translate artist biographies';
+
+  @override
+  String get translationNotice =>
+      'Translations come from the service you configure; the original text is sent to it';
+
+  @override
+  String get translationBaseUrl => 'API base URL';
+
+  @override
+  String get translationModel => 'Model';
+
+  @override
+  String get translationApiKey => 'API key';
+
+  @override
+  String get translationUnset => 'Not set';
+
+  @override
+  String get translationKeySaved => 'Saved';
+
+  @override
+  String get translationClearCache => 'Clear translation cache';
+
+  @override
+  String translationCachedCount(int count) {
+    return '$count translations cached';
+  }
+
+  @override
+  String get translationCacheCleared => 'Translation cache cleared';
+
+  @override
+  String get translationShowOriginal => 'Show original';
+
+  @override
+  String get translationShowTranslated => 'Show translation';
+
+  @override
   String get downloadCancel => 'Cancel download';
 
   @override

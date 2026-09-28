@@ -406,6 +406,28 @@
   "downloadSettings": "Downloads",
   "downloadTagsOn": "Tags written",
   "downloadTagsOff": "No tags",
+  "translation": "Translation",
+  "translationOff": "Off",
+  "translationNotConfigured": "Service not configured",
+  "translationEnabled": "Translate artist biographies",
+  "translationNotice": "Translations come from the service you configure; the original text is sent to it",
+  "translationBaseUrl": "API base URL",
+  "translationModel": "Model",
+  "translationApiKey": "API key",
+  "translationUnset": "Not set",
+  "translationKeySaved": "Saved",
+  "translationClearCache": "Clear translation cache",
+  "translationCachedCount": "{count} translations cached",
+  "@translationCachedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "translationCacheCleared": "Translation cache cleared",
+  "translationShowOriginal": "Show original",
+  "translationShowTranslated": "Show translation",
   "downloadCancel": "Cancel download",
   "downloadRetry": "Retry",
   "downloadInUse": "This one is playing with nothing to move on to; switch songs first"

@@ -40,6 +40,15 @@ final downloadNamingNotifier = ValueNotifier<DownloadNaming>(
 /// file still makes sense in a player that never heard of this app.
 final writeDownloadTagsNotifier = ValueNotifier<bool>(true);
 
+/// Translation of the text a server sends — today the artist biography.
+///
+/// Off by default: switching it on sends that text to a service the listener
+/// chooses, which is a decision to make deliberately rather than to discover.
+final translationEnabledNotifier = ValueNotifier<bool>(false);
+final translationBaseUrlNotifier = ValueNotifier<String>('');
+final translationModelNotifier = ValueNotifier<String>('');
+final translationTargetNotifier = ValueNotifier<String>('简体中文');
+
 /// Set once the pass that moves playback cache out of the downloads folder has
 /// run, so a file the listener never downloaded cannot be mistaken for theirs.
 bool downloadSplitRepaired = false;
@@ -159,6 +168,19 @@ class Setting {
     writeDownloadTagsNotifier.value =
         json['writeDownloadTags'] as bool? ?? writeDownloadTagsNotifier.value;
 
+    translationEnabledNotifier.value =
+        json['translationEnabled'] as bool? ?? translationEnabledNotifier.value;
+
+    translationBaseUrlNotifier.value =
+        json['translationBaseUrl'] as String? ??
+        translationBaseUrlNotifier.value;
+
+    translationModelNotifier.value =
+        json['translationModel'] as String? ?? translationModelNotifier.value;
+
+    translationTargetNotifier.value =
+        json['translationTarget'] as String? ?? translationTargetNotifier.value;
+
     downloadSplitRepaired =
         json['downloadSplitRepaired'] as bool? ?? downloadSplitRepaired;
   }
@@ -198,6 +220,10 @@ class Setting {
         'downloadSplitRepaired': downloadSplitRepaired,
         'downloadNaming': downloadNamingNotifier.value.name,
         'writeDownloadTags': writeDownloadTagsNotifier.value,
+        'translationEnabled': translationEnabledNotifier.value,
+        'translationBaseUrl': translationBaseUrlNotifier.value,
+        'translationModel': translationModelNotifier.value,
+        'translationTarget': translationTargetNotifier.value,
       }),
     );
   }

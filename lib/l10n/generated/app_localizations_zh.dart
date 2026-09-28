@@ -926,6 +926,53 @@ class AppLocalizationsZh extends AppLocalizations {
   String get downloadTagsOff => '不写标签';
 
   @override
+  String get translation => '翻译';
+
+  @override
+  String get translationOff => '未启用';
+
+  @override
+  String get translationNotConfigured => '服务未配置';
+
+  @override
+  String get translationEnabled => '翻译艺术家简介';
+
+  @override
+  String get translationNotice => '译文由你填写的服务生成，简介原文会上传到该服务';
+
+  @override
+  String get translationBaseUrl => '接口地址';
+
+  @override
+  String get translationModel => '模型';
+
+  @override
+  String get translationApiKey => 'API Key';
+
+  @override
+  String get translationUnset => '未填写';
+
+  @override
+  String get translationKeySaved => '已保存';
+
+  @override
+  String get translationClearCache => '清空翻译缓存';
+
+  @override
+  String translationCachedCount(int count) {
+    return '已缓存 $count 条译文';
+  }
+
+  @override
+  String get translationCacheCleared => '翻译缓存已清空';
+
+  @override
+  String get translationShowOriginal => '显示原文';
+
+  @override
+  String get translationShowTranslated => '显示译文';
+
+  @override
   String get downloadCancel => '取消下载';
 
   @override

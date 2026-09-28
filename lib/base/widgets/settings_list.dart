@@ -17,6 +17,7 @@ import 'package:sylvakru/base/services/interaction.dart';
 import 'package:sylvakru/base/services/logger.dart';
 import 'package:sylvakru/base/services/navidrome_client.dart';
 import 'package:sylvakru/base/services/stream_client.dart';
+import 'package:sylvakru/base/services/translation.dart';
 import 'package:sylvakru/base/services/system_ui_service.dart';
 import 'package:sylvakru/base/utils/common_utils.dart';
 import 'package:sylvakru/base/utils/media_query.dart';
@@ -141,6 +142,9 @@ class _SettingsListState extends State<SettingsList> {
         // library rows because that is what it belongs to, and because the
         // temporary cache right above it must not be confused with it.
         sliverBox(paddingIfNeed(isLandscape, downloadListTile(context, l10n))),
+        sliverBox(
+          paddingIfNeed(isLandscape, translationListTile(context, l10n)),
+        ),
 
         // Appearance: how the client looks and speaks.
         sliverBox(groupHeader(l10n.appearance, isLandscape)),
@@ -1477,6 +1481,143 @@ Future<DownloadNaming?> showDownloadNamingDialog(
               onTap: () => Navigator.of(context).pop(naming),
             ),
           const SizedBox(height: 10),
+        ],
+      ),
+    ),
+  );
+}
+
+/// Settings row for translating what the server sends.
+///
+/// The subtitle states plainly what will happen, because switching this on
+/// sends text off the machine to a service the listener pays for.
+Widget translationListTile(
+  BuildContext context,
+  AppLocalizations l10n, {
+
+  /// Matches the icon size the surrounding settings rows use.
+  double iconSize = 30,
+}) {
+  return ListTile(
+    leading: ImageIcon(languageImage, size: iconSize),
+    title: Text(l10n.translation),
+    subtitle: Text(translationSummary(l10n), overflow: TextOverflow.ellipsis),
+    onTap: () => showTranslationSettingsDialog(context),
+  );
+}
+
+String translationSummary(AppLocalizations l10n) {
+  if (!translationEnabledNotifier.value) {
+    return l10n.translationOff;
+  }
+  final settings = translator.settings;
+  if (!settings.isConfigured) {
+    return l10n.translationNotConfigured;
+  }
+  return '${settings.baseUrl} · ${settings.model}';
+}
+
+/// The translation choices: the switch, the service, and the key it uses.
+Future<void> showTranslationSettingsDialog(BuildContext context) async {
+  final l10n = AppLocalizations.of(context);
+
+  await showAnimationDialog(
+    context: context,
+    child: SizedBox(
+      width: 360,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: ImageIcon(languageImage, size: 24),
+            title: Text(l10n.translationEnabled),
+            subtitle: Text(l10n.translationNotice, maxLines: 3),
+            trailing: SizedBox(
+              width: 50,
+              child: MySwitch(
+                valueNotifier: translationEnabledNotifier,
+                onToggleCallBack: () {
+                  setting.save();
+                },
+              ),
+            ),
+          ),
+          ListTile(
+            leading: Icon(Icons.link_rounded, size: 24),
+            title: Text(l10n.translationBaseUrl),
+            subtitle: Text(
+              translationBaseUrlNotifier.value.isEmpty
+                  ? l10n.translationUnset
+                  : translationBaseUrlNotifier.value,
+              overflow: TextOverflow.ellipsis,
+            ),
+            onTap: () async {
+              final value = await getInputTextDialog(
+                context,
+                l10n.translationBaseUrl,
+              );
+              if (value.trim().isEmpty) {
+                return;
+              }
+              translationBaseUrlNotifier.value = value.trim();
+              setting.save();
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.memory_rounded, size: 24),
+            title: Text(l10n.translationModel),
+            subtitle: Text(
+              translationModelNotifier.value.isEmpty
+                  ? l10n.translationUnset
+                  : translationModelNotifier.value,
+              overflow: TextOverflow.ellipsis,
+            ),
+            onTap: () async {
+              final value = await getInputTextDialog(
+                context,
+                l10n.translationModel,
+              );
+              if (value.trim().isEmpty) {
+                return;
+              }
+              translationModelNotifier.value = value.trim();
+              setting.save();
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.key_rounded, size: 24),
+            title: Text(l10n.translationApiKey),
+            subtitle: Text(
+              (config.translationApiKey ?? '').isEmpty
+                  ? l10n.translationUnset
+                  : l10n.translationKeySaved,
+            ),
+            onTap: () async {
+              final value = await getInputTextDialog(
+                context,
+                l10n.translationApiKey,
+              );
+              if (value.trim().isEmpty) {
+                return;
+              }
+              // A secret the listener pays for: it goes to the credential
+              // store, not into setting.json.
+              config.translationApiKey = value.trim();
+              await config.save();
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.cleaning_services_rounded, size: 24),
+            title: Text(l10n.translationClearCache),
+            subtitle: Text(l10n.translationCachedCount(translator.cachedCount)),
+            onTap: () async {
+              await translator.clearCache();
+              if (context.mounted) {
+                showCenterMessage(l10n.translationCacheCleared);
+              }
+            },
+          ),
+          const SizedBox(height: 8),
         ],
       ),
     ),
