@@ -705,7 +705,7 @@ class _PortraitLyricsPageState extends State<PortraitLyricsPage> {
                         },
                         icon: Icon(Icons.add),
                       ),
-                      PlaybackRateButton(color: value),
+                      PlaybackRateButton(color: value, iconSize: 24),
 
                       SizedBox(width: 20),
                     ],

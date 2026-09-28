@@ -132,6 +132,7 @@ class MyAudioMetadata {
                 : null,
           ),
           id: song['id'],
+          coverId: subsonicCoverId(song),
           path: song['path'],
           playCount: song['playCount'] as int? ?? 0,
           lastPlayed: song['played'] != null
@@ -243,4 +244,24 @@ class MyAudioMetadata {
         "playCount:$playCount\n"
         "lastPlayed:$lastPlayed";
   }
+}
+
+/// The cover art id to ask a Subsonic-compatible server for.
+///
+/// The song's own `coverArt` is what the server says it would show: `al-…`
+/// when the artwork is the album's folder image, `mf-…` when it is embedded in
+/// the file. Older servers leave the field out, in which case the album still
+/// resolves to the artwork the server displays.
+///
+/// Leaving this unset made the client ask for the *song* id: for a track with
+/// no embedded art the server answered with its placeholder, so the client
+/// showed a blue disc while the server's own album page showed the real cover.
+String? subsonicCoverId(Map song) {
+  final coverArt = song['coverArt'];
+  if (coverArt is String && coverArt.isNotEmpty) {
+    return coverArt;
+  }
+
+  final parent = song['parent'];
+  return parent is String && parent.isNotEmpty ? 'al-$parent' : null;
 }
