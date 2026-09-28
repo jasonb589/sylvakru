@@ -132,3 +132,61 @@ abstract final class AppElevation {
   /// The large cover on a lyrics page or player hero area.
   static const double hero = 15;
 }
+
+/// The lyrics pages: how a line takes over from the one before it, and how the
+/// list follows the music.
+///
+/// A song changes line every couple of seconds, so everything here is short.
+/// The line switch is the only thing that lands on the beat; the scroll starts
+/// before it, so the new line has arrived by the time it is sung.
+abstract final class AppLyrics {
+  /// The line switch: the old line dims while the new one brightens.
+  static const Duration lineSwitch = Duration(milliseconds: 260);
+
+  /// Following the music, by how far the list has to travel. One line is a
+  /// step; a long jump is not worth flying across.
+  static const int scrollBaseMs = 220;
+  static const int scrollPerLineMs = 45;
+  static const int scrollMinMs = 260;
+  static const int scrollMaxMs = 420;
+
+  /// Beyond this many lines a jump lands in place instead of travelling, and
+  /// the list fades in where it arrived.
+  static const int jumpLines = 4;
+
+  /// Coming back to the current line after the listener scrolled away, and the
+  /// fade used when the list lands somewhere far away.
+  static const Duration scrollReturn = Duration(milliseconds: 420);
+  static const Duration resetFade = Duration(milliseconds: 160);
+
+  /// How long the listener may look away before the list follows the music
+  /// again. Crossing a line brings it back sooner: the song moved on, so the
+  /// view should.
+  static const Duration idleBeforeReturn = Duration(milliseconds: 2500);
+
+  /// Following is a settle, never a bounce: lyrics that overshoot read as a
+  /// mistake rather than as flow.
+  static const Curve scrollCurve = Curves.easeOutCubic;
+
+  /// Opacity by distance from the current line: the line being sung, then the
+  /// one after it, then further, and everything beyond at the floor.
+  static const List<double> lineOpacities = [1.0, 0.72, 0.48, 0.30];
+
+  /// The current line grows by this much. Small on purpose: a line that wraps
+  /// onto a second row would visibly jump at a larger factor.
+  static const double currentScale = 1.03;
+
+  /// How much of a word the fill has to have covered before that word is
+  /// painted, as a multiple of the font size. A hard cut read as a progress bar
+  /// crossing the words.
+  static const double fillEdgeEm = 0.6;
+
+  /// How far the fill may run past the last reported position. The player
+  /// reports a few times a second and the ticker smooths between those, but the
+  /// wipe must not get ahead of the voice.
+  static const int interpolationLeadMs = 100;
+
+  /// A gap between reports larger than this is a seek, not drift: the fill
+  /// takes the reported position instead of easing towards it.
+  static const int seekSnapMs = 400;
+}
