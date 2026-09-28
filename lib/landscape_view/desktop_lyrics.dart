@@ -339,7 +339,7 @@ class _DesktopLyricsState extends State<DesktopLyrics> {
                     fontSize: isMobile ? 20 : 30,
                     expanded: false,
                     isDesktopLyrics: true,
-                    desktopLyricsTextColor: color,
+                    colour: color,
                   );
                 },
               )

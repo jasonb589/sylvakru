@@ -411,6 +411,7 @@ class LyricLineWidget extends StatelessWidget {
                             position: audioHandler.getPosition(),
                             fontSize: fontSize,
                             expanded: expanded,
+                            colour: colour.withValues(alpha: opacity),
                           )
                         else
                           Text(
@@ -458,9 +459,11 @@ class LyricFillText extends StatefulWidget {
   final bool expanded;
   final bool isDesktopLyrics;
 
-  /// Colour used for the desktop lyrics window, which draws on its own dark
-  /// backdrop instead of following the app's lyrics page theme.
-  final Color? desktopLyricsTextColor;
+  /// The colour the line is drawn in. The page hands in the colour a line has
+  /// at its distance from the one being sung - so the fill keeps the same
+  /// colour while a line takes over from another - and the desktop lyrics
+  /// window brings the one its own dark backdrop needs.
+  final Color? colour;
 
   const LyricFillText({
     super.key,
@@ -469,7 +472,7 @@ class LyricFillText extends StatefulWidget {
     required this.fontSize,
     required this.expanded,
     this.isDesktopLyrics = false,
-    this.desktopLyricsTextColor,
+    this.colour,
   });
 
   @override
@@ -568,11 +571,16 @@ class KaraokeTextState extends State<LyricFillText>
 
   @override
   Widget build(BuildContext context) {
-    final played = widget.isDesktopLyrics
-        ? (widget.desktopLyricsTextColor ?? Colors.white)
-        : viewModeNotifier.value == .mini
-        ? miniViewHighlightTextColor.value
-        : lyricsPageHighlightTextColor.value;
+    // The page hands in the colour a line has at its distance from the one
+    // being sung, so a line taking over keeps its colour while it crosses; the
+    // desktop lyrics window brings the colour of its own backdrop.
+    final played =
+        widget.colour ??
+        (widget.isDesktopLyrics
+            ? Colors.white
+            : viewModeNotifier.value == .mini
+            ? miniViewHighlightTextColor.value
+            : lyricsPageHighlightTextColor.value);
 
     return LayoutBuilder(
       builder: (context, constraints) {
