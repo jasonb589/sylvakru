@@ -334,9 +334,12 @@ class _EditMetadataState extends State<EditMetadata> {
         imageCache.clear();
         imageCache.clearLiveImages();
 
-        await computeColor(song.picture);
+        final artColor = await computeColor(song.picture);
         if (song == currentSongNotifier.value) {
-          currentCoverArtColor = song.picture.color!;
+          // The colour just computed, not the one stored: a cover that cannot
+          // be read leaves the picture without a colour on purpose, so that it
+          // is asked for again instead of being remembered as grey.
+          currentCoverArtColor = artColor;
           contrastColorTheme = ContrastColorGenerator.generate(
             currentCoverArtColor,
           );

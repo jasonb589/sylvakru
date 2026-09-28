@@ -19,6 +19,13 @@ import 'package:sylvakru/base/utils/path.dart';
 final _httpClient = http.Client();
 List<MyPicture> globalPictureList = [];
 
+/// Bumped when a picture's bytes have landed.
+///
+/// The page colours are derived from the background picture, and that colour
+/// cannot be computed before the file is there. Without this the theme kept the
+/// grey it had painted while the cover was still loading.
+final pictureLoadedNotifier = ValueNotifier(0);
+
 class MyPicture {
   String id;
   bool isLoaded = false;
@@ -33,6 +40,15 @@ class MyPicture {
   Color? lowerLuminance;
 
   final changeNotifier = ValueNotifier(0);
+
+  /// How many times the bytes have been asked for. A fetch that came back
+  /// empty is worth another try - the server may simply have been busy - but
+  /// not forever.
+  int loadAttempts = 0;
+
+  /// Attempts after which a picture that keeps coming back empty is taken as
+  /// having nothing to show.
+  static const int maxLoadAttempts = 3;
 
   MyPicture(this.id, {String? md5Hash}) {
     if (id.isEmpty) {
@@ -72,6 +88,7 @@ class MyPicture {
     isExist = false;
     color = null;
     lowerLuminance = null;
+    loadAttempts = 0;
     pictureLoadScheduler.resetPicture(this);
     loadPictureSafe(this);
   }
@@ -81,6 +98,7 @@ class MyPicture {
     isExist = false;
     color = null;
     lowerLuminance = null;
+    loadAttempts = 0;
     pictureLoadScheduler.resetPicture(this);
   }
 }
@@ -109,47 +127,70 @@ Future<Uint8List?> downloadBytes(String url) async {
   }
   return null;
 }
-Future<void> _loadPicture(MyPicture picture) async {
-  try {
-    Uint8List? bytes;
 
-    switch (sourceType) {
-      case _ when picture.imageUrl != null:
-        // an absolute URL from the server's metadata provider, fetched with the
-        // same HTTP client the stream sources use
-        bytes = await downloadBytes(picture.imageUrl!);
-        break;
-      case .local:
-        bytes = await readPictureAsync(picture.id);
-        break;
-      case .webdav:
-        final tmpPath = await covertToRedirectPathIfNeed(picture.id);
-        if (tmpPath == null) {
-          bytes = await readPictureAsync(
-            picture.id,
-            headers: webdavClient?.headers,
-          );
-        } else {
-          bytes = await readPictureAsync(tmpPath);
-        }
-        break;
-      default:
-        bytes = await streamClient?.getPictureBytes(picture.id);
-        break;
-    }
+/// Where a picture's bytes come from.
+///
+/// The switch over the source types used to sit inside [_loadPicture]; it is a
+/// seam now because the rules around it - an empty answer is not an answer,
+/// attempts are capped, a colour is never remembered as grey - are what has to
+/// be checkable, and none of them need a server to be tested.
+Future<Uint8List?> Function(MyPicture picture) pictureBytesLoader =
+    _fetchPictureBytes;
+
+Future<Uint8List?> _fetchPictureBytes(MyPicture picture) async {
+  switch (sourceType) {
+    case _ when picture.imageUrl != null:
+      // an absolute URL from the server's metadata provider, fetched with the
+      // same HTTP client the stream sources use
+      return await downloadBytes(picture.imageUrl!);
+    case .local:
+      return await readPictureAsync(picture.id);
+    case .webdav:
+      final tmpPath = await covertToRedirectPathIfNeed(picture.id);
+      if (tmpPath == null) {
+        return await readPictureAsync(
+          picture.id,
+          headers: webdavClient?.headers,
+        );
+      }
+      return await readPictureAsync(tmpPath);
+    default:
+      return await streamClient?.getPictureBytes(picture.id);
+  }
+}
+
+Future<void> _loadPicture(MyPicture picture) async {
+  picture.loadAttempts++;
+  try {
+    final bytes = await pictureBytesLoader(picture);
 
     if (bytes != null) {
-      File pictureFile = File(picture.path);
+      final pictureFile = File(picture.path);
       if (!await pictureFile.exists()) {
         await pictureFile.create(recursive: true);
       }
       await pictureFile.writeAsBytes(bytes);
       picture.isExist = true;
+      picture.isLoaded = true;
+      // Pages take their colours from this picture: say that it has arrived so
+      // the one waiting on it can stop showing the colour of nothing.
+      pictureLoadedNotifier.value++;
+      return;
     }
   } catch (e) {
     logger.output(e.toString());
   }
-  picture.isLoaded = true;
+
+  // Nothing came back. That is not "this song has no artwork" but "this try did
+  // not work": leaving the picture unloaded lets the next page ask again, and
+  // the attempts are capped so a song that really has nothing does not become
+  // one request per rebuild.
+  picture.isLoaded = picture.loadAttempts >= MyPicture.maxLoadAttempts;
+  if (!picture.isLoaded) {
+    // Another go has to be a fresh request: the scheduler remembers this id as
+    // loaded and would otherwise hand back the wait that has already finished.
+    pictureLoadScheduler.resetPicture(picture);
+  }
 }
 
 Future<Color> computeColor(MyPicture? picture) async {
@@ -162,23 +203,27 @@ Future<Color> computeColor(MyPicture? picture) async {
   }
 
   if (picture?.isExist == true) {
-    File pictureFile = File(picture!.path);
+    final pictureFile = File(picture!.path);
     if (await pictureFile.exists()) {
       bytes = await pictureFile.readAsBytes();
     }
   }
 
-  if (bytes == null) {
-    picture?.color = Colors.grey;
+  final colour = bytes == null ? null : await _calculateAverageColor(bytes);
+  if (colour == null || picture == null) {
+    // Grey is what the pages fall back to while there is nothing, but it must
+    // not be remembered as this picture's colour: a cover that has not arrived
+    // yet - or a folder that has just been re-read - would then be grey for
+    // the rest of the session, which is exactly what happened after clearing
+    // the cache. Leaving the colour unset means the next call asks again.
     return Colors.grey;
   }
 
-  final color = await _calculateAverageColor(bytes);
-  picture!.color = color;
+  picture.color = colour;
 
-  double r = color.r;
-  double g = color.g;
-  double b = color.b;
+  double r = colour.r;
+  double g = colour.g;
+  double b = colour.b;
   final luminance = 0.299 * r + 0.587 * g + 0.114 * b;
 
   const maxLuminance = 200 / 255.0;
@@ -187,17 +232,22 @@ Future<Color> computeColor(MyPicture? picture) async {
     final factor = maxLuminance / luminance;
 
     picture.lowerLuminance = Color.from(
-      alpha: color.a,
+      alpha: colour.a,
       red: r * factor,
       green: g * factor,
       blue: b * factor,
     );
   }
 
-  return color;
+  return colour;
 }
 
-Future<Color> _calculateAverageColor(Uint8List bytes) async {
+/// The average colour of [bytes], or null when it cannot be read.
+///
+/// Null rather than grey: a cover that cannot be decoded today — a file still
+/// being written, a cache that has just been cleared — may be readable a
+/// moment later, and a remembered grey is what made that permanent.
+Future<Color?> _calculateAverageColor(Uint8List bytes) async {
   final state = WidgetsBinding.instance.lifecycleState;
 
   if (Platform.isIOS && state != AppLifecycleState.resumed) {
@@ -220,13 +270,13 @@ Future<Color> _calculateAverageColor(Uint8List bytes) async {
     image.dispose();
 
     if (byteData == null) {
-      return Colors.grey;
+      return null;
     }
 
     buffer = byteData.buffer.asUint8List();
   } catch (e) {
     logger.output(e.toString());
-    return Colors.grey;
+    return null;
   } finally {
     codec?.dispose();
   }
@@ -256,7 +306,7 @@ Future<Color> _calculateAverageColor(Uint8List bytes) async {
   }
 
   if (count == 0) {
-    return Colors.grey;
+    return null;
   }
   return Color.fromARGB(
     255,
@@ -266,11 +316,11 @@ Future<Color> _calculateAverageColor(Uint8List bytes) async {
   );
 }
 
-Color _calculateWithImagePackage(Uint8List bytes) {
+Color? _calculateWithImagePackage(Uint8List bytes) {
   final image = img.decodeImage(bytes);
 
   if (image == null) {
-    return Colors.grey;
+    return null;
   }
 
   final thumb = img.copyResize(
@@ -300,7 +350,7 @@ Color _calculateWithImagePackage(Uint8List bytes) {
   }
 
   if (count == 0) {
-    return Colors.grey;
+    return null;
   }
 
   return Color.fromARGB(

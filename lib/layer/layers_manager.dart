@@ -67,6 +67,19 @@ class LayersManager {
   final backgroundChangeNotifier = ValueNotifier(0);
   final switchNotifier = ValueNotifier(0);
 
+  LayersManager() {
+    // A page colour cannot be computed before the cover file is there, and the
+    // picture may land after the page was painted. Then the page asks again -
+    // but only for the picture it is actually painted from, so a grid loading
+    // forty covers does not recompute the theme forty times.
+    pictureLoadedNotifier.addListener(() {
+      final picture = backgroundPicture;
+      if (picture != null && picture.isExist && picture.color == null) {
+        updateBackground();
+      }
+    });
+  }
+
   Widget createPage(Widget layer) {
     final layerInfo = layerInfoMap.putIfAbsent(
       layer,

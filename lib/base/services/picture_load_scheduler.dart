@@ -24,7 +24,7 @@ class PictureLoadScheduler {
       _needRun.add(widgetId);
     }
     _queue.add(
-      _Task(widgetId, () async {
+      _Task(id, widgetId, () async {
         if (!_scheduled.contains(id)) {
           _scheduled.add(id);
 
@@ -47,7 +47,27 @@ class PictureLoadScheduler {
       if (task.widgetId == null || _needRun.contains(task.widgetId!)) {
         _running++;
         task.run();
+      } else {
+        // The widget that asked for this is gone, so the fetch would be for
+        // nobody. Whoever joined the same future still has to be let go.
+        _releaseIfNothingQueued(task.id);
       }
+    }
+  }
+
+  /// Completes the shared future for [id] once no other task still wants it.
+  ///
+  /// Dropping a cancelled task used to leave its completer pending for good,
+  /// and the map kept handing that dead future to every later caller: a page
+  /// waiting for a cover colour would wait forever.
+  void _releaseIfNothingQueued(String id) {
+    if (_queue.any((task) => task.id == id)) {
+      return;
+    }
+    _scheduled.remove(id);
+    final completer = _pictureCompleterMap.remove(id);
+    if (completer != null && !completer.isCompleted) {
+      completer.complete();
     }
   }
 
@@ -70,8 +90,9 @@ class PictureLoadScheduler {
 }
 
 class _Task {
+  final String id;
   final int? widgetId;
   final Future<void> Function() run;
 
-  _Task(this.widgetId, this.run);
+  _Task(this.id, this.widgetId, this.run);
 }
