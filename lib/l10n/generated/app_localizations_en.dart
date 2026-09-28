@@ -1055,6 +1055,39 @@ class AppLocalizationsEn extends AppLocalizations {
   String get unknownGenre => 'Unknown Genre';
 
   @override
+  String get sortBy => 'Sort';
+
+  @override
+  String get groupBy => 'Group';
+
+  @override
+  String get selectSongs => 'Select';
+
+  @override
+  String get sortTitle => 'Title';
+
+  @override
+  String get sortArtist => 'Artist';
+
+  @override
+  String get sortAlbum => 'Album';
+
+  @override
+  String get sortRecentlyPlayed => 'Recently played';
+
+  @override
+  String get sortMostPlayed => 'Most played';
+
+  @override
+  String get groupNone => 'No grouping';
+
+  @override
+  String get groupAlbum => 'By album';
+
+  @override
+  String get groupArtist => 'By artist';
+
+  @override
   String get downloadCancel => 'Cancel download';
 
   @override

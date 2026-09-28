@@ -1030,6 +1030,39 @@ class AppLocalizationsZh extends AppLocalizations {
   String get unknownGenre => '未知流派';
 
   @override
+  String get sortBy => '排序';
+
+  @override
+  String get groupBy => '分组';
+
+  @override
+  String get selectSongs => '选择';
+
+  @override
+  String get sortTitle => '标题';
+
+  @override
+  String get sortArtist => '艺术家';
+
+  @override
+  String get sortAlbum => '专辑';
+
+  @override
+  String get sortRecentlyPlayed => '最近播放';
+
+  @override
+  String get sortMostPlayed => '最常播放';
+
+  @override
+  String get groupNone => '不分组';
+
+  @override
+  String get groupAlbum => '按专辑';
+
+  @override
+  String get groupArtist => '按艺术家';
+
+  @override
   String get downloadCancel => '取消下载';
 
   @override

@@ -18,6 +18,9 @@ import 'package:sylvakru/base/widgets/my_navigator.dart';
 import 'package:sylvakru/l10n/generated/app_localizations.dart';
 import 'package:sylvakru/landscape_view/title_bar.dart';
 import 'package:sylvakru/layer/layers_manager.dart';
+import 'package:sylvakru/base/utils/download_list_order.dart';
+import 'package:sylvakru/base/utils/zoom_page_route.dart';
+import 'package:sylvakru/base/widgets/selectable_song_list_page.dart';
 import 'package:sylvakru/base/services/download_queue.dart';
 
 final GlobalKey<NavigatorState> downloadKey = GlobalKey();
@@ -34,6 +37,12 @@ class DownloadLayer extends StatefulWidget {
 
 class _DownloadLayerState extends State<DownloadLayer> {
   final scrollController = ScrollController();
+
+  /// How the list is ordered and whether it is split into sections. The centre
+  /// is a view of the same downloads rather than a setting, so these live with
+  /// the page instead of in setting.json.
+  final sortNotifier = ValueNotifier(DownloadSort.title);
+  final groupNotifier = ValueNotifier(DownloadGroup.none);
 
   @override
   void initState() {
@@ -148,25 +157,10 @@ class _DownloadLayerState extends State<DownloadLayer> {
                         Tooltip(
                           message: l10n.offlineMusicStorage,
                           child: TextButton.icon(
-                            onPressed: () =>
-                                _showOfflineLimitPicker(context, l10n),
+                            onPressed: () => _showListMenu(context, l10n),
                             icon: const Icon(Icons.tune, size: 16),
                             label: Text(storageLabel(l10n)),
                           ),
-                        ),
-                        ValueListenableBuilder(
-                          valueListenable: otherDownloadSizeNotifier,
-                          builder: (context, other, _) {
-                            if (other <= 0) {
-                              return const SizedBox.shrink();
-                            }
-                            return TextButton(
-                              onPressed: () => _showOtherFiles(context, l10n),
-                              child: Text(
-                                '${l10n.otherFiles} ${other.toStringAsFixed(1)}MB',
-                              ),
-                            );
-                          },
                         ),
                       ],
                     ),
@@ -201,21 +195,36 @@ class _DownloadLayerState extends State<DownloadLayer> {
                 ),
               )
             else
-              SliverList.builder(
-                itemCount: downloading.length + songs.length,
-                itemBuilder: (context, index) {
-                  if (index < downloading.length) {
-                    return downloadingRow(
-                      context,
-                      downloading[index],
-                      horizontalPadding,
-                    );
-                  }
-                  return offlineRow(
-                    context,
-                    songs[index - downloading.length],
+              ListenableBuilder(
+                listenable: Listenable.merge([sortNotifier, groupNotifier]),
+                builder: (context, _) {
+                  final entries = buildDownloadList(
                     songs,
-                    horizontalPadding,
+                    sort: sortNotifier.value,
+                    group: groupNotifier.value,
+                  );
+                  return SliverList.builder(
+                    itemCount: downloading.length + entries.length,
+                    itemBuilder: (context, index) {
+                      if (index < downloading.length) {
+                        return downloadingRow(
+                          context,
+                          downloading[index],
+                          horizontalPadding,
+                        );
+                      }
+                      final entry = entries[index - downloading.length];
+                      final header = entry.title;
+                      if (header != null) {
+                        return sectionHeader(context, header);
+                      }
+                      return offlineRow(
+                        context,
+                        entry.song!,
+                        songs,
+                        horizontalPadding,
+                      );
+                    },
                   );
                 },
               ),
@@ -289,6 +298,162 @@ class _DownloadLayerState extends State<DownloadLayer> {
               );
             },
           ),
+        ),
+      ),
+    );
+  }
+
+  /// The menu behind the storage button: the limit, the other files, and how
+  /// the list is ordered.
+  void _showListMenu(BuildContext context, AppLocalizations l10n) {
+    final box = context.findRenderObject() as RenderBox?;
+    final position = box != null && box.hasSize
+        ? box.localToGlobal(box.size.bottomLeft(Offset.zero))
+        : Offset.zero;
+
+    showContextMenu(context, [
+      MenuItem(
+        text: l10n.offlineMusicLimit,
+        callback: () => _showOfflineLimitPicker(context, l10n),
+      ),
+      MenuItem(
+        text: otherDownloadSizeNotifier.value > 0
+            ? '${l10n.otherFiles} ${otherDownloadSizeNotifier.value.toStringAsFixed(1)}MB'
+            : l10n.otherFiles,
+        callback: () => _showOtherFiles(context, l10n),
+      ),
+      MenuItem(
+        text: '${l10n.sortBy} · ${_sortLabel(l10n, sortNotifier.value)}',
+        callback: () => _pickSort(context, l10n),
+      ),
+      MenuItem(
+        text: '${l10n.groupBy} · ${_groupLabel(l10n, groupNotifier.value)}',
+        callback: () => _pickGroup(context, l10n),
+      ),
+      MenuItem(text: l10n.selectSongs, callback: () => _openSelection(context)),
+    ], position);
+  }
+
+  String _sortLabel(AppLocalizations l10n, DownloadSort sort) {
+    switch (sort) {
+      case DownloadSort.title:
+        return l10n.sortTitle;
+      case DownloadSort.artist:
+        return l10n.sortArtist;
+      case DownloadSort.album:
+        return l10n.sortAlbum;
+      case DownloadSort.recentlyPlayed:
+        return l10n.sortRecentlyPlayed;
+      case DownloadSort.mostPlayed:
+        return l10n.sortMostPlayed;
+    }
+  }
+
+  String _groupLabel(AppLocalizations l10n, DownloadGroup group) {
+    switch (group) {
+      case DownloadGroup.none:
+        return l10n.groupNone;
+      case DownloadGroup.album:
+        return l10n.groupAlbum;
+      case DownloadGroup.artist:
+        return l10n.groupArtist;
+    }
+  }
+
+  Future<void> _pickSort(BuildContext context, AppLocalizations l10n) async {
+    final chosen = await _pickFrom<DownloadSort>(context, l10n.sortBy, [
+      for (final option in DownloadSort.values)
+        (option, _sortLabel(l10n, option)),
+    ], sortNotifier.value);
+    if (chosen != null) {
+      sortNotifier.value = chosen;
+    }
+  }
+
+  Future<void> _pickGroup(BuildContext context, AppLocalizations l10n) async {
+    final chosen = await _pickFrom<DownloadGroup>(context, l10n.groupBy, [
+      for (final option in DownloadGroup.values)
+        (option, _groupLabel(l10n, option)),
+    ], groupNotifier.value);
+    if (chosen != null) {
+      groupNotifier.value = chosen;
+    }
+  }
+
+  /// One labelled chooser, the same shape the settings use for a short list.
+  Future<T?> _pickFrom<T>(
+    BuildContext context,
+    String title,
+    List<(T, String)> options,
+    T current,
+  ) {
+    return showAnimationDialog<T>(
+      context: context,
+      child: SizedBox(
+        width: 300,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 14, bottom: 4),
+              child: Text(title, style: AppText.sheetTitle),
+            ),
+            for (final (value, label) in options)
+              ListTile(
+                leading: Icon(
+                  value == current
+                      ? Icons.check_circle_rounded
+                      : Icons.circle_outlined,
+                ),
+                title: Text(label),
+                onTap: () => Navigator.of(context).pop(value),
+              ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// A section heading, for when the list is grouped.
+  Widget sectionHeader(BuildContext context, String title) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 4),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.bold,
+          color: iconColor.value,
+        ),
+      ),
+    );
+  }
+
+  /// Selects several downloads and removes them in one go. The file that is
+  /// playing stays: it cannot be deleted while the player holds it open.
+  Future<void> _openSelection(BuildContext context) async {
+    final songs = library.offlineMusicSongs;
+    if (songs.isEmpty) {
+      return;
+    }
+    await Navigator.of(context).push(
+      ZoomPageRoute(
+        builder: (_) => SelectableSongListPage(
+          songList: songs,
+          reorderable: false,
+          isSelectedNotifierMap: {
+            for (final song in songs) song: ValueNotifier(false),
+          },
+          onDelete: (selected) async {
+            for (final song in selected) {
+              if (currentSongNotifier.value?.id == song.id &&
+                  isPlayingNotifier.value) {
+                continue;
+              }
+              await library.removeOfflineCopy(song);
+            }
+          },
         ),
       ),
     );

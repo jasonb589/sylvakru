@@ -2072,6 +2072,72 @@ abstract class AppLocalizations {
   /// **'Unknown Genre'**
   String get unknownGenre;
 
+  /// No description provided for @sortBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get sortBy;
+
+  /// No description provided for @groupBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Group'**
+  String get groupBy;
+
+  /// No description provided for @selectSongs.
+  ///
+  /// In en, this message translates to:
+  /// **'Select'**
+  String get selectSongs;
+
+  /// No description provided for @sortTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get sortTitle;
+
+  /// No description provided for @sortArtist.
+  ///
+  /// In en, this message translates to:
+  /// **'Artist'**
+  String get sortArtist;
+
+  /// No description provided for @sortAlbum.
+  ///
+  /// In en, this message translates to:
+  /// **'Album'**
+  String get sortAlbum;
+
+  /// No description provided for @sortRecentlyPlayed.
+  ///
+  /// In en, this message translates to:
+  /// **'Recently played'**
+  String get sortRecentlyPlayed;
+
+  /// No description provided for @sortMostPlayed.
+  ///
+  /// In en, this message translates to:
+  /// **'Most played'**
+  String get sortMostPlayed;
+
+  /// No description provided for @groupNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No grouping'**
+  String get groupNone;
+
+  /// No description provided for @groupAlbum.
+  ///
+  /// In en, this message translates to:
+  /// **'By album'**
+  String get groupAlbum;
+
+  /// No description provided for @groupArtist.
+  ///
+  /// In en, this message translates to:
+  /// **'By artist'**
+  String get groupArtist;
+
   /// No description provided for @downloadCancel.
   ///
   /// In en, this message translates to:

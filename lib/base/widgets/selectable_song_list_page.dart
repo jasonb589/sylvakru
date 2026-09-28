@@ -14,6 +14,10 @@ import 'package:sylvakru/base/data/playlist.dart';
 class SelectableSongListPage extends StatelessWidget {
   final List<MyAudioMetadata> songList;
   final Playlist? playlist;
+
+  /// Removes the selected songs when the page was opened from somewhere that
+  /// owns the files rather than a playlist — the download centre, for instance.
+  final Future<void> Function(List<MyAudioMetadata> songs)? onDelete;
   final Folder? folder;
   final bool isFrequently;
   final bool isRecently;
@@ -29,6 +33,7 @@ class SelectableSongListPage extends StatelessWidget {
     super.key,
     required this.songList,
     this.playlist,
+    this.onDelete,
     this.folder,
     this.isFrequently = false,
     this.isRecently = false,
@@ -324,7 +329,7 @@ class SelectableSongListPage extends StatelessWidget {
                 ),
               ),
 
-              if (playlist != null)
+              if (playlist != null || onDelete != null)
                 Expanded(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -334,7 +339,12 @@ class SelectableSongListPage extends StatelessWidget {
                           if (valid) {
                             tryVibrate();
                             if (await showConfirmDialog(context, l10n.delete)) {
-                              playlist!.remove(getSelectedSongList());
+                              final selected = getSelectedSongList();
+                              if (playlist != null) {
+                                playlist!.remove(selected);
+                              } else {
+                                await onDelete!(selected);
+                              }
                             }
                           }
                         },
