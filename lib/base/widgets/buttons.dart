@@ -379,13 +379,7 @@ Widget downloadButton(double size) {
                 return;
               }
 
-              final downloaded = await library.downloadForOffline(
-                currentSong,
-                keepSongIds: {...playQueue.map((item) => item.id)},
-              );
-              if (!downloaded && context.mounted) {
-                showCenterMessage(l10n.downloadFailed);
-              }
+              downloadSongs([currentSong], l10n);
             },
             icon: exists
                 ? Icon(Icons.download_done_outlined, size: size)

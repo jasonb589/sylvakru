@@ -810,6 +810,17 @@ class AppLocalizationsZh extends AppLocalizations {
   String get downloadInUse => '这首歌正在播放且没有下一首可切换，请先切歌再移除';
 
   @override
+  String get downloadAll => '下载全部';
+
+  @override
+  String queuedForDownload(int count) {
+    return '已加入下载队列（$count 首）';
+  }
+
+  @override
+  String get downloadAllDone => '这些都已在下载中心';
+
+  @override
   String get noOfflineMusicHint => '在歌曲菜单里选择「下载」，之后无网络也能播放';
 
   @override

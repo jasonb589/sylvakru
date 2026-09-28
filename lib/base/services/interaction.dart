@@ -18,6 +18,7 @@ import 'package:sylvakru/base/services/color_manager.dart';
 import 'package:sylvakru/base/services/picture_service.dart';
 import 'package:sylvakru/base/utils/metadata_utils.dart';
 import 'package:sylvakru/base/data/library.dart';
+import 'package:sylvakru/base/services/download_queue.dart';
 import 'package:sylvakru/base/utils/zoom_page_route.dart';
 import 'package:sylvakru/base/widgets/cover_art_widget.dart';
 import 'package:sylvakru/base/widgets/custom_text_field.dart';
@@ -997,15 +998,7 @@ void showSongOptions({
                               showCenterMessage(l10n.downloadInUse);
                             }
                           } else {
-                            final downloaded = await library.downloadForOffline(
-                              song,
-                              keepSongIds: {
-                                ...playQueue.map((item) => item.id),
-                              },
-                            );
-                            if (!downloaded && context.mounted) {
-                              showCenterMessage(l10n.downloadFailed);
-                            }
+                            downloadSongs([song], l10n);
                           }
                         },
                       );
@@ -1197,6 +1190,28 @@ void showPlayQueueItemOptions(
   );
 }
 
+/// Queues [songs] for download and reports what actually changed.
+///
+/// The queue already skips songs that are downloaded, waiting or running, so a
+/// whole album can be handed over: the message counts the songs that were new
+/// instead of the size of the album.
+void downloadSongs(List<MyAudioMetadata> songs, AppLocalizations l10n) {
+  final busy = {
+    ...downloadQueueNotifier.value,
+    ...downloadRunningNotifier.value,
+  };
+  final pending = songs
+      .where((song) => !song.downloadExist && !busy.contains(song.id))
+      .map((song) => song.id)
+      .toSet();
+  downloadQueue.add(songs);
+  showCenterMessage(
+    pending.isEmpty
+        ? l10n.downloadAllDone
+        : l10n.queuedForDownload(pending.length),
+  );
+}
+
 void showSongListOptions(BuildContext context, List<MyAudioMetadata> songList) {
   final l10n = AppLocalizations.of(context);
   showAnimationDialog(
@@ -1254,6 +1269,15 @@ void showSongListOptions(BuildContext context, List<MyAudioMetadata> songList) {
                 },
               ),
 
+              if (sourceType != .local && songList.isNotEmpty)
+                ListTile(
+                  leading: const Icon(Icons.download_rounded),
+                  title: Text(l10n.downloadAll),
+                  onTap: () {
+                    Navigator.pop(context);
+                    downloadSongs(songList, l10n);
+                  },
+                ),
               SizedBox(height: 10),
             ],
           );

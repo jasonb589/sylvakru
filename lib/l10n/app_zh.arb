@@ -265,6 +265,16 @@
   "downloading": "正在下载…",
   "downloadFailed": "下载失败，请检查网络和存储空间",
   "downloadInUse": "请先暂停播放，再移除这首下载",
+  "downloadAll": "下载全部",
+  "queuedForDownload": "已加入下载队列（{count} 首）",
+  "@queuedForDownload": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "downloadAllDone": "这些都已在下载中心",
   "noOfflineMusicHint": "在歌曲菜单里选择「下载」，之后无网络也能播放",
   "browseSongs": "去浏览音乐",
   "playQueueEmptyHint": "在歌曲菜单里选择「添加到播放列表」，歌曲会出现在这里",

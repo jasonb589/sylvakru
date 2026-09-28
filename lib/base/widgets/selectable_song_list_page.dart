@@ -298,6 +298,32 @@ class SelectableSongListPage extends StatelessWidget {
                   ),
                 ),
               ),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      onPressed: () {
+                        if (valid) {
+                          tryVibrate();
+                          downloadSongs(getSelectedSongList(), l10n);
+                        }
+                      },
+                      icon: Icon(Icons.download_rounded),
+                      color: color,
+                    ),
+
+                    Transform.translate(
+                      offset: Offset(0, -10),
+                      child: Text(
+                        l10n.downloadForOffline,
+                        style: TextStyle(color: color, fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
               if (playlist != null)
                 Expanded(
                   child: Column(

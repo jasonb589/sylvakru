@@ -36,6 +36,13 @@ final ValueNotifier<bool> downloadPausedNotifier = ValueNotifier(false);
 /// knows about the others — how many run at once, which one is next, and how a
 /// cancel or a retry reaches a transfer that is already in flight.
 class DownloadQueue {
+  /// Lets a caller hand in the transfer itself. Production leaves it null and
+  /// the library picks the right client for the source; a test can then watch
+  /// the queue without a server.
+  DownloadQueue({this.downloader});
+
+  final SongDownloader? downloader;
+
   final Map<String, DownloadCancellation> _cancellations = {};
   final Map<String, int> _attempts = {};
   bool _pumping = false;
@@ -127,6 +134,7 @@ class DownloadQueue {
     try {
       final success = await library.downloadForOffline(
         song,
+        downloader: downloader,
         onProgress: (received, total) =>
             _setProgress(song.id, total > 0 ? received / total : -1),
         cancellation: cancellation,

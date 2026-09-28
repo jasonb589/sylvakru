@@ -944,16 +944,25 @@ extension _SongListPanel on _SongListState {
                 );
                 if (!removed) showCenterMessage(l10n.downloadInUse);
               } else {
-                final downloaded = await library.downloadForOffline(
-                  song,
-                  keepSongIds: playQueue.map((item) => item.id).toSet(),
-                );
-                if (!downloaded) showCenterMessage(l10n.downloadFailed);
+                downloadSongs([song], l10n);
               }
             },
           ),
         );
       }
+      if (sourceType != .local && selectedSongList.length > 1) {
+        final pending = selectedSongList.where((item) => !item.downloadExist);
+        if (pending.isNotEmpty) {
+          menuItems.add(
+            MenuItem(
+              iconData: Icons.download_rounded,
+              text: l10n.downloadAll,
+              callback: () => downloadSongs(selectedSongList, l10n),
+            ),
+          );
+        }
+      }
+
       if (sourceType == .local && artist == null && album == null) {
         menuItems.add(
           MenuItem(

@@ -1652,6 +1652,24 @@ abstract class AppLocalizations {
   /// **'This one is playing with nothing to move on to; switch songs first'**
   String get downloadInUse;
 
+  /// No description provided for @downloadAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Download All'**
+  String get downloadAll;
+
+  /// No description provided for @queuedForDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} added to the download queue'**
+  String queuedForDownload(int count);
+
+  /// No description provided for @downloadAllDone.
+  ///
+  /// In en, this message translates to:
+  /// **'These are already downloaded'**
+  String get downloadAllDone;
+
   /// No description provided for @noOfflineMusicHint.
   ///
   /// In en, this message translates to:

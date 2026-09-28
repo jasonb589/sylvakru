@@ -826,6 +826,17 @@ class AppLocalizationsEn extends AppLocalizations {
       'This one is playing with nothing to move on to; switch songs first';
 
   @override
+  String get downloadAll => 'Download All';
+
+  @override
+  String queuedForDownload(int count) {
+    return '$count added to the download queue';
+  }
+
+  @override
+  String get downloadAllDone => 'These are already downloaded';
+
+  @override
   String get noOfflineMusicHint =>
       'Pick Download in a song menu and it plays here even without a network';
 
