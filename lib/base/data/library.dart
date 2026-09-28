@@ -15,6 +15,7 @@ import 'package:sylvakru/base/services/stream_client.dart';
 import 'package:sylvakru/base/services/webdav_client.dart';
 import 'package:sylvakru/base/data/setting.dart';
 import 'package:sylvakru/base/utils/path.dart';
+import 'package:sylvakru/base/utils/download_tags.dart';
 import 'package:sylvakru/base/data/folder.dart';
 import 'package:sylvakru/layer/layers_manager.dart';
 import 'package:sylvakru/base/my_audio_metadata.dart';
@@ -561,6 +562,12 @@ class Library {
     song.updateNotifier.value++;
     if (!song.downloadExist) {
       return false;
+    }
+
+    if (writeDownloadTagsNotifier.value) {
+      // The file is the listener's now, so it should say what it is even in a
+      // player that never heard of this app.
+      tagDownloadedFile(song, path);
     }
 
     await _accumulateDownloads();

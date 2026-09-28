@@ -1838,6 +1838,18 @@ abstract class AppLocalizations {
   /// **'Renamed {count} files'**
   String downloadsRenamed(int count);
 
+  /// No description provided for @downloadTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Tag Downloads'**
+  String get downloadTags;
+
+  /// No description provided for @downloadTagsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Write the title, artist and album into the downloaded file so other players show them'**
+  String get downloadTagsDescription;
+
   /// No description provided for @downloadCancel.
   ///
   /// In en, this message translates to:

@@ -36,6 +36,10 @@ final downloadNamingNotifier = ValueNotifier<DownloadNaming>(
   DownloadNaming.hash,
 );
 
+/// Whether a finished download gets the library's tags written onto it, so the
+/// file still makes sense in a player that never heard of this app.
+final writeDownloadTagsNotifier = ValueNotifier<bool>(true);
+
 /// Set once the pass that moves playback cache out of the downloads folder has
 /// run, so a file the listener never downloaded cannot be mistaken for theirs.
 bool downloadSplitRepaired = false;
@@ -152,6 +156,9 @@ class Setting {
       orElse: () => DownloadNaming.hash,
     );
 
+    writeDownloadTagsNotifier.value =
+        json['writeDownloadTags'] as bool? ?? writeDownloadTagsNotifier.value;
+
     downloadSplitRepaired =
         json['downloadSplitRepaired'] as bool? ?? downloadSplitRepaired;
   }
@@ -190,6 +197,7 @@ class Setting {
         'downloadDir': downloadRootDir,
         'downloadSplitRepaired': downloadSplitRepaired,
         'downloadNaming': downloadNamingNotifier.value.name,
+        'writeDownloadTags': writeDownloadTagsNotifier.value,
       }),
     );
   }

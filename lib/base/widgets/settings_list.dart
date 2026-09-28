@@ -146,6 +146,9 @@ class _SettingsListState extends State<SettingsList> {
         sliverBox(
           paddingIfNeed(isLandscape, downloadNamingListTile(context, l10n)),
         ),
+        sliverBox(
+          paddingIfNeed(isLandscape, downloadTaggingListTile(context, l10n)),
+        ),
 
         // Appearance: how the client looks and speaks.
         sliverBox(groupHeader(l10n.appearance, isLandscape)),
@@ -1411,6 +1414,33 @@ Future<DownloadNaming?> showDownloadNamingDialog(
             ),
           const SizedBox(height: 10),
         ],
+      ),
+    ),
+  );
+}
+
+/// Settings row for tagging finished downloads.
+Widget downloadTaggingListTile(
+  BuildContext context,
+  AppLocalizations l10n, {
+
+  /// Matches the icon size the surrounding settings rows use.
+  double iconSize = 30,
+}) {
+  return ListTile(
+    leading: ImageIcon(downloadImage, size: iconSize),
+    title: Text(l10n.downloadTags),
+    subtitle: Text(
+      l10n.downloadTagsDescription,
+      overflow: TextOverflow.ellipsis,
+    ),
+    trailing: SizedBox(
+      width: 50,
+      child: MySwitch(
+        valueNotifier: writeDownloadTagsNotifier,
+        onToggleCallBack: () {
+          setting.save();
+        },
       ),
     ),
   );
