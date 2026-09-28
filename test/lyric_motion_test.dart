@@ -214,6 +214,36 @@ void main() {
     });
   });
 
+  group('the list catches up with the lines', () {
+    test('a list one item ahead is not dragged back', () {
+      // The last half second of a line: the scroll for the next line is running,
+      // so the list is exactly one item ahead of the current line on purpose.
+      // Treating that as "behind" sent it back to the current line, and the head
+      // start sent it forward again - once per frame, which is the shake that
+      // showed up just before every line change.
+      expect(
+        lyricListNeedsCatchUp(lineChanged: false, scrolledTo: 8, target: 7),
+        isFalse,
+      );
+    });
+
+    test('a line the list is not on is caught up with', () {
+      // A seek, a stalled frame, or a return from the listener's own scrolling:
+      // the line changed and the list is somewhere else.
+      expect(
+        lyricListNeedsCatchUp(lineChanged: true, scrolledTo: 2, target: 9),
+        isTrue,
+      );
+    });
+
+    test('a line change the head start already covered is left alone', () {
+      expect(
+        lyricListNeedsCatchUp(lineChanged: true, scrolledTo: 9, target: 9),
+        isFalse,
+      );
+    });
+  });
+
   group('the line switch', () {
     test('only the lines next to the one being sung take part', () {
       // Everything past the third step looks the same on both sides of the

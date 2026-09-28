@@ -131,6 +131,22 @@ bool lyricLineNeedsSwitchAnimation(int oldDistance, int newDistance) {
   return far <= AppLyrics.switchAnimationMaxDistance;
 }
 
+/// Whether the list has to be sent to the current line right now.
+///
+/// Only a line the list is not on makes it wrong. While the scroll for the next
+/// line is under way - the head start that gets the next line into place before
+/// it is sung - the list is deliberately *ahead* of the current line. Asking
+/// "is it not where the current line is?" then sent it back to the current line,
+/// and the very next call sent it forward again, once per frame for the last
+/// half second of every line: the list vibrated between two anchors.
+bool lyricListNeedsCatchUp({
+  required bool lineChanged,
+  required int scrolledTo,
+  required int target,
+}) {
+  return lineChanged && scrolledTo != target;
+}
+
 /// The distance a line is at [progress] through the switch, so a line taking
 /// over from another crosses the steps instead of jumping between them.
 double lyricSwitchDistance(int oldDistance, int newDistance, double progress) {

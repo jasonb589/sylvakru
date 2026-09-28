@@ -132,9 +132,15 @@ class LyricsListViewState extends State<LyricsListView>
       jump = false;
       _scrolledTo = target;
       _landAt(target);
-    } else if (_scrolledTo != target) {
-      // The list is behind: either there was no head start (a seek, a stalled
-      // frame) or the listener just came back. Land or travel, by distance.
+    } else if (lyricListNeedsCatchUp(
+      lineChanged: current != previous,
+      scrolledTo: _scrolledTo,
+      target: target,
+    )) {
+      // The list is not on this line and the head start did not bring it here:
+      // a seek, a stalled frame, or a return from the listener's own scrolling.
+      // While the next line's scroll is under way the list is one item ahead on
+      // purpose, which is not "behind" and must not be corrected.
       _moveTo(target);
     }
 
