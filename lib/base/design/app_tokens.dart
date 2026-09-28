@@ -184,11 +184,16 @@ abstract final class AppLyrics {
   /// How far the fill may run past the last reported position. The player
   /// reports a few times a second and the ticker smooths between those, but the
   /// wipe must not get ahead of the voice.
-  static const int interpolationLeadMs = 100;
+  static const int interpolationLeadMs = 40;
 
   /// A gap between reports larger than this is a seek, not drift: the fill
   /// takes the reported position instead of easing towards it.
   static const int seekSnapMs = 400;
+
+  /// How much the smoothed position may sit behind the player's report before
+  /// it is pulled up to it. A frame of lag is invisible and absorbs the jitter
+  /// of the reports; more than that is the page reading the song late.
+  static const int lagToleranceMs = 16;
 
   /// A tap on a line: a short acknowledgement, not a bounce.
   static const Duration tapPulse = Duration(milliseconds: 240);

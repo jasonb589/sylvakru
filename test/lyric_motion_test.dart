@@ -209,8 +209,8 @@ void main() {
   group('lyricDrawPosition', () {
     test('keeps the smoothed position while it is close to the report', () {
       expect(
-        lyricDrawPosition(reported: ms(1000), smoothed: ms(1050)),
-        ms(1050),
+        lyricDrawPosition(reported: ms(1000), smoothed: ms(1030)),
+        ms(1030),
       );
     });
 
@@ -221,15 +221,35 @@ void main() {
       );
     });
 
+    test('a smoothed value that fell behind is pulled up to the voice', () {
+      // This is what kept the words behind the song: the player reports every
+      // ~50 ms, and a smoothed value left behind stayed behind for good.
+      expect(
+        lyricDrawPosition(reported: ms(1000), smoothed: ms(900)),
+        ms(1000),
+      );
+      expect(
+        lyricDrawPosition(reported: ms(1000), smoothed: ms(700)),
+        ms(1000),
+      );
+    });
+
+    test('a lag of one frame is left alone', () {
+      // It is invisible, and jumping for it would only add jitter.
+      expect(
+        lyricDrawPosition(
+          reported: ms(1000),
+          smoothed: ms(1000 - AppLyrics.lagToleranceMs + 4),
+        ),
+        ms(1000 - AppLyrics.lagToleranceMs + 4),
+      );
+    });
+
     test('a seek is not drift: the reported position wins', () {
       expect(
         lyricDrawPosition(reported: ms(1000), smoothed: ms(90000)),
         ms(1000),
       );
-    });
-
-    test('lagging a little behind is allowed', () {
-      expect(lyricDrawPosition(reported: ms(1000), smoothed: ms(900)), ms(900));
     });
   });
 
@@ -292,6 +312,35 @@ void main() {
         greaterThan(40),
       );
       expect(find.byType(CustomPaint), findsWidgets);
+    });
+
+    testWidgets('draws from the clock the page hands in', (tester) async {
+      // With a clock there is no second clock and no player involved: the page
+      // owns the position, so the highlight and the fill can never disagree.
+      final clock = ValueNotifier<Duration>(ms(1500));
+      addTearDown(clock.dispose);
+      final lyrics = line(1000, 'Bo Peep Bo Peep', [
+        token(1000, 'Bo ', 1400),
+        token(1400, 'Peep ', 2200),
+        token(2200, 'Bo Peep', 3000),
+      ]);
+
+      await tester.pumpWidget(
+        wrap(
+          LyricFillText(
+            line: lyrics,
+            position: Duration.zero,
+            clock: clock,
+            fontSize: 16,
+            expanded: true,
+          ),
+        ),
+      );
+
+      clock.value = ms(2600);
+      await tester.pump();
+
+      expect(tester.getSize(find.byType(LyricFillText)).height, greaterThan(0));
     });
   });
 

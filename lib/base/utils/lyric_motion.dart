@@ -189,19 +189,28 @@ bool lyricScrollDue({
   return position >= nextStart - Duration(milliseconds: durationMs);
 }
 
-/// The position the fill is drawn at.
+/// The position the lyrics are drawn at.
 ///
-/// [smoothed] is the last reported position plus the time since it arrived,
-/// which keeps the wipe moving between reports. A gap larger than
-/// [AppLyrics.seekSnapMs] is a seek rather than drift, so the reported position
-/// wins outright; within that, the fill may lead the voice by at most
-/// [AppLyrics.interpolationLeadMs] so it never runs ahead of it.
+/// [reported] is the player's last word on where the voice is; [smoothed] is
+/// that position plus the time since it arrived, which keeps the wipe moving
+/// between the reports instead of stepping.
+///
+/// The voice is the authority in **both** directions. A smoothed value that has
+/// fallen behind is pulled up to the report rather than left to lag: leaving it
+/// was what put the whole page a notification behind the song, because the
+/// player only speaks every ~50 ms and every later report kept re-measuring the
+/// same offset. It may lead by at most [AppLyrics.interpolationLeadMs], and a
+/// gap larger than [AppLyrics.seekSnapMs] is a seek rather than drift.
 Duration lyricDrawPosition({
   required Duration reported,
   required Duration smoothed,
 }) {
   final drift = smoothed - reported;
   if (drift.abs() > Duration(milliseconds: AppLyrics.seekSnapMs)) {
+    return reported;
+  }
+  final lag = -Duration(milliseconds: AppLyrics.lagToleranceMs);
+  if (drift < lag) {
     return reported;
   }
   final lead = Duration(milliseconds: AppLyrics.interpolationLeadMs);

@@ -41,7 +41,7 @@ class LyricsListView extends StatefulWidget {
 }
 
 class LyricsListViewState extends State<LyricsListView>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver, SingleTickerProviderStateMixin {
   final ItemScrollController itemScrollController = ItemScrollController();
   final ValueNotifier<int> currentIndexNotifier = ValueNotifier<int>(-1);
 
@@ -49,6 +49,14 @@ class LyricsListViewState extends State<LyricsListView>
   /// (a seek, a return from the other end of the song). Each bump fades the
   /// list back in where it arrived.
   final ValueNotifier<int> resetFadeNotifier = ValueNotifier<int>(0);
+
+  /// The clock the whole page is laid out from: the player's reports, carried
+  /// forward between them. The line that is highlighted and the fill that sweeps
+  /// through it both read this one, so they cannot disagree about where the
+  /// voice is.
+  final ValueNotifier<Duration> drawPositionNotifier = ValueNotifier<Duration>(
+    Duration.zero,
+  );
 
   StreamSubscription<Duration>? positionSub;
 
@@ -66,6 +74,16 @@ class LyricsListViewState extends State<LyricsListView>
   int _scrolledTo = -1;
 
   double? _viewportHeight;
+
+  /// The player's last word on where the voice is, and when it arrived. The
+  /// position is carried forward in real time from there, so a line changes on
+  /// the frame it is due rather than on the next property notification: those
+  /// arrive about every 50 ms, which on its own is a visible delay between the
+  /// voice and the words.
+  late final Ticker _clock;
+  Duration _reported = Duration.zero;
+  Duration _drawPosition = Duration.zero;
+  DateTime _lastSync = DateTime.now();
 
   /// The anchor a line rests at: the current line sits above the middle, so the
   /// next one is already in view and the list reads as moving forward.
@@ -198,7 +216,39 @@ class LyricsListViewState extends State<LyricsListView>
 
   void _listen() {
     positionSub?.cancel();
-    positionSub = audioHandler.getPositionStream().listen(scroll2CurrentIndex);
+    positionSub = audioHandler.getPositionStream().listen(_onPosition);
+  }
+
+  /// The player spoke: from here on that position is the truth, and the clock
+  /// only has to carry it across the gap until the next report.
+  void _onPosition(Duration position) {
+    _reported = position;
+    _lastSync = DateTime.now();
+    _advance();
+  }
+
+  /// Moves the clock on by the elapsed time and lays the list out from it.
+  void _advance() {
+    final now = DateTime.now();
+    final elapsed = now.difference(_lastSync);
+    _lastSync = now;
+    _drawPosition = lyricDrawPosition(
+      reported: _reported,
+      smoothed: _drawPosition + elapsed,
+    );
+    drawPositionNotifier.value = _drawPosition;
+    scroll2CurrentIndex(_drawPosition);
+  }
+
+  void _playStateListener() {
+    if (isPlayingNotifier.value) {
+      _lastSync = DateTime.now();
+      if (!_clock.isActive) {
+        _clock.start();
+      }
+    } else if (_clock.isActive) {
+      _clock.stop();
+    }
   }
 
   @override
@@ -206,8 +256,16 @@ class LyricsListViewState extends State<LyricsListView>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     lines = widget.lines;
-    scroll2CurrentIndex(audioHandler.getPosition());
+    _clock = createTicker((_) => _advance());
+    isPlayingNotifier.addListener(_playStateListener);
+    _reported = audioHandler.getPosition();
+    _drawPosition = _reported;
+    _lastSync = DateTime.now();
+    scroll2CurrentIndex(_drawPosition);
     _listen();
+    if (isPlayingNotifier.value) {
+      _clock.start();
+    }
   }
 
   @override
@@ -216,6 +274,8 @@ class LyricsListViewState extends State<LyricsListView>
     // Stop listening when lyrics page is closed
     positionSub?.cancel();
     positionSub = null;
+    isPlayingNotifier.removeListener(_playStateListener);
+    _clock.dispose();
 
     _idleTimer?.cancel();
     _idleTimer = null;
@@ -228,8 +288,14 @@ class LyricsListViewState extends State<LyricsListView>
       case AppLifecycleState.resumed:
         if (positionSub == null) {
           jump = true;
-          scroll2CurrentIndex(audioHandler.getPosition());
+          _reported = audioHandler.getPosition();
+          _drawPosition = _reported;
+          _lastSync = DateTime.now();
+          scroll2CurrentIndex(_drawPosition);
           _listen();
+          if (isPlayingNotifier.value && !_clock.isActive) {
+            _clock.start();
+          }
         }
         break;
       case AppLifecycleState.paused:
@@ -297,6 +363,7 @@ class LyricsListViewState extends State<LyricsListView>
                   index: index - 1,
                   line: lines[index - 1],
                   currentIndexNotifier: currentIndexNotifier,
+                  clock: drawPositionNotifier,
                   expanded: widget.expanded,
                   isKaraoke: widget.isKaraoke,
                 );
@@ -320,6 +387,10 @@ class LyricLineWidget extends StatefulWidget {
   final int index;
   final LyricLine line;
   final ValueNotifier<int> currentIndexNotifier;
+
+  /// The page's clock, handed down so the fill sweeps on the same position the
+  /// highlight changed on.
+  final ValueListenable<Duration>? clock;
   final bool expanded;
   final bool isKaraoke;
 
@@ -330,6 +401,7 @@ class LyricLineWidget extends StatefulWidget {
     required this.currentIndexNotifier,
     required this.expanded,
     required this.isKaraoke,
+    this.clock,
   });
 
   @override
@@ -472,6 +544,7 @@ class _LyricLineWidgetState extends State<LyricLineWidget>
                               LyricFillText(
                                 line: line,
                                 position: audioHandler.getPosition(),
+                                clock: widget.clock,
                                 fontSize: fontSize,
                                 expanded: expanded,
                                 colour: colour.withValues(alpha: strength),
@@ -570,6 +643,12 @@ class _LyricLineWidgetState extends State<LyricLineWidget>
 class LyricFillText extends StatefulWidget {
   final LyricLine line;
   final Duration position;
+
+  /// The page's clock. When one is handed in, this widget stops keeping its own:
+  /// the highlight and the fill then read the same position, which is what keeps
+  /// the words with the voice. The desktop lyrics window has no page to hand one
+  /// over, so it keeps its own.
+  final ValueListenable<Duration>? clock;
   final double fontSize;
   final bool expanded;
   final bool isDesktopLyrics;
@@ -586,6 +665,7 @@ class LyricFillText extends StatefulWidget {
     required this.position,
     required this.fontSize,
     required this.expanded,
+    this.clock,
     this.isDesktopLyrics = false,
     this.colour,
   });
@@ -594,15 +674,18 @@ class LyricFillText extends StatefulWidget {
   State<LyricFillText> createState() => KaraokeTextState();
 }
 
+
+
 /// Kept under its previous name: the desktop lyrics window builds it directly.
 typedef KaraokeText = LyricFillText;
 
 class KaraokeTextState extends State<LyricFillText>
     with SingleTickerProviderStateMixin {
-  late final Ticker ticker;
+  Ticker? ticker;
 
-  /// The position the fill is drawn at: the player's reports, smoothed between
-  /// them so the wipe moves every frame instead of stepping.
+  /// The position the fill is drawn at, when this widget keeps its own clock:
+  /// the player's reports, smoothed between them so the wipe moves every frame
+  /// instead of stepping.
   final ValueNotifier<Duration> drawPosition = ValueNotifier<Duration>(
     Duration.zero,
   );
@@ -633,21 +716,26 @@ class KaraokeTextState extends State<LyricFillText>
   }
 
   void _playStateListener() {
+    final ticker = this.ticker;
+    if (ticker == null) {
+      return;
+    }
     if (isPlayingNotifier.value) {
       lastSyncTime = DateTime.now();
       if (!ticker.isActive) {
         ticker.start();
       }
-    } else {
-      if (ticker.isActive) {
-        ticker.stop();
-      }
+    } else if (ticker.isActive) {
+      ticker.stop();
     }
   }
 
   @override
   void initState() {
     super.initState();
+    if (widget.clock != null) {
+      return;
+    }
     lastReported = widget.position;
     drawPosition.value = widget.position;
     ticker = createTicker(_onTick);
@@ -658,13 +746,16 @@ class KaraokeTextState extends State<LyricFillText>
       positionSub = audioHandler.getPositionStream().listen(_onReported);
     }
     if (isPlayingNotifier.value) {
-      ticker.start();
+      ticker!.start();
     }
   }
 
   @override
   void didUpdateWidget(covariant LyricFillText oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.clock != null) {
+      return;
+    }
     // A new line, a seek, or the next position handed in by the lyrics window.
     drawPosition.value = lyricDrawPosition(
       reported: widget.position,
@@ -679,7 +770,7 @@ class KaraokeTextState extends State<LyricFillText>
     positionSub?.cancel();
     positionSub = null;
     isPlayingNotifier.removeListener(_playStateListener);
-    ticker.dispose();
+    ticker?.dispose();
     drawPosition.dispose();
     super.dispose();
   }
@@ -704,7 +795,7 @@ class KaraokeTextState extends State<LyricFillText>
             : MediaQuery.sizeOf(context).width;
         final painter = LyricFillPainter(
           line: widget.line,
-          position: drawPosition,
+          position: widget.clock ?? drawPosition,
           playedColor: played,
           // What has not been sung yet is the same colour, held back: the line
           // reads as one line with a voice moving through it, rather than as a
