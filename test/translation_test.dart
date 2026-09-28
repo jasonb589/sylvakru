@@ -9,7 +9,6 @@ import 'package:sylvakru/base/data/setting.dart';
 import 'package:sylvakru/base/services/translation.dart';
 import 'package:sylvakru/base/services/logger.dart';
 import 'package:sylvakru/base/widgets/artist_metadata.dart';
-import 'package:sylvakru/base/widgets/settings_list.dart';
 import 'package:sylvakru/l10n/generated/app_localizations.dart';
 
 /// Translation is best effort by design: it needs a service the listener
@@ -214,54 +213,6 @@ void main() {
 
     expect(preset.baseUrl, 'https://api.siliconflow.cn/v1');
     expect(preset.models, contains('deepseek-ai/DeepSeek-V3.2'));
-  });
-
-  test('the settings row says what is missing, not just "not configured"', () {
-    final l10n = lookupAppLocalizations(const Locale('en'));
-
-    expect(
-      translationSummary(
-        l10n,
-        enabled: false,
-        baseUrl: 'https://x/v1',
-        model: 'm',
-        hasApiKey: true,
-      ),
-      l10n.translationOff,
-    );
-
-    expect(
-      translationSummary(
-        l10n,
-        enabled: true,
-        baseUrl: '',
-        model: 'm',
-        hasApiKey: true,
-      ),
-      l10n.translationNotConfigured,
-    );
-
-    expect(
-      translationSummary(
-        l10n,
-        enabled: true,
-        baseUrl: 'https://x/v1',
-        model: 'm',
-        hasApiKey: false,
-      ),
-      l10n.translationNotConfigured,
-    );
-
-    expect(
-      translationSummary(
-        l10n,
-        enabled: true,
-        baseUrl: 'https://x/v1',
-        model: 'm',
-        hasApiKey: true,
-      ),
-      'https://x/v1 · m',
-    );
   });
 
   testWidgets('configuring translation later still translates an open page', (

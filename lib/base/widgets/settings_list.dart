@@ -543,11 +543,6 @@ class _SettingsListState extends State<SettingsList> {
     return ListTile(
       leading: ImageIcon(cacheImage, size: iconSize),
       title: Text(l10n.cache),
-      subtitle: Text(
-        l10n.temporaryCacheDescription,
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
-      ),
       onTap: () {
         showAnimationDialog(
           context: context,
@@ -1203,32 +1198,9 @@ Widget downloadListTile(
   /// Matches the icon size the surrounding settings rows use.
   double iconSize = 30,
 }) {
-  final custom = downloadRootDir;
-  final folder = custom == null || custom.isEmpty
-      ? l10n.downloadFolderDefault
-      : custom;
-
   return ListTile(
     leading: ImageIcon(downloadImage, size: iconSize),
     title: Text(l10n.downloadSettings),
-    subtitle: ValueListenableBuilder(
-      valueListenable: writeDownloadTagsNotifier,
-      builder: (context, tags, _) {
-        return ValueListenableBuilder(
-          valueListenable: downloadNamingNotifier,
-          builder: (context, naming, _) {
-            return Text(
-              [
-                folder,
-                downloadNamingLabel(l10n, naming),
-                tags ? l10n.downloadTagsOn : l10n.downloadTagsOff,
-              ].join(' · '),
-              overflow: TextOverflow.ellipsis,
-            );
-          },
-        );
-      },
-    ),
     onTap: () => showDownloadSettingsDialog(context),
   );
 }
@@ -1502,47 +1474,17 @@ Widget translationListTile(
   return ListTile(
     leading: ImageIcon(languageImage, size: iconSize),
     title: Text(l10n.translation),
-    subtitle: ListenableBuilder(
-      listenable: Listenable.merge([
-        translationEnabledNotifier,
-        translationBaseUrlNotifier,
-        translationModelNotifier,
-        config.translationApiKeyNotifier,
-      ]),
-      builder: (context, _) => Text(
-        translationSummary(
-          l10n,
-          enabled: translationEnabledNotifier.value,
-          baseUrl: translationBaseUrlNotifier.value,
-          model: translationModelNotifier.value,
-          hasApiKey: config.translationApiKeyNotifier.value.isNotEmpty,
-        ),
-        overflow: TextOverflow.ellipsis,
+    trailing: SizedBox(
+      width: 50,
+      child: MySwitch(
+        valueNotifier: translationEnabledNotifier,
+        onToggleCallBack: () {
+          setting.save();
+        },
       ),
     ),
     onTap: () => showTranslationSettingsDialog(context),
   );
-}
-
-/// The row's subtitle: what the translation setting is doing right now.
-///
-/// The values come in from the caller so the row can listen for them. Reading
-/// the notifiers in here once is what left the row saying "not configured"
-/// after it had been configured.
-String translationSummary(
-  AppLocalizations l10n, {
-  required bool enabled,
-  required String baseUrl,
-  required String model,
-  required bool hasApiKey,
-}) {
-  if (!enabled) {
-    return l10n.translationOff;
-  }
-  if (baseUrl.trim().isEmpty || model.trim().isEmpty || !hasApiKey) {
-    return l10n.translationNotConfigured;
-  }
-  return '$baseUrl · $model';
 }
 
 /// The translation choices: the switch, the service, and the key it uses.
