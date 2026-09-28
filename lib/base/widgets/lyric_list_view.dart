@@ -41,7 +41,7 @@ class LyricsListView extends StatefulWidget {
 }
 
 class LyricsListViewState extends State<LyricsListView>
-    with WidgetsBindingObserver, SingleTickerProviderStateMixin {
+    with WidgetsBindingObserver, TickerProviderStateMixin {
   final ItemScrollController itemScrollController = ItemScrollController();
   final ValueNotifier<int> currentIndexNotifier = ValueNotifier<int>(-1);
 
@@ -89,6 +89,13 @@ class LyricsListViewState extends State<LyricsListView>
   /// next one is already in view and the list reads as moving forward.
   double get _alignment => widget.expanded ? 0.30 : 0.42;
 
+  /// Drives the crossfade of the lines that take part in a switch.
+  late final AnimationController switchClock;
+
+  /// The line that was being sung before the current one, so every line knows
+  /// which two steps it is crossing.
+  int _previousIndex = -1;
+
   /// Which line is being sung, and where the list should be because of it.
   ///
   /// The scroll starts before the line does - a head start of its own duration
@@ -103,8 +110,13 @@ class LyricsListViewState extends State<LyricsListView>
 
     final previous = currentIndexNotifier.value;
     final current = lyricIndexAt(lines, position);
+    if (current != previous) {
+      // One clock for the switch: the lines near the one being sung cross their
+      // steps together instead of each carrying a tween of its own.
+      _previousIndex = previous;
+      switchClock.forward(from: 0);
+    }
     currentIndexNotifier.value = current;
-
     // The list carries one leading spacer, so a line's item index is one more.
     final target = current + 1;
 
@@ -257,6 +269,11 @@ class LyricsListViewState extends State<LyricsListView>
     WidgetsBinding.instance.addObserver(this);
     lines = widget.lines;
     _clock = createTicker((_) => _advance());
+    switchClock = AnimationController(
+      vsync: this,
+      duration: AppLyrics.lineSwitch,
+      value: 1,
+    );
     isPlayingNotifier.addListener(_playStateListener);
     _reported = audioHandler.getPosition();
     _drawPosition = _reported;
@@ -276,6 +293,7 @@ class LyricsListViewState extends State<LyricsListView>
     positionSub = null;
     isPlayingNotifier.removeListener(_playStateListener);
     _clock.dispose();
+    switchClock.dispose();
 
     _idleTimer?.cancel();
     _idleTimer = null;
@@ -364,6 +382,8 @@ class LyricsListViewState extends State<LyricsListView>
                   line: lines[index - 1],
                   currentIndexNotifier: currentIndexNotifier,
                   clock: drawPositionNotifier,
+                  switchClock: switchClock,
+                  previousIndex: _previousIndex,
                   expanded: widget.expanded,
                   isKaraoke: widget.isKaraoke,
                 );
@@ -391,6 +411,14 @@ class LyricLineWidget extends StatefulWidget {
   /// The page's clock, handed down so the fill sweeps on the same position the
   /// highlight changed on.
   final ValueListenable<Duration>? clock;
+
+  /// The page's switch clock, so the lines near the one being sung cross their
+  /// steps together instead of each carrying a tween of its own.
+  final Animation<double>? switchClock;
+
+  /// The line that was being sung before the current one: which two steps this
+  /// line is crossing.
+  final int? previousIndex;
   final bool expanded;
   final bool isKaraoke;
 
@@ -401,6 +429,8 @@ class LyricLineWidget extends StatefulWidget {
     required this.currentIndexNotifier,
     required this.expanded,
     required this.isKaraoke,
+    this.switchClock,
+    this.previousIndex,
     this.clock,
   });
 
@@ -448,7 +478,6 @@ class _LyricLineWidgetState extends State<LyricLineWidget>
 
   @override
   Widget build(BuildContext context) {
-    final line = widget.line;
     final expanded = widget.expanded;
     double paddingHeight = 15;
     double fontSizeOffset = 0;
@@ -501,131 +530,42 @@ class _LyricLineWidgetState extends State<LyricLineWidget>
                     ? miniViewHighlightTextColor.value
                     : lyricsPageHighlightTextColor.value;
 
-                // The distance to the line being sung is animated, so a line
-                // that takes over from another crosses the steps in between
-                // instead of switching on: at 0 it is being sung, at 1 the one
-                // after it is.
-                return TweenAnimationBuilder<double>(
-                  tween: Tween<double>(
-                    end: lyricDistance(
-                      widget.index,
-                      widget.currentIndexNotifier.value,
-                    ).toDouble(),
+                // Only the lines next to the one being sung cross their steps,
+                // and they cross them together on the page's switch clock.
+                // Every other line looks the same at either distance, so
+                // animating it was a rebuild per frame with nothing to show.
+                final current = widget.currentIndexNotifier.value;
+                final oldDistance = lyricDistance(
+                  widget.index,
+                  widget.previousIndex ?? current,
+                );
+                final newDistance = lyricDistance(widget.index, current);
+                final switchClock = widget.switchClock;
+                if (switchClock == null ||
+                    !lyricLineNeedsSwitchAnimation(oldDistance, newDistance)) {
+                  return _line(
+                    newDistance.toDouble(),
+                    textColor,
+                    highlightTextColor,
+                    fontSize,
+                    expanded,
+                    settled: true,
+                  );
+                }
+                return AnimatedBuilder(
+                  animation: switchClock,
+                  builder: (context, _) => _line(
+                    lyricSwitchDistance(
+                      oldDistance,
+                      newDistance,
+                      AppCurve.enter.transform(switchClock.value),
+                    ),
+                    textColor,
+                    highlightTextColor,
+                    fontSize,
+                    expanded,
+                    settled: switchClock.value >= 1,
                   ),
-                  duration: AppLyrics.lineSwitch,
-                  curve: AppCurve.enter,
-                  builder: (context, distance, child) {
-                    final near = distance.clamp(0.0, 1.0);
-                    final colour = Color.lerp(
-                      textColor,
-                      highlightTextColor,
-                      1 - near,
-                    )!;
-                    final opacity = lyricLineOpacity(distance);
-                    final weight = lyricLineWeight(
-                      lyricsFontWeightNotifier.value,
-                      distance,
-                    );
-
-                    return _withPulse((pulse) {
-                      // A tap lifts the line a little, on top of where it
-                      // already stands for its distance.
-                      final strength = (opacity + 0.25 * pulse).clamp(0.0, 1.0);
-                      Widget content = Transform.scale(
-                        scale: lyricLineScale(distance) * (1 + 0.02 * pulse),
-                        alignment: expanded ? .centerLeft : .center,
-                        child: Column(
-                          crossAxisAlignment: expanded ? .start : .center,
-                          children: [
-                            if (near < 1)
-                              // Being sung, or about to be: the fill sweeps
-                              // across it. Every other line is text at its own
-                              // strength.
-                              LyricFillText(
-                                line: line,
-                                position: audioHandler.getPosition(),
-                                clock: widget.clock,
-                                fontSize: fontSize,
-                                expanded: expanded,
-                                colour: colour.withValues(alpha: strength),
-                              )
-                            else
-                              Text(
-                                line.text,
-                                textAlign: expanded ? .start : .center,
-                                style: TextStyle(
-                                  fontSize: fontSize,
-                                  fontWeight: weight,
-                                  color: colour.withValues(alpha: strength),
-                                ),
-                              ),
-                            for (final translate in line.translates)
-                              Text(
-                                translate,
-                                textAlign: expanded ? .start : .center,
-                                style: TextStyle(
-                                  fontSize: fontSize - (expanded ? 8 : 4),
-                                  fontWeight: weight,
-                                  color: colour.withValues(
-                                    alpha: strength * (near >= 1 ? 0.85 : 0.8),
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      );
-
-                      final sigma = lyricsFarBlurNotifier.value
-                          ? lyricFarBlurSigma(distance)
-                          : 0.0;
-                      if (sigma > 0.01) {
-                        content = ImageFiltered(
-                          imageFilter: ui.ImageFilter.blur(
-                            sigmaX: sigma,
-                            sigmaY: sigma,
-                          ),
-                          child: content,
-                        );
-                      }
-
-                      return Stack(
-                        alignment: expanded ? .topStart : .topCenter,
-                        clipBehavior: Clip.none,
-                        children: [
-                          content,
-                          Positioned(
-                            left: -12,
-                            top: 0,
-                            bottom: 0,
-                            child: TweenAnimationBuilder<double>(
-                              tween: Tween<double>(
-                                begin: 0,
-                                end: _hovered ? 1 : 0,
-                              ),
-                              duration: AppDuration.quick,
-                              curve: AppCurve.enter,
-                              builder: (context, value, child) =>
-                                  Opacity(opacity: value, child: child),
-                              child: Center(
-                                child: Container(
-                                  width: AppLyrics.hoverBarWidth,
-                                  height: fontSize * 1.2,
-                                  decoration: BoxDecoration(
-                                    color: colour.withValues(
-                                      alpha: AppLyrics.hoverBarAlpha,
-                                    ),
-                                    borderRadius: BorderRadius.circular(
-                                      AppLyrics.hoverBarWidth / 2,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      );
-                    });
-                  },
                 );
               },
             ),
@@ -633,6 +573,120 @@ class _LyricLineWidgetState extends State<LyricLineWidget>
         ),
       ),
     );
+  }
+
+  /// One line at [distance] steps from the one being sung.
+  ///
+  /// [settled] is false while the line is still crossing its steps: the blur
+  /// waits until it has arrived, because a line in motion already has the eye
+  /// and a filter would add a layer per frame on top of that.
+  Widget _line(
+    double distance,
+    Color textColor,
+    Color highlightTextColor,
+    double fontSize,
+    bool expanded, {
+    required bool settled,
+  }) {
+    final line = widget.line;
+    final near = distance.clamp(0.0, 1.0);
+    final colour = Color.lerp(textColor, highlightTextColor, 1 - near)!;
+    final opacity = lyricLineOpacity(distance);
+    final weight = lyricLineWeight(lyricsFontWeightNotifier.value, distance);
+
+    return _withPulse((pulse) {
+      // A tap lifts the line a little, on top of where it already stands for
+      // its distance.
+      final strength = (opacity + 0.25 * pulse).clamp(0.0, 1.0);
+      Widget content = Transform.scale(
+        scale: lyricLineScale(distance) * (1 + 0.02 * pulse),
+        alignment: expanded ? .centerLeft : .center,
+        // Inside the transform: a scale is then composited over the cached
+        // raster instead of drawing the text again on every frame.
+        child: RepaintBoundary(
+          child: Column(
+            crossAxisAlignment: expanded ? .start : .center,
+            children: [
+              if (near < 1)
+                // Being sung, or about to be: the fill sweeps across it. Every
+                // other line is text at its own strength.
+                LyricFillText(
+                  line: line,
+                  position: audioHandler.getPosition(),
+                  clock: widget.clock,
+                  fontSize: fontSize,
+                  expanded: expanded,
+                  colour: colour.withValues(alpha: strength),
+                )
+              else
+                Text(
+                  line.text,
+                  textAlign: expanded ? .start : .center,
+                  style: TextStyle(
+                    fontSize: fontSize,
+                    fontWeight: weight,
+                    color: colour.withValues(alpha: strength),
+                  ),
+                ),
+              for (final translate in line.translates)
+                Text(
+                  translate,
+                  textAlign: expanded ? .start : .center,
+                  style: TextStyle(
+                    fontSize: fontSize - (expanded ? 8 : 4),
+                    fontWeight: weight,
+                    color: colour.withValues(
+                      alpha: strength * (near >= 1 ? 0.85 : 0.8),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      );
+
+      final sigma = settled && lyricsFarBlurNotifier.value
+          ? lyricFarBlurSigma(distance)
+          : 0.0;
+      if (sigma > 0.01) {
+        content = ImageFiltered(
+          imageFilter: ui.ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
+          child: content,
+        );
+      }
+
+      return Stack(
+        alignment: expanded ? .topStart : .topCenter,
+        clipBehavior: Clip.none,
+        children: [
+          content,
+          Positioned(
+            left: -12,
+            top: 0,
+            bottom: 0,
+            child: TweenAnimationBuilder<double>(
+              tween: Tween<double>(begin: 0, end: _hovered ? 1 : 0),
+              duration: AppDuration.quick,
+              curve: AppCurve.enter,
+              builder: (context, value, child) =>
+                  Opacity(opacity: value, child: child),
+              child: Center(
+                child: Container(
+                  width: AppLyrics.hoverBarWidth,
+                  height: fontSize * 1.2,
+                  decoration: BoxDecoration(
+                    color: colour.withValues(alpha: AppLyrics.hoverBarAlpha),
+                    borderRadius: BorderRadius.circular(
+                      AppLyrics.hoverBarWidth / 2,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    });
   }
 }
 

@@ -114,6 +114,25 @@ int lyricDistance(int index, int current) {
   return (index - current).abs();
 }
 
+/// Whether a line that moved from [oldDistance] to [newDistance] takes part in
+/// the switch.
+///
+/// Only the lines near the one being sung do. Everything past the third step
+/// already looks the same - the opacity has reached its floor - so animating it
+/// changed nothing on screen while it cost a rebuild on every frame of the
+/// switch, on every line of the page at once.
+bool lyricLineNeedsSwitchAnimation(int oldDistance, int newDistance) {
+  final far = oldDistance > newDistance ? oldDistance : newDistance;
+  return far <= AppLyrics.switchAnimationMaxDistance;
+}
+
+/// The distance a line is at [progress] through the switch, so a line taking
+/// over from another crosses the steps instead of jumping between them.
+double lyricSwitchDistance(int oldDistance, int newDistance, double progress) {
+  final t = progress.clamp(0.0, 1.0);
+  return oldDistance + (newDistance - oldDistance) * t;
+}
+
 /// The opacity of a line [distance] lines from the one being sung.
 ///
 /// The distance is fractional while the change animates, so a line taking over

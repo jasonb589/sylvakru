@@ -171,9 +171,11 @@ void main() {
   });
 
   group('following the music', () {
-    test('a step is short and a long jump is not worth flying', () {
-      expect(lyricScrollMs(1), 265);
-      expect(lyricScrollMs(3), 355);
+    test('a step is a glide, and a long jump is not worth flying', () {
+      // Half a second for one line: the old 265 ms started fast and stopped
+      // hard, which read as a yank rather than as following.
+      expect(lyricScrollMs(1), 470);
+      expect(lyricScrollMs(3), 610);
       expect(lyricScrollMs(0), AppLyrics.scrollMinMs);
       expect(lyricScrollMs(10), AppLyrics.scrollMaxMs);
     });
@@ -203,6 +205,31 @@ void main() {
         ),
         isTrue,
       );
+    });
+  });
+
+  group('the line switch', () {
+    test('only the lines next to the one being sung take part', () {
+      // Everything past the third step looks the same on both sides of the
+      // change, so animating it was a rebuild per frame with nothing to show.
+      expect(lyricLineNeedsSwitchAnimation(0, 1), isTrue);
+      expect(lyricLineNeedsSwitchAnimation(1, 0), isTrue);
+      expect(lyricLineNeedsSwitchAnimation(1, 2), isTrue);
+      expect(lyricLineNeedsSwitchAnimation(2, 1), isTrue);
+      expect(lyricLineNeedsSwitchAnimation(2, 3), isFalse);
+      expect(lyricLineNeedsSwitchAnimation(3, 2), isFalse);
+      expect(lyricLineNeedsSwitchAnimation(5, 6), isFalse);
+      expect(lyricLineNeedsSwitchAnimation(0, 9), isFalse);
+    });
+
+    test('a line crosses the steps instead of jumping between them', () {
+      expect(lyricSwitchDistance(0, 1, 0), 0);
+      expect(lyricSwitchDistance(0, 1, 1), 1);
+      expect(lyricSwitchDistance(0, 1, 0.5), closeTo(0.5, 0.0001));
+      expect(lyricSwitchDistance(1, 2, 0.5), closeTo(1.5, 0.0001));
+      // Past the ends it stays put: the clock may overshoot a frame.
+      expect(lyricSwitchDistance(0, 1, 2), 1);
+      expect(lyricSwitchDistance(0, 1, -1), 0);
     });
   });
 

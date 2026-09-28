@@ -143,12 +143,15 @@ abstract final class AppLyrics {
   /// The line switch: the old line dims while the new one brightens.
   static const Duration lineSwitch = Duration(milliseconds: 260);
 
-  /// Following the music, by how far the list has to travel. One line is a
-  /// step; a long jump is not worth flying across.
-  static const int scrollBaseMs = 220;
-  static const int scrollPerLineMs = 45;
-  static const int scrollMinMs = 260;
-  static const int scrollMaxMs = 420;
+  /// Following the music, by how far the list has to travel.
+  ///
+  /// A single line takes about half a second on purpose: the old 265 ms step
+  /// started fast and stopped hard, which read as the list being yanked rather
+  /// than following. A long jump is still not worth flying across.
+  static const int scrollBaseMs = 400;
+  static const int scrollPerLineMs = 70;
+  static const int scrollMinMs = 420;
+  static const int scrollMaxMs = 640;
 
   /// Beyond this many lines a jump lands in place instead of travelling, and
   /// the list fades in where it arrived.
@@ -166,7 +169,7 @@ abstract final class AppLyrics {
 
   /// Following is a settle, never a bounce: lyrics that overshoot read as a
   /// mistake rather than as flow.
-  static const Curve scrollCurve = Curves.easeOutCubic;
+  static const Curve scrollCurve = Curves.easeInOutCubic;
 
   /// Opacity by distance from the current line: the line being sung, then the
   /// one after it, then further, and everything beyond at the floor.
@@ -174,12 +177,19 @@ abstract final class AppLyrics {
 
   /// The current line grows by this much. Small on purpose: a line that wraps
   /// onto a second row would visibly jump at a larger factor.
-  static const double currentScale = 1.03;
+  static const double currentScale = 1.02;
 
   /// How much of a word the fill has to have covered before that word is
   /// painted, as a multiple of the font size. A hard cut read as a progress bar
   /// crossing the words.
   static const double fillEdgeEm = 0.6;
+
+  /// How many lines away from the switch still take part in it.
+  ///
+  /// Everything beyond the third step looks the same - the opacity has already
+  /// reached its floor - so animating those lines was work with no pixels to
+  /// show for it, on every line of the page at once.
+  static const int switchAnimationMaxDistance = 2;
 
   /// How far the fill may run past the last reported position. The player
   /// reports a few times a second and the ticker smooths between those, but the
