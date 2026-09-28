@@ -20,7 +20,9 @@ class PlaybackRateButton extends StatelessWidget {
   /// Colour for the readout, matching whatever the surrounding controls use.
   final Color color;
 
-  /// Glyph size for the readout, matching the neighbouring icons.
+  /// Glyph size for the readout, matching the neighbouring icons. Material
+  /// icons carry padding inside their box, so the digits are drawn a little
+  /// smaller than the box to come out the same size as the glyphs beside them.
   final double iconSize;
 
   const PlaybackRateButton({
@@ -41,9 +43,9 @@ class PlaybackRateButton extends StatelessWidget {
             _label(rate),
             style: TextStyle(
               color: color,
-              fontSize: iconSize * 0.9,
+              fontSize: iconSize * 0.8,
               // A speed other than 1.0 is a state worth noticing at a glance.
-              fontWeight: rate == 1.0 ? .w500 : .bold,
+              fontWeight: rate == 1.0 ? .normal : .bold,
             ),
           ),
         );

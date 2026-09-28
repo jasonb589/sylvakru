@@ -234,7 +234,7 @@ class _LandscapeLyricsPageState extends State<LandscapeLyricsPage> {
                           lyricsFontSizeOffsetNotifier.value -= 2;
                           setting.save();
                         },
-                        icon: Icon(Icons.text_decrease_rounded, size: 18),
+                        icon: Icon(Icons.text_decrease_rounded, size: 20),
                       ),
                       PlaybackRateButton(
                         color: lyricsPageForegroundColor.value,
