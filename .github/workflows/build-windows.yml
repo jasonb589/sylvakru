@@ -13,6 +13,8 @@ on:
 
 permissions:
   contents: write
+  # deleting the run's own artifact after a tag build succeeds
+  actions: write
 
 jobs:
   windows:
@@ -28,12 +30,20 @@ jobs:
           fetch-depth: 0
 
       # keep this in sync with .fvmrc and the `flutter:` constraint in pubspec.yaml
+      # Caching is off on purpose. Actions storage on this account is 0.5 GB,
+      # and the action's SDK cache is 1.8 GB. Worse, it could never be used:
+      # every release runs on its own tag, GitHub scopes a cache to the ref that
+      # created it, and a tag cannot read another tag's cache - so each release
+      # downloaded the SDK anyway and then stored a fresh 1.8 GB copy next to the
+      # previous ones (five releases reached 10.4 GB of caches, which is what
+      # filled the quota). Downloading the toolchain per build is the cheaper
+      # trade here.
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: 3.47.5
           channel: stable
-          cache: true
+          cache: false
 
       - name: Show Flutter version
         run: flutter --version
@@ -242,3 +252,26 @@ jobs:
             gh release edit $tag --notes-file $notesPath
           }
           gh release upload $tag $env:ZIP_NAME --clobber
+
+      # Actions storage on this account is 0.5 GB. The release holds the zip that
+      # people download, so once a tag build has attached it the run's own
+      # artifact is dead weight - and it is the part that counts against the
+      # quota. Manual runs keep theirs: there is no release to download from.
+      #
+      # Left non-fatal on purpose: a release that is already published must not
+      # be marked failed because a cleanup call did not go through. The weekly
+      # cleanup workflow is the backstop.
+      - name: Clean up run storage
+        if: success() && startsWith(github.ref, 'refs/tags/')
+        continue-on-error: true
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ids = gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts" --jq '.artifacts[].id'
+          foreach ($id in $ids) {
+            if (-not $id) { continue }
+            Write-Host "Deleting artifact $id"
+            gh api -X DELETE "repos/${{ github.repository }}/actions/artifacts/$id" | Out-Null
+          }
+          Write-Host "Run storage cleaned."
