@@ -6,6 +6,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sylvakru/base/app.dart';
 import 'package:sylvakru/base/my_audio_metadata.dart';
 import 'package:sylvakru/base/widgets/artist_album_line.dart';
+import 'package:sylvakru/base/data/artist_album.dart';
+import 'package:sylvakru/base/services/picture_service.dart';
+import 'package:sylvakru/layer/layers_manager.dart';
 
 /// The playback screens carry the way into an artist page: in "Artist - Album"
 /// the artist is a tap target and the album beside it is not, so a tap meant
@@ -19,6 +22,9 @@ void main() {
   // so point it at a temporary directory first.
   setUpAll(() {
     appSupportDir = Directory.systemTemp.createTempSync('sylvakru_aa_line');
+    // The layer machine behind the artist page asks for cover colours: with no
+    // bytes to read it settles on grey instead of reaching for a server.
+    pictureBytesLoader = (_) async => null;
   });
 
   MyAudioMetadata buildSong() => MyAudioMetadata(
@@ -108,5 +114,52 @@ void main() {
       final source = File(path).readAsStringSync();
       expect(source.contains('ArtistAlbumLine('), isTrue, reason: path);
     }
+  });
+
+  // The playback screen is a route above the layer stack, and its artist link
+  // switches layers underneath: without stepping out of that route first the
+  // artist page opened hidden behind the screen and only appeared once the
+  // screen was closed, which is what this pins down.
+  testWidgets('the artist takes you off the playback screen, not under it', (
+    tester,
+  ) async {
+    artistAlbumManager.artistMap['Tinashe'] = Artist('Tinashe');
+    addTearDown(() => artistAlbumManager.artistMap.remove('Tinashe'));
+
+    await tester.pumpWidget(
+      MaterialApp(home: const Scaffold(body: Text('the layers'))),
+    );
+
+    final navigator = Navigator.of(tester.element(find.text('the layers')));
+    final playback = navigator.push<void>(
+      MaterialPageRoute(
+        builder: (_) => Scaffold(
+          body: Center(
+            child: ArtistAlbumLine(
+              song: buildSong(),
+              style: const TextStyle(fontSize: 14),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(find.byType(ArtistAlbumLine), findsOneWidget);
+
+    await tester.tap(find.text('Tinashe'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+    await tester.pump();
+
+    // The screen the artist was tapped on is gone: the artist page, opened on
+    // the layers underneath it, is what is left to look at.
+    expect(find.byType(ArtistAlbumLine), findsNothing);
+    expect(
+      layersManager.topRootLayer,
+      isNotNull,
+      reason: 'the artist page opened on the layers',
+    );
+    expect(playback, completes);
   });
 }

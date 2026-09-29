@@ -11,6 +11,11 @@ import 'package:sylvakru/base/utils/metadata_utils.dart';
 /// on one line would travel against each other, and the title above this line
 /// already carries the marquee.
 ///
+/// The playback screen is a route above the layer stack, so this tap steps out
+/// of that route before the artist page opens: the switch happens underneath,
+/// and the page would otherwise stay hidden behind this screen until it is
+/// popped - which reads as a tap that does nothing.
+///
 /// The bottom bar deliberately does not use this widget. There the whole row
 /// opens the playback screen, and the artist name inside it is plain text that
 /// goes nowhere: the way into an artist page is from the playback screen, not
@@ -48,7 +53,7 @@ class ArtistAlbumLine extends StatelessWidget {
               ? text(artist)
               : GestureDetector(
                   behavior: HitTestBehavior.opaque,
-                  onTap: () => goToArtist(track, context),
+                  onTap: () => goToArtist(track, context, stepOutOfRoute: true),
                   child: MouseRegion(
                     cursor: SystemMouseCursors.click,
                     child: text(artist),

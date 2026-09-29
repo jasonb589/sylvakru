@@ -1443,11 +1443,23 @@ Future<String?> _selectArtist(
   );
 }
 
+/// Opens [song]'s artist page, asking which artist when several are tagged.
+///
+/// Set [stepOutOfRoute] when the caller sits on a route above the layer stack
+/// - the playback screen does: the switch happens underneath that route, so
+/// without stepping out first the artist page would only appear once the
+/// caller's screen is popped, which reads as a tap that does nothing.
 void goToArtist(
   MyAudioMetadata song,
   BuildContext context, {
   String? excludedArtist,
+  bool stepOutOfRoute = false,
 }) async {
+  // Captured before the await below: by then this context may be gone.
+  final stepOutNavigator =
+      stepOutOfRoute && (ModalRoute.of(context)?.isCurrent ?? false)
+      ? Navigator.of(context)
+      : null;
   Artist? artist;
   final artistName = await _selectArtist(
     context,
@@ -1468,6 +1480,9 @@ void goToArtist(
       ),
     );
   } else {
+    // Step out of the caller's route first (see [stepOutOfRoute]): the layers
+    // switch underneath it, so the artist page must not stay hidden behind it.
+    stepOutNavigator?.pop();
     showCenterLoading();
     // openArtistDetail switches layers and pushes the detail in one go, so the
     // artist list is never shown in between
