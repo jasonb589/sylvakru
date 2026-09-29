@@ -716,11 +716,10 @@ class Library {
   Future<void> clearCache() async {
     final cacheDir = Directory(getCachesPath(sourceType));
     if (await cacheDir.exists()) {
-      await for (final entity in cacheDir.list()) {
-        if (entity is File) {
-          await entity.delete();
-        }
-      }
+      // The whole folder goes, not just the files in it: anything the cache
+      // grew below the top level would otherwise stay behind, and an empty
+      // folder is what the next download creates again anyway.
+      await cacheDir.delete(recursive: true);
     }
 
     cacheSizeNotifier.value = 0;
@@ -729,6 +728,18 @@ class Library {
         song.cacheExist = false;
         song.updateNotifier.value++;
       }
+    }
+  }
+
+  /// Drops the lyrics that have already been parsed.
+  ///
+  /// The parsed form is kept on the song ([MyAudioMetadata.parsedLyrics]) so
+  /// the page does not parse again while the song is playing. Clearing the
+  /// cache has to drop that copy as well: an .lrc file the listener has since
+  /// edited would otherwise keep showing its old words until the next restart.
+  Future<void> clearLrcCache() async {
+    for (final song in id2Song.values) {
+      song.parsedLyrics = null;
     }
   }
 
@@ -872,11 +883,7 @@ class Library {
   Future<void> clearPicture() async {
     Directory pictureDir = Directory(getPicturesPath(sourceType));
     if (await pictureDir.exists()) {
-      await for (final file in pictureDir.list()) {
-        if (file is File) {
-          await file.delete();
-        }
-      }
+      await pictureDir.delete(recursive: true);
     }
     pictureLoadScheduler.clear();
     for (final picture in globalPictureList) {

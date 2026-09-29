@@ -619,7 +619,11 @@ class _SettingsListState extends State<SettingsList> {
     if (await showConfirmDialog(context, l10n.clear)) {
       showCenterLoading();
       layersManager.clearDataLayers();
+      // Playing from a file holds it open, and a cache file that is still open
+      // cannot be deleted on Windows. Stop first, then clear.
+      await audioHandler.clear();
       await library.clearCache();
+      await library.clearLrcCache();
       playlistManager.updateNotifier.value++;
       removeCenterLoading();
     }
