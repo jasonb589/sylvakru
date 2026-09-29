@@ -9,6 +9,7 @@ import 'package:sylvakru/base/services/color_manager.dart';
 import 'package:sylvakru/base/app.dart';
 import 'package:sylvakru/base/asset_images.dart';
 import 'package:sylvakru/base/widgets/buttons.dart';
+import 'package:sylvakru/base/widgets/artist_album_line.dart';
 import 'package:sylvakru/base/widgets/cover_art_widget.dart';
 import 'package:sylvakru/base/data/setting.dart';
 import 'package:sylvakru/landscape_view/speaker.dart';
@@ -309,13 +310,12 @@ class _LandscapeLyricsPageState extends State<LandscapeLyricsPage> {
             child: ValueListenableBuilder(
               valueListenable: lyricsPageForegroundColor.valueNotifier,
               builder: (context, value, child) {
-                return TextScroll(
-                  key: UniqueKey(),
-                  '${getArtist(currentSong)} - ${getAlbum(currentSong)}',
+                // The artist opens the artist page here - this screen is where
+                // that link lives now; the bottom bar only opens this screen.
+                return ArtistAlbumLine(
+                  song: currentSong,
+                  textAlign: .center,
                   style: TextStyle(fontSize: 14, color: value),
-                  velocity: const .new(pixelsPerSecond: .new(40, 0)),
-                  intervalSpaces: 10,
-                  pauseBetween: Duration(seconds: 2),
                 );
               },
             ),

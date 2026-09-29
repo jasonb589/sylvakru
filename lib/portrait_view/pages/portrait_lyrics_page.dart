@@ -6,6 +6,7 @@ import 'package:sylvakru/base/design/cover_backdrop.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:sylvakru/base/audio_handler.dart';
+import 'package:sylvakru/base/widgets/artist_album_line.dart';
 import 'package:sylvakru/base/services/color_manager.dart';
 import 'package:sylvakru/base/app.dart';
 import 'package:sylvakru/base/asset_images.dart';
@@ -223,18 +224,12 @@ class _PortraitLyricsPageState extends State<PortraitLyricsPage> {
                                     pauseBetween: Duration(seconds: 2),
                                   ),
                                   SizedBox(height: 10),
-                                  TextScroll(
-                                    '${getArtist(currentSong)} - ${getAlbum(currentSong)}',
-                                    velocity: const Velocity(
-                                      pixelsPerSecond: Offset(40, 0),
-                                    ),
+                                  ArtistAlbumLine(
+                                    song: currentSong,
                                     style: TextStyle(
                                       fontSize: 14,
                                       color: lyricsPageForegroundColor.value,
-                                      overflow: .ellipsis,
                                     ),
-                                    intervalSpaces: 10,
-                                    pauseBetween: Duration(seconds: 2),
                                   ),
                                 ],
                               ),
@@ -279,30 +274,16 @@ class _PortraitLyricsPageState extends State<PortraitLyricsPage> {
                           padding: const EdgeInsets.symmetric(horizontal: 30),
                           child: SizedBox(
                             height: 28,
-                            child: ValueListenableBuilder(
-                              valueListenable: enableAllNotifier,
-                              builder: (context, value, child) {
-                                final data =
-                                    '${getArtist(currentSong)} - ${getAlbum(currentSong)}';
-                                final textStyle = TextStyle(
-                                  fontSize: 14,
-                                  color: lyricsPageForegroundColor.value,
-                                  overflow: .ellipsis,
-                                );
-                                if (!value) {
-                                  return Text(data, style: textStyle);
-                                }
-                                return TextScroll(
-                                  textAlign: .center,
-                                  data,
-                                  velocity: const Velocity(
-                                    pixelsPerSecond: Offset(40, 0),
-                                  ),
-                                  style: textStyle,
-                                  intervalSpaces: 10,
-                                  pauseBetween: Duration(seconds: 2),
-                                );
-                              },
+                            // The artist is the way into the artist page: this
+                            // screen carries that link, the bottom bar only
+                            // opens this screen.
+                            child: ArtistAlbumLine(
+                              song: currentSong,
+                              textAlign: .center,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: lyricsPageForegroundColor.value,
+                              ),
                             ),
                           ),
                         ),
