@@ -1195,4 +1195,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String duplicateSongsCount(int count) {
     return '$count groups found';
   }
+
+  @override
+  String get shortcutEditHint => 'Tap a key on the right to change it';
+
+  @override
+  String get shortcutPressKeys => 'Press the keys you want…';
+
+  @override
+  String get shortcutNotAllowed => 'That combination cannot be a shortcut';
+
+  @override
+  String shortcutConflict(String action) {
+    return '\"$action\" already uses it; replacing swaps the two';
+  }
+
+  @override
+  String get shortcutReplace => 'Replace';
+
+  @override
+  String get shortcutRestoreDefaults => 'Restore defaults';
+
+  @override
+  String get shortcutRestored => 'Shortcuts restored to their defaults';
 }

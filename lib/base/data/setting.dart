@@ -8,6 +8,7 @@ import 'package:sylvakru/base/services/interaction.dart';
 import 'package:sylvakru/base/widgets/lyric_list_view.dart';
 import 'package:sylvakru/base/app.dart';
 import 'package:sylvakru/base/utils/path.dart';
+import 'package:sylvakru/base/utils/shortcuts.dart';
 import 'package:sylvakru/base/widgets/manage_music_folders.dart';
 import 'package:sylvakru/portrait_view/portrait_view.dart';
 
@@ -48,6 +49,14 @@ final diskSpaceWarnMbNotifier = ValueNotifier<int>(1024);
 
 /// The values the reminder picker offers.
 const diskSpaceWarnOptionsMb = [0, 512, 1024, 2048, 5120, 10240];
+
+/// The shortcuts the user has changed, keyed by action.
+///
+/// Only the changes are kept; every action not listed here follows
+/// [defaultShortcutBindings], so a later change to a default still reaches
+/// anyone who never touched that key.
+final shortcutBindingsNotifier =
+    ValueNotifier<Map<ShortcutAction, ShortcutBinding>>({});
 
 /// How the address is turned into a request URL.
 ///
@@ -222,6 +231,10 @@ class Setting {
 
     downloadSplitRepaired =
         json['downloadSplitRepaired'] as bool? ?? downloadSplitRepaired;
+
+    shortcutBindingsNotifier.value = decodeShortcutOverrides(
+      json['shortcutBindings'],
+    );
   }
 
   void save() {
@@ -265,6 +278,9 @@ class Setting {
         'translationBaseUrl': translationBaseUrlNotifier.value,
         'translationModel': translationModelNotifier.value,
         'translationTarget': translationTargetNotifier.value,
+        'shortcutBindings': encodeShortcutOverrides(
+          shortcutBindingsNotifier.value,
+        ),
       }),
     );
   }

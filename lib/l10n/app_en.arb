@@ -519,5 +519,19 @@
         "type": "int"
       }
     }
-  }
+  },
+  "shortcutEditHint": "Tap a key on the right to change it",
+  "shortcutPressKeys": "Press the keys you want…",
+  "shortcutNotAllowed": "That combination cannot be a shortcut",
+  "shortcutConflict": "\"{action}\" already uses it; replacing swaps the two",
+  "@shortcutConflict": {
+    "placeholders": {
+      "action": {
+        "type": "String"
+      }
+    }
+  },
+  "shortcutReplace": "Replace",
+  "shortcutRestoreDefaults": "Restore defaults",
+  "shortcutRestored": "Shortcuts restored to their defaults"
 }

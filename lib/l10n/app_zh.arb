@@ -442,5 +442,19 @@
         "type": "int"
       }
     }
-  }
+  },
+  "shortcutEditHint": "点右侧键位即可修改",
+  "shortcutPressKeys": "请按新的组合…",
+  "shortcutNotAllowed": "这个组合不能用作快捷键",
+  "shortcutConflict": "「{action}」正在使用，替换会与它互换",
+  "@shortcutConflict": {
+    "placeholders": {
+      "action": {
+        "type": "String"
+      }
+    }
+  },
+  "shortcutReplace": "替换",
+  "shortcutRestoreDefaults": "恢复默认",
+  "shortcutRestored": "已恢复默认快捷键"
 }

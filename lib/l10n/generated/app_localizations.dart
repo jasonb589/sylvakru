@@ -2341,6 +2341,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} groups found'**
   String duplicateSongsCount(int count);
+
+  /// No description provided for @shortcutEditHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a key on the right to change it'**
+  String get shortcutEditHint;
+
+  /// No description provided for @shortcutPressKeys.
+  ///
+  /// In en, this message translates to:
+  /// **'Press the keys you want…'**
+  String get shortcutPressKeys;
+
+  /// No description provided for @shortcutNotAllowed.
+  ///
+  /// In en, this message translates to:
+  /// **'That combination cannot be a shortcut'**
+  String get shortcutNotAllowed;
+
+  /// No description provided for @shortcutConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{action}\" already uses it; replacing swaps the two'**
+  String shortcutConflict(String action);
+
+  /// No description provided for @shortcutReplace.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace'**
+  String get shortcutReplace;
+
+  /// No description provided for @shortcutRestoreDefaults.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore defaults'**
+  String get shortcutRestoreDefaults;
+
+  /// No description provided for @shortcutRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'Shortcuts restored to their defaults'**
+  String get shortcutRestored;
 }
 
 class _AppLocalizationsDelegate

@@ -2,6 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:sylvakru/base/app.dart';
 import 'package:sylvakru/base/audio_handler.dart';
 import 'package:sylvakru/base/data/playlist.dart';
+import 'package:sylvakru/base/data/setting.dart';
 import 'package:sylvakru/base/services/my_window_listener.dart';
 import 'package:sylvakru/base/utils/dynamic_lyrics_page_route.dart';
 import 'package:sylvakru/base/utils/shortcuts.dart';
@@ -22,6 +23,11 @@ double? _volumeBeforeMute;
 void keyboardInit() {
   HardwareKeyboard.instance.addHandler((event) {
     if (event is KeyDownEvent) {
+      // The shortcuts panel is waiting for a key of its own: nothing may happen
+      // meanwhile, or rebinding to Ctrl+→ would also skip a song.
+      if (isCapturingShortcut) {
+        return false;
+      }
       switch (event.logicalKey) {
         case LogicalKeyboardKey.shiftLeft:
         case LogicalKeyboardKey.shiftRight:
@@ -52,6 +58,10 @@ void keyboardInit() {
               control: ctrlIsPressed,
               shift: shiftIsPressed,
               typing: isTyping,
+              // The table the user has set up, defaults with their changes on
+              // top. Read here rather than cached: a rebind has to take effect
+              // on the very next key press.
+              bindings: effectiveBindings(shortcutBindingsNotifier.value),
             ),
           );
       }

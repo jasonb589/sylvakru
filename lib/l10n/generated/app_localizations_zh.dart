@@ -1169,4 +1169,27 @@ class AppLocalizationsZh extends AppLocalizations {
   String duplicateSongsCount(int count) {
     return '发现 $count 组';
   }
+
+  @override
+  String get shortcutEditHint => '点右侧键位即可修改';
+
+  @override
+  String get shortcutPressKeys => '请按新的组合…';
+
+  @override
+  String get shortcutNotAllowed => '这个组合不能用作快捷键';
+
+  @override
+  String shortcutConflict(String action) {
+    return '「$action」正在使用，替换会与它互换';
+  }
+
+  @override
+  String get shortcutReplace => '替换';
+
+  @override
+  String get shortcutRestoreDefaults => '恢复默认';
+
+  @override
+  String get shortcutRestored => '已恢复默认快捷键';
 }
