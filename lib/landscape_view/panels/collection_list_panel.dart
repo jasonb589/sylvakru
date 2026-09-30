@@ -25,6 +25,17 @@ extension _CollectionListPanel on CollectionListState {
   }
 
   Widget contentWidget(BuildContext context) {
+    // The skeleton is drawn over the grid rather than instead of it, so the grid
+    // keeps its place - and its scroll - while the placeholder fades. A sliver
+    // swap cannot do that: see ContentSwap.
+    return ContentSwap(
+      loading: preparing,
+      placeholder: const SkeletonGrid(),
+      child: scrollView(context),
+    );
+  }
+
+  Widget scrollView(BuildContext context) {
     final l10n = AppLocalizations.of(context);
 
     return CustomScrollView(
@@ -134,10 +145,14 @@ extension _CollectionListPanel on CollectionListState {
     return ListenableBuilder(
       listenable: Listenable.merge([changeNotifier]),
       builder: (context, child) {
-        if (preparing) {
-          return const SliverFillRemaining(
+        if (currentPictureList.isEmpty) {
+          return SliverFillRemaining(
             hasScrollBody: false,
-            child: SkeletonGrid(),
+            child: EmptyState(
+              icon: Icons.music_note_outlined,
+              title: AppLocalizations.of(context).listEmpty,
+              subtitle: AppLocalizations.of(context).listEmptyHint,
+            ),
           );
         }
         return SliverPadding(
