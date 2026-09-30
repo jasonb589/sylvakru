@@ -486,7 +486,14 @@ class Library {
       ...downloadingSongIdsNotifier.value,
       song.id,
     };
-    final outputFile = File(savePath);
+    // The transfer lands beside the target under a ".part" name and is only
+    // moved onto it once it has finished: a half-written file then never passes
+    // for a complete download, which is what existence is taken to mean here.
+    // A caller-injected [downloader] writes the destination itself (it is the
+    // test seam, production passes null and the client below is chosen), so it
+    // keeps writing straight to [savePath].
+    final partPath = downloader == null ? '$savePath.part' : savePath;
+    final outputFile = File(partPath);
     var success = false;
     try {
       if (delayForPlayback) {
@@ -499,7 +506,7 @@ class Library {
         success =
             await webdavClient?.download(
               remotePath: song.path!,
-              localPath: savePath,
+              localPath: partPath,
               onReceiveProgress: onProgress,
               cancellation: cancellation,
             ) ??
@@ -508,7 +515,7 @@ class Library {
         success =
             await streamClient?.downloadSong(
               song.id,
-              savePath,
+              partPath,
               onProgress: onProgress,
               cancellation: cancellation,
             ) ??
@@ -520,6 +527,13 @@ class Library {
           await outputFile.delete();
         }
         return false;
+      }
+      if (partPath != savePath) {
+        // Only now does the file appear under the name playback looks for.
+        if (await File(savePath).exists()) {
+          await File(savePath).delete();
+        }
+        await outputFile.rename(savePath);
       }
       return true;
     } catch (error) {
