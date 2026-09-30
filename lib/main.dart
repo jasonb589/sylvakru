@@ -122,6 +122,18 @@ Future<void> main() async {
           navigatorKey: globalNavigatorKey,
           title: 'Sylvakru',
           theme: ThemeData(
+            // One scrollbar for the whole client: a desktop pointer needs a bar
+            // it can hit, and a tinted one belongs to the cover-derived theme in
+            // a way the stock grey does not.
+            scrollbarTheme: ScrollbarThemeData(
+              thickness: const WidgetStatePropertyAll(8),
+              radius: const Radius.circular(4),
+              thumbColor: WidgetStatePropertyAll(
+                iconColor.value.withValues(alpha: 0.32),
+              ),
+              trackVisibility: const WidgetStatePropertyAll(false),
+            ),
+
             // Focus has to read stronger than hover: both are the same kind of
             // tint, so if the numbers sit close together a keyboard user cannot
             // tell which row the next Enter will act on.

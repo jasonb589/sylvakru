@@ -718,9 +718,16 @@ class _DownloadLayerState extends State<DownloadLayer> {
           : running && progress >= 0
           ? Padding(
               padding: const EdgeInsets.only(top: 6, bottom: 4),
-              child: LinearProgressIndicator(
-                value: progress.clamp(0.0, 1.0),
-                minHeight: 3,
+              child: TweenAnimationBuilder<double>(
+                // The network reports progress in steps; the bar should not
+                // step with it.
+                tween: Tween(begin: 0, end: progress.clamp(0.0, 1.0)),
+                duration: prefersReducedMotion(context)
+                    ? AppDuration.none
+                    : AppDuration.calm,
+                curve: AppCurve.standard,
+                builder: (context, value, _) =>
+                    LinearProgressIndicator(value: value, minHeight: 3),
               ),
             )
           : Text(

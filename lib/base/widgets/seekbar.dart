@@ -42,6 +42,11 @@ class SeekBarState extends State<SeekBar> {
   /// over the bar.
   double? hoverValue;
 
+  /// The preview the bubble is fading out with. Held so it stays where the
+  /// pointer left it instead of jumping back to the song's own position as it
+  /// goes.
+  double? _bubbleValue;
+
   /// Smallest vertical touch target the seekbar accepts.
   static const double _minTouchTarget = 24;
 
@@ -115,9 +120,6 @@ class SeekBarState extends State<SeekBar> {
               builder: (context, constraints) {
                 final width = constraints.maxWidth;
                 final accent = widget.color ?? seekBarColor.value;
-                final valueFraction = durationMs <= 0
-                    ? 0.0
-                    : (shownValue / durationMs).clamp(0.0, 1.0);
 
                 return SizedBox(
                   height: widget.widgetHeight,
@@ -213,16 +215,33 @@ class SeekBarState extends State<SeekBar> {
 
                       // The time under the pointer, where the bar has room for
                       // it: the compact bars show it in the readout instead.
-                      if (preview != null &&
-                          widget.widgetHeight >= _bubbleHeightNeeded)
+                      // The time under the pointer, where the bar has room for
+                      // it. It leaves over the same step the thumb does, from
+                      // the place the pointer left it.
+                      if (widget.widgetHeight >= _bubbleHeightNeeded &&
+                          _bubbleValue != null)
                         Positioned(
-                          left: _bubbleLeft(width, valueFraction),
+                          left: _bubbleLeft(
+                            width,
+                            durationMs <= 0
+                                ? 0.0
+                                : (_bubbleValue! / durationMs).clamp(0.0, 1.0),
+                          ),
                           top: 0,
-                          child: _TimeBubble(
-                            text: formatDuration(
-                              Duration(milliseconds: shownValue.toInt()),
+                          child: IgnorePointer(
+                            child: AnimatedOpacity(
+                              opacity: preview == null ? 0 : 1,
+                              duration: prefersReducedMotion(context)
+                                  ? AppDuration.none
+                                  : AppDuration.quick,
+                              curve: AppCurve.enter,
+                              child: _TimeBubble(
+                                text: formatDuration(
+                                  Duration(milliseconds: _bubbleValue!.toInt()),
+                                ),
+                                accent: accent,
+                              ),
                             ),
-                            accent: accent,
                           ),
                         ),
 
@@ -238,7 +257,7 @@ class SeekBarState extends State<SeekBar> {
                               return;
                             }
                             setState(() {
-                              hoverValue = previewValue(
+                              hoverValue = _bubbleValue = previewValue(
                                 dx: event.localPosition.dx,
                                 width: width,
                                 durationMs: durationMs,
@@ -336,7 +355,7 @@ class SeekBarState extends State<SeekBar> {
   /// through here, so hovering and dragging cannot disagree about where a point
   /// on the bar is.
   void seekByTouch(double dx, double width, double durationMs) {
-    dragValue = previewValue(
+    dragValue = _bubbleValue = previewValue(
       dx: dx,
       width: width,
       durationMs: durationMs,

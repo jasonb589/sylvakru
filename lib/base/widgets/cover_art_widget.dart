@@ -28,20 +28,41 @@ class CoverArtWidget extends StatelessWidget {
     this.color,
     this.useResize = true,
   });
-
   @override
   Widget build(BuildContext context) {
-    return Material(
-      key: ValueKey(picture?.changeNotifier.value),
-      elevation: elevation,
-      color: color ?? Colors.transparent,
-      shape: SmoothRectangleBorder(
-        smoothness: 1,
-        borderRadius: BorderRadius.circular(borderRadius),
+    return AnimatedSwitcher(
+      duration: prefersReducedMotion(context)
+          ? AppDuration.none
+          : AppDuration.normal,
+      switchInCurve: AppCurve.enter,
+      switchOutCurve: AppCurve.exit,
+      // Keyed by which cover is on screen, not by whether it has finished
+      // loading: a change of track cross-fades here, while a cover arriving
+      // under the same key is the inner fade's business.
+      child: Material(
+        key: ValueKey(_coverKey),
+        elevation: elevation,
+        color: color ?? Colors.transparent,
+        shape: SmoothRectangleBorder(
+          smoothness: 1,
+          borderRadius: BorderRadius.circular(borderRadius),
+        ),
+        clipBehavior: .antiAlias,
+        child: content(context),
       ),
-      clipBehavior: .antiAlias,
-      child: content(context),
     );
+  }
+
+  /// What identifies the cover on screen.
+  ///
+  /// A rebuild of the same cover keeps its element, so it does not fade again;
+  /// the same song loading its cover is still one key.
+  String get _coverKey {
+    if (picturePath != null) {
+      return picturePath!;
+    }
+    final current = picture;
+    return current == null ? 'none' : 'cover-${current.id}';
   }
 
   Widget content(BuildContext context) {
