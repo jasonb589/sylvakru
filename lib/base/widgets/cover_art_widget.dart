@@ -6,6 +6,8 @@ import 'package:smooth_corner/smooth_corner.dart';
 import 'package:sylvakru/base/services/picture_load_scheduler.dart';
 import 'package:sylvakru/base/services/picture_service.dart';
 import 'package:sylvakru/base/design/loading_skeleton.dart';
+import 'package:sylvakru/base/design/app_tokens.dart';
+import 'package:sylvakru/base/design/content_swap.dart';
 
 class CoverArtWidget extends StatelessWidget {
   final double? size;
@@ -72,6 +74,20 @@ class CoverArtWidget extends StatelessWidget {
       height: size,
       fit: size != null ? .contain : .cover,
       gaplessPlayback: true,
+      // A picture read straight from the file still arrives a frame or two
+      // late: fading it in turns that into the cover appearing rather than
+      // blinking into place.
+      frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+        if (wasSynchronouslyLoaded) {
+          return child;
+        }
+        return AnimatedOpacity(
+          opacity: frame == null ? 0 : 1,
+          duration: AppDuration.quick,
+          curve: AppCurve.enter,
+          child: child,
+        );
+      },
       errorBuilder: (context, error, stackTrace) {
         return musicNote();
       },
@@ -120,21 +136,23 @@ class _FuturePictureState extends State<_FuturePicture> {
     return FutureBuilder(
       future: loadPictureSafe(widget.picture, widgetId: widgetId),
       builder: (context, asyncSnapshot) {
-        if (asyncSnapshot.connectionState == ConnectionState.waiting) {
-          // The pulse is what makes this read as a loading cover instead of an
-          // empty grey tile. Every other skeleton in the client has it; without
-          // it a row of covers waiting on the network looked broken.
-          return SkeletonPulse(
+        // The pulse is what makes this read as a loading cover instead of an
+        // empty grey tile. Every other skeleton in the client has it; without
+        // it a row of covers waiting on the network looked broken.
+        //
+        // It leaves through a fade rather than in one frame, which is the
+        // difference between a cover arriving and a tile blinking.
+        return ContentFade(
+          loading: asyncSnapshot.connectionState == ConnectionState.waiting,
+          placeholder: SkeletonPulse(
             child: widget.size == null
                 ? const SkeletonBox()
                 : SkeletonBox.square(widget.size!),
-          );
-        }
-
-        if (asyncSnapshot.hasError) {
-          return widget.musicNote();
-        }
-        return widget.imageWidget(widget.picture.path);
+          ),
+          child: asyncSnapshot.hasError
+              ? widget.musicNote()
+              : widget.imageWidget(widget.picture.path),
+        );
       },
     );
   }

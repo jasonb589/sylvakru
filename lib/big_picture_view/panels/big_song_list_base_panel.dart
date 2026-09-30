@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sylvakru/base/design/content_swap.dart';
 import 'package:sylvakru/base/design/app_tokens.dart';
 import 'package:sylvakru/base/design/loading_skeleton.dart';
 import 'package:flutter/rendering.dart';
@@ -30,9 +31,16 @@ abstract class BigSongListBasePanelState extends State<BigSongListBasePanel> {
 
   @override
   Widget build(BuildContext context) {
-    if (firstLoading) {
-      return const SkeletonList(rows: 10, rowHeight: 80);
-    }
+    // The skeleton is drawn over the list rather than instead of it, so the
+    // wait ends in a fade and whatever is underneath never jumps.
+    return ContentSwap(
+      loading: firstLoading,
+      placeholder: const SkeletonList(rows: 10, rowHeight: 80),
+      child: songListPanel(context),
+    );
+  }
+
+  Widget songListPanel(BuildContext context) {
     final itemExtent = isTooNarrow(context) ? 60.0 : 80.0;
 
     return ListView.builder(

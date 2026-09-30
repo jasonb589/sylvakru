@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sylvakru/base/design/content_swap.dart';
 import 'package:sylvakru/base/design/app_tokens.dart';
 import 'package:sylvakru/base/design/loading_skeleton.dart';
 import 'package:flutter/rendering.dart';
@@ -40,9 +41,16 @@ abstract class BigCollectionListPanelState
 
   @override
   Widget build(BuildContext context) {
-    if (preparing) {
-      return const SkeletonGrid();
-    }
+    // The skeleton is drawn over the grid rather than instead of it, so the
+    // wait ends in a fade and the grid underneath never jumps.
+    return ContentSwap(
+      loading: preparing,
+      placeholder: const SkeletonGrid(),
+      child: collectionGrid(context),
+    );
+  }
+
+  Widget collectionGrid(BuildContext context) {
     return GridView.builder(
       controller: scrollController,
       padding: EdgeInsets.symmetric(
