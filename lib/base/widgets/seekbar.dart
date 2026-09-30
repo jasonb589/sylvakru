@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sylvakru/base/audio_handler.dart';
+import 'package:sylvakru/base/design/app_tokens.dart';
 import 'package:sylvakru/base/services/color_manager.dart';
 import 'package:sylvakru/base/app.dart';
 import 'package:sylvakru/base/utils/common_utils.dart';
@@ -7,6 +8,14 @@ import 'package:sylvakru/base/utils/media_query.dart';
 import 'package:sylvakru/base/utils/metadata_utils.dart';
 import 'package:sylvakru/base/widgets/full_width_track_shape.dart';
 
+/// The progress bar, and how it answers a pointer.
+///
+/// On a desktop the pointer is over the bar long before anything is pressed, so
+/// hovering counts as a question - "where would this land?" - and the bar
+/// answers it: the time under the pointer, and a thumb and track that take hold
+/// of the spot as it arrives - one 150 ms step, the same one a drag gets - so
+/// arriving, dragging and leaving read as one bar changing its mind rather than
+/// three separate reactions.
 class SeekBar extends StatefulWidget {
   final Color? color;
   final bool isMiniMode;
@@ -29,8 +38,42 @@ class SeekBarState extends State<SeekBar> {
   bool isDragging = false; // track if user is touching the thumb
   double horizontalPadding = 0;
 
+  /// Where the pointer is, in milliseconds into the song. Null when it is not
+  /// over the bar.
+  double? hoverValue;
+
   /// Smallest vertical touch target the seekbar accepts.
   static const double _minTouchTarget = 24;
+
+  /// The bar needs this much height before a time bubble fits above the track.
+  /// The compact bars in the control rows are shorter than this, and there the
+  /// preview is shown by the left-hand readout instead.
+  static const double _bubbleHeightNeeded = 30;
+
+  /// The value a pointer at [dx] points at, with the bar's horizontal padding
+  /// taken out and the ends clamped.
+  ///
+  /// Kept as a plain function of the numbers so the mapping can be checked
+  /// without a player, a window or a pointer.
+  static double previewValue({
+    required double dx,
+    required double width,
+    required double durationMs,
+    required double padding,
+  }) {
+    final usable = width - padding * 2;
+    if (usable <= 0 || durationMs <= 0) {
+      return 0;
+    }
+    final relative = ((dx - padding) / usable).clamp(0.0, 1.0);
+    return relative * durationMs;
+  }
+
+  /// What the bar is showing right now: the drag if there is one, otherwise the
+  /// pointer, otherwise nothing.
+  double? get _previewValue => dragValue ?? hoverValue;
+
+  bool get _isEmphasised => isDragging || hoverValue != null;
 
   @override
   Widget build(BuildContext context) {
@@ -62,147 +105,215 @@ class SeekBarState extends State<SeekBar> {
             if (playQueue.isEmpty) {
               sliderValue = 0;
             }
-            return SizedBox(
-              height: widget.widgetHeight,
-              child: Stack(
-                alignment: Alignment.centerLeft,
-                children: [
-                  // Duration labels
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: isMobile ? 0 : 2,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          formatDuration(
-                            Duration(milliseconds: sliderValue.toInt()),
-                          ),
-                          style: TextStyle(
-                            color: widget.color,
-                            fontSize: isMobile
-                                ? null
-                                : widget.isMiniMode
-                                ? 10.5
-                                : 12.5,
-                          ),
-                        ),
-                        Text(
-                          formatDuration(duration),
-                          style: TextStyle(
-                            color: widget.color,
-                            fontSize: isMobile
-                                ? null
-                                : widget.isMiniMode
-                                ? 10.5
-                                : 12.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
 
-                  // Slider visuals
-                  SizedBox(
-                    height: widget.seekBarHeight,
-                    child: SliderTheme(
-                      data: SliderTheme.of(context).copyWith(
-                        thumbColor: widget.color ?? seekBarColor.value,
-                        trackHeight: isDragging ? 4 : 2,
-                        trackShape: const FullWidthTrackShape(),
-                        // A visible thumb only while dragging: it shows what is
-                        // being grabbed without adding a knob to the resting
-                        // bar, which is meant to read as a thin line.
-                        thumbShape: RoundSliderThumbShape(
-                          enabledThumbRadius: isDragging ? 6 : 0,
-                        ),
-                        overlayShape: SliderComponentShape.noOverlay,
-                        activeTrackColor: widget.color ?? seekBarColor.value,
-                        // Derived from the track colour instead of a fixed
-                        // black tint, which disappeared on a dark theme.
-                        inactiveTrackColor: (widget.color ?? seekBarColor.value)
-                            .withValues(alpha: 0.25),
-                      ),
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: horizontalPadding,
-                        ),
-                        child: ExcludeFocus(
-                          child: Slider(
-                            min: 0.0,
-                            max: durationMs,
-                            value: sliderValue.clamp(0.0, durationMs),
-                            onChanged: (value) {},
-                          ),
+            // The value the readout and the bubble show: while the pointer or a
+            // drag is on the bar, that is where the song would be.
+            final preview = playQueue.isEmpty ? null : _previewValue;
+            final shownValue = preview ?? sliderValue;
+
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                final width = constraints.maxWidth;
+                final accent = widget.color ?? seekBarColor.value;
+                final valueFraction = durationMs <= 0
+                    ? 0.0
+                    : (shownValue / durationMs).clamp(0.0, 1.0);
+
+                return SizedBox(
+                  height: widget.widgetHeight,
+                  // The bubble floats above the track, so nothing is clipped.
+                  child: Stack(
+                    alignment: Alignment.centerLeft,
+                    clipBehavior: Clip.none,
+                    children: [
+                      // Duration labels, the left one carrying the preview.
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom: isMobile ? 0 : 2,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              formatDuration(
+                                Duration(milliseconds: shownValue.toInt()),
+                              ),
+                              style: TextStyle(
+                                color: widget.color,
+                                fontWeight: preview == null
+                                    ? null
+                                    : FontWeight.bold,
+                                fontSize: isMobile
+                                    ? null
+                                    : widget.isMiniMode
+                                    ? 10.5
+                                    : 12.5,
+                              ),
+                            ),
+                            Text(
+                              formatDuration(duration),
+                              style: TextStyle(
+                                color: widget.color,
+                                fontSize: isMobile
+                                    ? null
+                                    : widget.isMiniMode
+                                    ? 10.5
+                                    : 12.5,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                  ),
 
-                  // Full-track GestureDetector to capture touches anywhere on the track
-                  Positioned.fill(
-                    top: (widget.widgetHeight - touchHeight) / 2,
-                    bottom: (widget.widgetHeight - touchHeight) / 2,
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.translucent,
-                      onVerticalDragStart: (_) {
-                        setState(() => isDragging = false);
-                      },
-                      onTapDown: (_) {
-                        if (currentSongNotifier.value == null) {
-                          return;
-                        }
-                        setState(() => isDragging = true);
-                      },
-                      onHorizontalDragUpdate: (details) {
-                        if (currentSongNotifier.value == null) {
-                          return;
-                        }
-                        seekByTouch(
-                          details.localPosition.dx,
-                          context,
-                          durationMs,
-                        );
-                        setState(() {
-                          isDragging = true;
-                        });
-                      },
-                      onHorizontalDragEnd: (_) async {
-                        if (currentSongNotifier.value == null) {
-                          return;
-                        }
-                        if (dragValue != null) {
-                          await audioHandler.seek(
-                            Duration(milliseconds: dragValue!.toInt()),
-                          );
-                        }
-                        setState(() {
-                          dragValue = null;
-                          isDragging = false;
-                        });
-                      },
-                      onTapUp: (details) async {
-                        if (currentSongNotifier.value == null) {
-                          return;
-                        }
-                        seekByTouch(
-                          details.localPosition.dx,
-                          context,
-                          durationMs,
-                        );
-                        await audioHandler.seek(
-                          Duration(milliseconds: dragValue!.toInt()),
-                        );
-                        setState(() {
-                          dragValue = null;
-                          isDragging = false;
-                        });
-                      },
-                    ),
+                      // Slider visuals: the track and the thumb take hold of
+                      // the spot together, over one step - a pointer arriving
+                      // and a drag starting read as the same bar.
+                      SizedBox(
+                        height: widget.seekBarHeight,
+                        child: TweenAnimationBuilder<double>(
+                          tween: Tween(begin: 0, end: _isEmphasised ? 1 : 0),
+                          duration: AppDuration.quick,
+                          curve: AppCurve.enter,
+                          builder: (context, emphasis, child) {
+                            return SliderTheme(
+                              data: SliderTheme.of(context).copyWith(
+                                thumbColor: accent,
+                                trackHeight: 2 + 2 * emphasis,
+                                trackShape: const FullWidthTrackShape(),
+                                thumbShape: RoundSliderThumbShape(
+                                  enabledThumbRadius: 5 * emphasis,
+                                ),
+                                overlayShape: SliderComponentShape.noOverlay,
+                                activeTrackColor: accent,
+                                // Derived from the track colour instead of a
+                                // fixed black tint, which disappeared on a dark
+                                // theme.
+                                inactiveTrackColor: accent.withValues(
+                                  alpha: 0.25,
+                                ),
+                              ),
+                              child: child!,
+                            );
+                          },
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: horizontalPadding,
+                            ),
+                            child: ExcludeFocus(
+                              child: Slider(
+                                min: 0.0,
+                                max: durationMs,
+                                value: sliderValue.clamp(0.0, durationMs),
+                                onChanged: (value) {},
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // The time under the pointer, where the bar has room for
+                      // it: the compact bars show it in the readout instead.
+                      if (preview != null &&
+                          widget.widgetHeight >= _bubbleHeightNeeded)
+                        Positioned(
+                          left: _bubbleLeft(width, valueFraction),
+                          top: 0,
+                          child: _TimeBubble(
+                            text: formatDuration(
+                              Duration(milliseconds: shownValue.toInt()),
+                            ),
+                            accent: accent,
+                          ),
+                        ),
+
+                      // Full-track GestureDetector to capture touches anywhere
+                      // on the track, wrapped so the pointer is reported too.
+                      Positioned.fill(
+                        top: (widget.widgetHeight - touchHeight) / 2,
+                        bottom: (widget.widgetHeight - touchHeight) / 2,
+                        child: MouseRegion(
+                          cursor: SystemMouseCursors.click,
+                          onHover: (event) {
+                            if (currentSongNotifier.value == null) {
+                              return;
+                            }
+                            setState(() {
+                              hoverValue = previewValue(
+                                dx: event.localPosition.dx,
+                                width: width,
+                                durationMs: durationMs,
+                                padding: horizontalPadding,
+                              );
+                            });
+                          },
+                          onExit: (_) {
+                            if (hoverValue == null) {
+                              return;
+                            }
+                            setState(() => hoverValue = null);
+                          },
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.translucent,
+                            onVerticalDragStart: (_) {
+                              setState(() => isDragging = false);
+                            },
+                            onTapDown: (_) {
+                              if (currentSongNotifier.value == null) {
+                                return;
+                              }
+                              setState(() => isDragging = true);
+                            },
+                            onHorizontalDragUpdate: (details) {
+                              if (currentSongNotifier.value == null) {
+                                return;
+                              }
+                              seekByTouch(
+                                details.localPosition.dx,
+                                width,
+                                durationMs,
+                              );
+                              setState(() {
+                                isDragging = true;
+                              });
+                            },
+                            onHorizontalDragEnd: (_) async {
+                              if (currentSongNotifier.value == null) {
+                                return;
+                              }
+                              if (dragValue != null) {
+                                await audioHandler.seek(
+                                  Duration(milliseconds: dragValue!.toInt()),
+                                );
+                              }
+                              setState(() {
+                                dragValue = null;
+                                isDragging = false;
+                              });
+                            },
+                            onTapUp: (details) async {
+                              if (currentSongNotifier.value == null) {
+                                return;
+                              }
+                              seekByTouch(
+                                details.localPosition.dx,
+                                width,
+                                durationMs,
+                              );
+                              await audioHandler.seek(
+                                Duration(milliseconds: dragValue!.toInt()),
+                              );
+                              setState(() {
+                                dragValue = null;
+                                isDragging = false;
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                );
+              },
             );
           },
         );
@@ -210,13 +321,58 @@ class SeekBarState extends State<SeekBar> {
     );
   }
 
-  /// Map horizontal touch to slider value
-  void seekByTouch(double dx, BuildContext context, double durationMs) {
-    final box = context.findRenderObject() as RenderBox;
+  /// Keeps the bubble inside the bar: half a bubble's width from either end.
+  double _bubbleLeft(double width, double valueFraction) {
+    const halfBubble = 30.0;
+    final centre =
+        horizontalPadding + valueFraction * (width - horizontalPadding * 2);
+    return (centre - halfBubble).clamp(
+      0.0,
+      (width - halfBubble * 2).clamp(0.0, width),
+    );
+  }
 
-    double relative =
-        (dx - horizontalPadding) / (box.size.width - horizontalPadding * 2);
-    relative = relative.clamp(0.0, 1.0);
-    dragValue = relative * durationMs;
+  /// Map a position on the bar to a value. The pointer and the finger both go
+  /// through here, so hovering and dragging cannot disagree about where a point
+  /// on the bar is.
+  void seekByTouch(double dx, double width, double durationMs) {
+    dragValue = previewValue(
+      dx: dx,
+      width: width,
+      durationMs: durationMs,
+      padding: horizontalPadding,
+    );
+  }
+}
+
+/// The small readout that follows the pointer along the bar.
+///
+/// Coloured like the bar itself on the surface colour, so it belongs to the
+/// track and needs no colour of its own.
+class _TimeBubble extends StatelessWidget {
+  final String text;
+  final Color accent;
+
+  const _TimeBubble({required this.text, required this.accent});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(
+        color: colorManager.getSpecificBgColor(),
+        borderRadius: BorderRadius.circular(AppRadius.coverTiny),
+        border: Border.all(color: accent.withValues(alpha: 0.35)),
+        boxShadow: AppShadow.card(accent),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: accent,
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
   }
 }

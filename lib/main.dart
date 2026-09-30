@@ -122,9 +122,12 @@ Future<void> main() async {
           navigatorKey: globalNavigatorKey,
           title: 'Sylvakru',
           theme: ThemeData(
+            // Focus has to read stronger than hover: both are the same kind of
+            // tint, so if the numbers sit close together a keyboard user cannot
+            // tell which row the next Enter will act on.
             focusColor: lightHoverFocusColorNotifier.value
-                ? Colors.white.withAlpha(20)
-                : Colors.black.withAlpha(20),
+                ? Colors.white.withAlpha(44)
+                : Colors.black.withAlpha(34),
             hoverColor: lightHoverFocusColorNotifier.value
                 ? Colors.white.withAlpha(20)
                 : Colors.black.withAlpha(15),
