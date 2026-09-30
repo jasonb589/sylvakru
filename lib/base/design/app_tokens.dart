@@ -30,11 +30,6 @@ abstract final class AppRadius {
   /// Cover art at thumbnail size inside a dense list.
   static const double coverTiny = 4;
 
-  /// What the platform's "less motion" asks for: the change still happens, it
-  /// just does not travel. A scroll lands where it was going instead of
-  /// sliding there - see [prefersReducedMotion].
-  static const Duration none = Duration.zero;
-
   /// Cover art in a normal list row.
   static const double coverRow = 5;
 
@@ -46,6 +41,11 @@ abstract final class AppRadius {
 abstract final class AppDuration {
   /// Hover, press, focus. Must feel instant.
   static const Duration quick = Duration(milliseconds: 150);
+
+  /// What the platform's "less motion" asks for: the change still happens, it
+  /// just does not travel. A scroll lands where it was going instead of sliding
+  /// there - see [prefersReducedMotion].
+  static const Duration none = Duration.zero;
 
   /// Small state changes: a toggle, a check mark.
   static const Duration normal = Duration(milliseconds: 250);

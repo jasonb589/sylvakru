@@ -19,7 +19,6 @@ final lyricsFontSizeOffsetNotifier = ValueNotifier(0.0);
 final lyricsTimeOffsetNotifier = ValueNotifier(0);
 final lyricsFontWeightNotifier = ValueNotifier(FontWeight.bold);
 
-
 /// Whether lines far from the one being sung are blurred, for depth at the
 /// edges of the view. Off by default: it costs a layer per line.
 final lyricsFarBlurNotifier = ValueNotifier<bool>(false);
@@ -184,7 +183,9 @@ class LyricsListViewState extends State<LyricsListView>
     }
     itemScrollController.scrollTo(
       index: index,
-      duration: Duration(milliseconds: lyricScrollMs(distance)),
+      duration: prefersReducedMotion(context)
+          ? AppDuration.none
+          : Duration(milliseconds: lyricScrollMs(distance)),
       curve: AppLyrics.scrollCurve,
       alignment: _alignment,
     );
@@ -472,7 +473,7 @@ class _LyricLineWidgetState extends State<LyricLineWidget>
   /// never been tapped.
   Widget _withPulse(Widget Function(double pulse) build) {
     final pulse = _pulse;
-    if (pulse == null) {
+    if (pulse == null || prefersReducedMotion(context)) {
       return build(0);
     }
     return AnimatedBuilder(
@@ -598,13 +599,16 @@ class _LyricLineWidgetState extends State<LyricLineWidget>
     final colour = Color.lerp(textColor, highlightTextColor, 1 - near)!;
     final opacity = lyricLineOpacity(distance);
     final weight = lyricLineWeight(lyricsFontWeightNotifier.value, distance);
+    // The platform's "less motion" turns off what is only decoration: a line
+    // that grows as it moves away from the one being sung.
+    final reduced = prefersReducedMotion(context);
 
     return _withPulse((pulse) {
       // A tap lifts the line a little, on top of where it already stands for
       // its distance.
       final strength = (opacity + 0.25 * pulse).clamp(0.0, 1.0);
       Widget content = Transform.scale(
-        scale: lyricLineScale(distance) * (1 + 0.02 * pulse),
+        scale: reduced ? 1.0 : lyricLineScale(distance) * (1 + 0.02 * pulse),
         alignment: expanded ? .centerLeft : .center,
         // Inside the transform: a scale is then composited over the cached
         // raster instead of drawing the text again on every frame.
@@ -650,7 +654,7 @@ class _LyricLineWidgetState extends State<LyricLineWidget>
         ),
       );
 
-      final sigma = settled && lyricsFarBlurNotifier.value
+      final sigma = settled && lyricsFarBlurNotifier.value && !reduced
           ? lyricFarBlurSigma(distance)
           : 0.0;
       if (sigma > 0.01) {
@@ -732,8 +736,6 @@ class LyricFillText extends StatefulWidget {
   @override
   State<LyricFillText> createState() => KaraokeTextState();
 }
-
-
 
 /// Kept under its previous name: the desktop lyrics window builds it directly.
 typedef KaraokeText = LyricFillText;

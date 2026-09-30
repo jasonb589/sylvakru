@@ -62,7 +62,9 @@ class MySwitch extends StatelessWidget {
                 height: 20,
                 toggleSize: 15,
                 activeColor: switchColor.value,
-                inactiveColor: Colors.grey.shade300,
+                // Derived from the switch's own colour rather than a fixed
+                // grey, which read as a different material on a dark theme.
+                inactiveColor: switchColor.value.withValues(alpha: 0.25),
                 value: value,
                 onToggle: (value) {
                   tryVibrate();

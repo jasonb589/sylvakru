@@ -57,7 +57,9 @@ class _EqualizerWidgetState extends State<EqualizerWidget> {
                 thumbShape: RoundSliderThumbShape(enabledThumbRadius: 10),
                 overlayShape: SliderComponentShape.noOverlay,
                 activeTrackColor: iconColor.value,
-                inactiveTrackColor: Colors.black12,
+                // Same family as the active track: a fixed black tint
+                // disappeared on a dark theme.
+                inactiveTrackColor: iconColor.value.withValues(alpha: 0.25),
               ),
               child: Slider(
                 min: -12,
