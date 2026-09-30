@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sylvakru/base/app.dart';
+import 'package:sylvakru/base/design/app_tokens.dart';
 
 class ZoomPageRoute<T> extends PageRoute<T> {
   ZoomPageRoute({required this.builder});
@@ -51,5 +52,5 @@ class ZoomPageRoute<T> extends PageRoute<T> {
   bool get maintainState => true;
 
   @override
-  Duration get transitionDuration => const Duration(milliseconds: 600);
+  Duration get transitionDuration => AppDuration.page;
 }

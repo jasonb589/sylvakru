@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:sylvakru/base/design/app_tokens.dart';
 
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
@@ -47,8 +48,8 @@ class _SongInfoState extends State<SongInfo> {
 
     _scrollController.animateTo(
       target,
-      duration: const Duration(milliseconds: 120),
-      curve: Curves.easeOut,
+      duration: AppDuration.quick,
+      curve: AppCurve.enter,
     );
   }
 

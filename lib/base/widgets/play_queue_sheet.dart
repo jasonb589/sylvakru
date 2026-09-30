@@ -180,7 +180,7 @@ class PlayQueueSheetState extends State<PlayQueueSheet> {
                               return AnimatedBuilder(
                                 animation: animation,
                                 builder: (context, innerChild) {
-                                  final lift = Curves.easeOut.transform(
+                                  final lift = AppCurve.enter.transform(
                                     animation.value,
                                   );
                                   return Container(

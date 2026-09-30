@@ -343,7 +343,7 @@ Future<T?> showAnimationDialog<T>({
   return await showGeneralDialog<T>(
     context: context,
     barrierColor: Colors.transparent,
-    transitionDuration: const Duration(milliseconds: 300),
+    transitionDuration: AppDuration.calm,
     pageBuilder: (context, animation, _) {
       return StatefulBuilder(
         builder: (context, setState) {
@@ -394,8 +394,8 @@ Future<T?> showAnimationDialog<T>({
 
               Center(
                 child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeOutCubic,
+                  duration: AppDuration.normal,
+                  curve: AppCurve.enter,
                   transform: Matrix4.translationValues(0, offset.dy, 0),
                   child: GestureDetector(
                     onVerticalDragUpdate: (details) {
@@ -431,7 +431,7 @@ Future<T?> showAnimationDialog<T>({
                           ).animate(
                             CurvedAnimation(
                               parent: animation,
-                              curve: Curves.easeInOutCubic,
+                              curve: AppCurve.standard,
                             ),
                           ),
                       child: FadeTransition(

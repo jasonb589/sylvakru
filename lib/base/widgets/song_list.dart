@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:sylvakru/base/design/loading_skeleton.dart';
+import 'package:sylvakru/base/design/app_tokens.dart';
 
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:material_ui/material_ui.dart';

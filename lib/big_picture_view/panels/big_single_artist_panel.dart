@@ -1,4 +1,5 @@
 import 'package:sylvakru/base/design/cover_backdrop.dart';
+import 'package:sylvakru/base/design/app_tokens.dart';
 
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/rendering.dart';
@@ -385,8 +386,8 @@ class _BigSingleArtistPanelState extends State<BigSingleArtistPanel> {
                               _scrollController.position.minScrollExtent,
                               _scrollController.position.maxScrollExtent,
                             ),
-                            duration: const Duration(milliseconds: 250),
-                            curve: Curves.easeOut,
+                            duration: AppDuration.normal,
+                            curve: AppCurve.enter,
                           );
                         }
                       },

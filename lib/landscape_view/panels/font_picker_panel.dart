@@ -15,8 +15,8 @@ extension _FontPickerPanel on _FontPickerLayerState {
           scrollToTop: () {
             scrollController.animateTo(
               0,
-              duration: Duration(milliseconds: 250),
-              curve: Curves.linear,
+              duration: AppDuration.normal,
+              curve: AppCurve.standard,
             );
           },
         ),

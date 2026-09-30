@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sylvakru/base/design/app_tokens.dart';
 import 'package:flutter/rendering.dart';
 import 'package:sylvakru/base/data/artist_album.dart';
 import 'package:sylvakru/base/app.dart';
@@ -463,8 +464,8 @@ class _ListViewState extends State<_ListView> {
                           controller.position.minScrollExtent,
                           controller.position.maxScrollExtent,
                         ),
-                        duration: const Duration(milliseconds: 150),
-                        curve: Curves.easeOut,
+                        duration: AppDuration.quick,
+                        curve: AppCurve.enter,
                       );
 
                       final rowBox =
@@ -485,8 +486,8 @@ class _ListViewState extends State<_ListView> {
                           widget.verticalController.position.minScrollExtent,
                           widget.verticalController.position.maxScrollExtent,
                         ),
-                        duration: const Duration(milliseconds: 150),
-                        curve: Curves.easeOut,
+                        duration: AppDuration.quick,
+                        curve: AppCurve.enter,
                       );
                     },
                     child: Column(

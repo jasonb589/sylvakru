@@ -16,8 +16,8 @@ extension _SongListPanel on _SongListState {
             scrollToTop: () {
               scrollController.animateTo(
                 0,
-                duration: Duration(milliseconds: 250),
-                curve: Curves.linear,
+                duration: AppDuration.normal,
+                curve: AppCurve.standard,
               );
             },
             findLocation: () {
@@ -41,8 +41,8 @@ extension _SongListPanel on _SongListState {
                   minScrollExtent,
                   maxScrollExtent,
                 ),
-                duration: Duration(milliseconds: 250),
-                curve: Curves.linear,
+                duration: AppDuration.normal,
+                curve: AppCurve.standard,
               );
             },
           ),

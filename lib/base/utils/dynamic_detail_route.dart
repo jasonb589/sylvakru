@@ -1,9 +1,9 @@
 import 'dart:io';
 
 import 'package:material_ui/material_ui.dart';
-import 'package:sylvakru/base/app.dart';
 import 'package:sylvakru/base/utils/media_query.dart';
 import 'package:sylvakru/layer/layers_manager.dart';
+import 'package:sylvakru/base/design/app_tokens.dart';
 
 class DynamicDetailRoute extends PageRoute with MaterialRouteTransitionMixin {
   DynamicDetailRoute({required this.builder, required this.label});
@@ -12,12 +12,10 @@ class DynamicDetailRoute extends PageRoute with MaterialRouteTransitionMixin {
   final String label;
 
   @override
-  Duration get transitionDuration =>
-      Duration(milliseconds: isMobile ? 400 : 500);
+  Duration get transitionDuration => AppDuration.page;
 
   @override
-  Duration get reverseTransitionDuration =>
-      Duration(milliseconds: isMobile ? 400 : 500);
+  Duration get reverseTransitionDuration => AppDuration.page;
 
   @override
   Widget buildContent(BuildContext context) => builder(context);
@@ -53,8 +51,8 @@ class DynamicDetailRoute extends PageRoute with MaterialRouteTransitionMixin {
         }
         final animation = CurvedAnimation(
           parent: secondaryAnimation,
-          curve: Curves.linearToEaseOut,
-          reverseCurve: Curves.easeInToLinear,
+          curve: AppCurve.enter,
+          reverseCurve: AppCurve.exit,
         );
         final Animation<Offset> delegatedPositionAnimation = animation.drive(
           tween,
@@ -96,8 +94,8 @@ class DynamicDetailRoute extends PageRoute with MaterialRouteTransitionMixin {
       }
       final curved = CurvedAnimation(
         parent: animation,
-        curve: Curves.easeInOutCubic,
-        reverseCurve: Curves.easeInOutCubic,
+        curve: AppCurve.standard,
+        reverseCurve: AppCurve.standard,
       );
       return SlideTransition(
         position: Tween<Offset>(

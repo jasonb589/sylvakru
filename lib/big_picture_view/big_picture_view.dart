@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:sylvakru/base/design/app_tokens.dart';
 import 'package:sylvakru/base/design/cover_backdrop.dart';
 
 import 'package:material_ui/material_ui.dart';
@@ -350,7 +351,7 @@ class _BigPictureViewState extends State<BigPictureView> {
                                               duration: const Duration(
                                                 milliseconds: 300,
                                               ),
-                                              curve: Curves.easeOut,
+                                              curve: AppCurve.enter,
                                             );
                                           },
                                           needFocusColor: true,

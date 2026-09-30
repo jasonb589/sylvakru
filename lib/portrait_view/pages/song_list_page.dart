@@ -266,8 +266,8 @@ extension _SongListPage on _SongListState {
                 onPressed: () {
                   scrollController.animateTo(
                     0,
-                    duration: Duration(milliseconds: 250),
-                    curve: Curves.linear,
+                    duration: AppDuration.normal,
+                    curve: AppCurve.standard,
                   );
                 },
                 icon: ImageIcon(topArrowImage),

@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sylvakru/base/design/app_tokens.dart';
 import 'package:sylvakru/base/design/loading_skeleton.dart';
 import 'package:flutter/rendering.dart';
 import 'package:smooth_corner/smooth_corner.dart';
@@ -77,8 +78,8 @@ abstract class BigSongListBasePanelState extends State<BigSongListBasePanel> {
                         scrollController.position.minScrollExtent,
                         scrollController.position.maxScrollExtent,
                       ),
-                      duration: const Duration(milliseconds: 250),
-                      curve: Curves.easeOut,
+                      duration: AppDuration.normal,
+                      curve: AppCurve.enter,
                     );
                   }
                 },

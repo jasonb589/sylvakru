@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:sylvakru/base/design/app_tokens.dart';
 
 import 'package:material_ui/material_ui.dart';
 import 'package:sylvakru/base/services/color_manager.dart';
@@ -40,13 +41,10 @@ class _PortraitViewState extends State<PortraitView>
 
   void updateDrawerSetting() {
     setState(() {
-      _slideAnimation =
-          Tween<Offset>(
-            begin: Offset(endDrawerNotifier.value ? 1.0 : -1.0, 0.0),
-            end: Offset.zero,
-          ).animate(
-            CurvedAnimation(parent: _controller, curve: Curves.linearToEaseOut),
-          );
+      _slideAnimation = Tween<Offset>(
+        begin: Offset(endDrawerNotifier.value ? 1.0 : -1.0, 0.0),
+        end: Offset.zero,
+      ).animate(CurvedAnimation(parent: _controller, curve: AppCurve.enter));
     });
   }
 
@@ -54,20 +52,14 @@ class _PortraitViewState extends State<PortraitView>
   void initState() {
     super.initState();
 
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 400),
-    );
+    _controller = AnimationController(vsync: this, duration: AppDuration.calm);
 
     _controller.addStatusListener(statusListener);
 
-    _slideAnimation =
-        Tween<Offset>(
-          begin: Offset(endDrawerNotifier.value ? 1.0 : -1.0, 0.0),
-          end: Offset.zero,
-        ).animate(
-          CurvedAnimation(parent: _controller, curve: Curves.linearToEaseOut),
-        );
+    _slideAnimation = Tween<Offset>(
+      begin: Offset(endDrawerNotifier.value ? 1.0 : -1.0, 0.0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _controller, curve: AppCurve.enter));
 
     endDrawerNotifier.addListener(updateDrawerSetting);
     layersManager.switchNotifier.addListener(slideBegin);

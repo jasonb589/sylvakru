@@ -45,8 +45,13 @@ abstract final class AppDuration {
   /// Small state changes: a toggle, a check mark.
   static const Duration normal = Duration(milliseconds: 250);
 
-  /// Page and panel transitions.
+  /// Panels, dialogs and popups: a surface arriving inside the window.
   static const Duration calm = Duration(milliseconds: 300);
+
+  /// A page that takes over the window - a detail page, the player, a
+  /// big-picture panel. The longest step the app takes above [calm], and the
+  /// one transition the listener should never see run at two speeds.
+  static const Duration page = Duration(milliseconds: 500);
 
   /// The cover backdrop. Slow enough that a track change reads as the whole
   /// surface shifting colour rather than a flicker.
@@ -58,6 +63,10 @@ abstract final class AppDuration {
 }
 
 /// Curves, paired with the intent of the animation.
+///
+/// Four roles, and every animation in the app uses one of them: a test fails on
+/// a `Curves.*` written anywhere else, so a screen cannot quietly pick its own
+/// easing and drift away from the others.
 abstract final class AppCurve {
   /// Default for anything that moves between two resting states.
   static const Curve standard = Curves.easeInOutCubic;

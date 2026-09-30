@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:sylvakru/base/design/app_tokens.dart';
 
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import 'package:material_ui/material_ui.dart';
@@ -749,8 +750,8 @@ class HomeLayerState extends State<HomeLayer> {
                                 0.0,
                                 scrollController.position.maxScrollExtent,
                               ),
-                              duration: Duration(milliseconds: 500),
-                              curve: Curves.easeInOutCubic,
+                              duration: AppDuration.page,
+                              curve: AppCurve.standard,
                             );
                             isScrolling = false;
                             changeNotifier.value++;
@@ -801,8 +802,8 @@ class HomeLayerState extends State<HomeLayer> {
                                 0.0,
                                 scrollController.position.maxScrollExtent,
                               ),
-                              duration: Duration(milliseconds: 500),
-                              curve: Curves.easeInOutCubic,
+                              duration: AppDuration.page,
+                              curve: AppCurve.standard,
                             );
 
                             isScrolling = false;

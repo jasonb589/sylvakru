@@ -235,7 +235,7 @@ Widget showPlayQueueButton(double size, {Color? iconColor}) {
                             ),
                             clipBehavior: Clip.antiAliasWithSaveLayer,
                             child: AnimatedContainer(
-                              duration: Duration(milliseconds: 250),
+                              duration: AppDuration.normal,
                               color: Color.alphaBlend(
                                 colorManager.getSpecificBgColor(),
                                 colorManager.getSpecificBgBaseColor(),
@@ -258,7 +258,7 @@ Widget showPlayQueueButton(double size, {Color? iconColor}) {
                         .animate(
                           CurvedAnimation(
                             parent: animation,
-                            curve: Curves.easeOutCubic,
+                            curve: AppCurve.enter,
                           ),
                         ),
                     child: child,

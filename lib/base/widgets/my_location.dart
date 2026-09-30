@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sylvakru/base/design/app_tokens.dart';
 import 'package:sylvakru/base/audio_handler.dart';
 import 'package:sylvakru/base/asset_images.dart';
 import 'package:sylvakru/base/my_audio_metadata.dart';
@@ -43,8 +44,8 @@ class MyLocation extends StatelessWidget {
             final minScrollExtent = position.minScrollExtent;
             scrollController.animateTo(
               (60 * index + offset).clamp(minScrollExtent, maxScrollExtent),
-              duration: Duration(milliseconds: 300),
-              curve: Curves.linear,
+              duration: AppDuration.normal,
+              curve: AppCurve.standard,
             );
           },
           icon: ImageIcon(locationImage),

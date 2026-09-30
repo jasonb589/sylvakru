@@ -135,7 +135,7 @@ class _PortraitLyricsPageState extends State<PortraitLyricsPage> {
         builder: (context, value, child) {
           return AnimatedContainer(
             duration: Duration(milliseconds: _animationDuration),
-            curve: Curves.easeOutCubic,
+            curve: AppCurve.enter,
             transform: Matrix4.translationValues(0, value, 0),
             child: child,
           );

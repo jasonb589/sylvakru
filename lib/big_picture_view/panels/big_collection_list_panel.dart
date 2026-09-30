@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:sylvakru/base/design/app_tokens.dart';
 import 'package:sylvakru/base/design/loading_skeleton.dart';
 import 'package:flutter/rendering.dart';
 import 'package:sylvakru/base/services/picture_service.dart';
@@ -106,8 +107,8 @@ abstract class BigCollectionListPanelState
                     scrollController.position.minScrollExtent,
                     scrollController.position.maxScrollExtent,
                   ),
-                  duration: const Duration(milliseconds: 150),
-                  curve: Curves.easeOut,
+                  duration: AppDuration.quick,
+                  curve: AppCurve.enter,
                 );
               },
             );
