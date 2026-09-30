@@ -1204,4 +1204,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get reducedMotionNever => '从不减少';
+
+  @override
+  String get listEmpty => '这里还没有内容';
+
+  @override
+  String get listEmptyHint => '换个筛选条件，或先在设置里同步曲库';
 }

@@ -537,5 +537,7 @@
   "reducedMotion": "Reduce motion",
   "reducedMotionSystem": "Follow the system",
   "reducedMotionAlways": "Always keep still",
-  "reducedMotionNever": "Keep the app's animations"
+  "reducedMotionNever": "Keep the app's animations",
+  "listEmpty": "Nothing here yet",
+  "listEmptyHint": "Change the filter, or sync the library in Settings"
 }

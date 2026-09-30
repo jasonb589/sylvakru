@@ -101,8 +101,7 @@ Future<void> main() async {
         lightHoverFocusColorNotifier,
       ]),
       builder: (context, child) {
-        if (!immersiveWideLayoutNotifier.value &&
-            !_statusBarStyleScheduled) {
+        if (!immersiveWideLayoutNotifier.value && !_statusBarStyleScheduled) {
           _statusBarStyleScheduled = true;
           WidgetsBinding.instance.addPostFrameCallback((_) {
             SystemChrome.setSystemUIOverlayStyle(
@@ -177,13 +176,13 @@ Future<void> main() async {
             iconButtonTheme: IconButtonThemeData(
               style: IconButton.styleFrom(
                 enabledMouseCursor: SystemMouseCursors.click,
-              ),
+              ).copyWith(side: _keyboardFocusRing(iconColor.value)),
             ),
 
             textButtonTheme: TextButtonThemeData(
               style: TextButton.styleFrom(
                 enabledMouseCursor: SystemMouseCursors.click,
-              ),
+              ).copyWith(side: _keyboardFocusRing(iconColor.value)),
             ),
 
             elevatedButtonTheme: ElevatedButtonThemeData(
@@ -473,3 +472,17 @@ $text
     );
   });
 }
+
+/// The ring a control draws while it holds the keyboard focus.
+///
+/// A tint alone is easy to miss in a row of identical buttons, and a keyboard
+/// user has to see which one Enter will fire. Buttons only: a list row is a
+/// surface rather than a control, and its focused tint is already stronger than
+/// its hover tint.
+WidgetStateProperty<BorderSide?> _keyboardFocusRing(Color colour) =>
+    WidgetStateProperty.resolveWith((states) {
+      if (!states.contains(WidgetState.focused)) {
+        return BorderSide.none;
+      }
+      return BorderSide(color: colour.withValues(alpha: 0.75), width: 2);
+    });

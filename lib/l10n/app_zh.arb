@@ -460,5 +460,7 @@
   "reducedMotion": "减少动效",
   "reducedMotionSystem": "跟随系统",
   "reducedMotionAlways": "总是减少",
-  "reducedMotionNever": "从不减少"
+  "reducedMotionNever": "从不减少",
+  "listEmpty": "这里还没有内容",
+  "listEmptyHint": "换个筛选条件，或先在设置里同步曲库"
 }

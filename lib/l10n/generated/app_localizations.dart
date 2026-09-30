@@ -2407,6 +2407,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Keep the app\'s animations'**
   String get reducedMotionNever;
+
+  /// No description provided for @listEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing here yet'**
+  String get listEmpty;
+
+  /// No description provided for @listEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Change the filter, or sync the library in Settings'**
+  String get listEmptyHint;
 }
 
 class _AppLocalizationsDelegate

@@ -1230,4 +1230,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reducedMotionNever => 'Keep the app\'s animations';
+
+  @override
+  String get listEmpty => 'Nothing here yet';
+
+  @override
+  String get listEmptyHint =>
+      'Change the filter, or sync the library in Settings';
 }

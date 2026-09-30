@@ -52,6 +52,8 @@ import 'package:sylvakru/layer/recently_added_layer.dart';
 import 'package:sylvakru/portrait_view/my_search_field.dart';
 import 'package:sylvakru/base/design/marquee_text.dart';
 
+import 'package:sylvakru/base/design/content_swap.dart';
+import 'package:sylvakru/base/design/empty_state.dart';
 part '../../landscape_view/panels/song_list_panel.dart';
 part '../../portrait_view/pages/song_list_page.dart';
 

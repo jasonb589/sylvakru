@@ -53,6 +53,20 @@ extension _SongListPanel on _SongListState {
   }
 
   Widget panelContent(BuildContext context) {
+    // The skeleton is drawn over the list rather than instead of it, so the list
+    // keeps its place - and its scroll - while the placeholder fades. A sliver
+    // swap cannot do that: see ContentSwap.
+    return ValueListenableBuilder(
+      valueListenable: currentSongListNotifier,
+      builder: (context, _, _) => ContentSwap(
+        loading: prepareing,
+        placeholder: const SkeletonList(rows: 12),
+        child: panelScrollView(context),
+      ),
+    );
+  }
+
+  Widget panelScrollView(BuildContext context) {
     return CustomScrollView(
       controller: scrollController,
       slivers: [
@@ -89,10 +103,14 @@ extension _SongListPanel on _SongListState {
           sliver: ValueListenableBuilder(
             valueListenable: currentSongListNotifier,
             builder: (context, currentSongList, child) {
-              if (prepareing) {
-                return const SliverFillRemaining(
+              if (currentSongList.isEmpty) {
+                return SliverFillRemaining(
                   hasScrollBody: false,
-                  child: SkeletonList(),
+                  child: EmptyState(
+                    icon: Icons.music_note_outlined,
+                    title: AppLocalizations.of(context).listEmpty,
+                    subtitle: AppLocalizations.of(context).listEmptyHint,
+                  ),
                 );
               }
               return SliverReorderableList(

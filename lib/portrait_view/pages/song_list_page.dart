@@ -67,10 +67,10 @@ extension _SongListPage on _SongListState {
                   Text("${l10n.folders}: ", style: TextStyle(fontSize: 15)),
 
                 Expanded(
-                    child: MarqueeText(
-                      text: getTitleText(l10n),
-                      style: TextStyle(fontSize: 15),
-                    ),
+                  child: MarqueeText(
+                    text: getTitleText(l10n),
+                    style: TextStyle(fontSize: 15),
+                  ),
                 ),
               ],
             ),
@@ -359,6 +359,16 @@ extension _SongListPage on _SongListState {
               return const SliverFillRemaining(
                 hasScrollBody: false,
                 child: SkeletonList(),
+              );
+            }
+            if (currentSongList.isEmpty) {
+              return SliverFillRemaining(
+                hasScrollBody: false,
+                child: EmptyState(
+                  icon: Icons.music_note_outlined,
+                  title: AppLocalizations.of(context).listEmpty,
+                  subtitle: AppLocalizations.of(context).listEmptyHint,
+                ),
               );
             }
             return SliverFixedExtentList.builder(
