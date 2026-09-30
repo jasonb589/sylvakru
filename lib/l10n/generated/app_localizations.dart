@@ -2383,6 +2383,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Shortcuts restored to their defaults'**
   String get shortcutRestored;
+
+  /// No description provided for @reducedMotion.
+  ///
+  /// In en, this message translates to:
+  /// **'Reduce motion'**
+  String get reducedMotion;
+
+  /// No description provided for @reducedMotionSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow the system'**
+  String get reducedMotionSystem;
+
+  /// No description provided for @reducedMotionAlways.
+  ///
+  /// In en, this message translates to:
+  /// **'Always keep still'**
+  String get reducedMotionAlways;
+
+  /// No description provided for @reducedMotionNever.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep the app\'s animations'**
+  String get reducedMotionNever;
 }
 
 class _AppLocalizationsDelegate

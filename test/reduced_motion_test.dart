@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sylvakru/base/design/marquee_text.dart';
+import 'package:sylvakru/base/design/app_tokens.dart';
 
 /// The platform's "less motion" is a request, and the client answers it: what
 /// carries information keeps moving, what is only decoration stands still.
@@ -43,6 +44,57 @@ void main() {
     // signal here, so the count of the line itself is what is asserted.
     final text = tester.widget<Text>(find.byType(Text).first);
     expect(text.overflow, TextOverflow.ellipsis);
+    expect(
+      find.text('A song title far too long to fit in here'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('the app setting wins over the platform, both ways', (
+    tester,
+  ) async {
+    addTearDown(
+      () => reducedMotionModeNotifier.value = ReducedMotionMode.system,
+    );
+
+    Widget app({required bool reduced}) => MaterialApp(
+      // A new key each time, so the tree is rebuilt rather than reused while
+      // the setting changes underneath it.
+      key: ValueKey('$reduced-${reducedMotionModeNotifier.value.name}'),
+      home: MediaQuery(
+        data: MediaQueryData(disableAnimations: reduced),
+        child: const Scaffold(
+          body: SizedBox(
+            width: 120,
+            child: MarqueeText(
+              text: 'A song title far too long to fit in here',
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // Still, even where the platform would allow movement.
+    reducedMotionModeNotifier.value = ReducedMotionMode.always;
+    await tester.pumpWidget(app(reduced: false));
+    expect(
+      find.text('A song title far too long to fit in here'),
+      findsOneWidget,
+    );
+
+    // Moving, even where the platform asks for less.
+    reducedMotionModeNotifier.value = ReducedMotionMode.never;
+    await tester.pumpWidget(app(reduced: true));
+    await tester.pump();
+    expect(
+      find.text('A song title far too long to fit in here'),
+      findsNWidgets(2),
+    );
+
+    // Back to following the platform.
+    reducedMotionModeNotifier.value = ReducedMotionMode.system;
+    await tester.pumpWidget(app(reduced: true));
+    await tester.pump();
     expect(
       find.text('A song title far too long to fit in here'),
       findsOneWidget,

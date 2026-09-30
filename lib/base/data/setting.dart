@@ -9,6 +9,7 @@ import 'package:sylvakru/base/widgets/lyric_list_view.dart';
 import 'package:sylvakru/base/app.dart';
 import 'package:sylvakru/base/utils/path.dart';
 import 'package:sylvakru/base/utils/shortcuts.dart';
+import 'package:sylvakru/base/design/app_tokens.dart';
 import 'package:sylvakru/base/widgets/manage_music_folders.dart';
 import 'package:sylvakru/portrait_view/portrait_view.dart';
 
@@ -235,6 +236,11 @@ class Setting {
     shortcutBindingsNotifier.value = decodeShortcutOverrides(
       json['shortcutBindings'],
     );
+
+    reducedMotionModeNotifier.value = ReducedMotionMode.values.firstWhere(
+      (mode) => mode.name == json['reducedMotion'],
+      orElse: () => ReducedMotionMode.system,
+    );
   }
 
   void save() {
@@ -281,6 +287,7 @@ class Setting {
         'shortcutBindings': encodeShortcutOverrides(
           shortcutBindingsNotifier.value,
         ),
+        'reducedMotion': reducedMotionModeNotifier.value.name,
       }),
     );
   }

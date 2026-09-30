@@ -1218,4 +1218,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shortcutRestored => 'Shortcuts restored to their defaults';
+
+  @override
+  String get reducedMotion => 'Reduce motion';
+
+  @override
+  String get reducedMotionSystem => 'Follow the system';
+
+  @override
+  String get reducedMotionAlways => 'Always keep still';
+
+  @override
+  String get reducedMotionNever => 'Keep the app\'s animations';
 }

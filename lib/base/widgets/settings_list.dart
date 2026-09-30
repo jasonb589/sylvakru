@@ -182,6 +182,10 @@ class _SettingsListState extends State<SettingsList> {
 
         sliverBox(paddingIfNeed(isLandscape, equalizerListTile(context, l10n))),
 
+        sliverBox(
+          paddingIfNeed(isLandscape, reducedMotionListTile(context, l10n)),
+        ),
+
         if (isMobile)
           sliverBox(
             paddingIfNeed(
@@ -697,6 +701,67 @@ class _SettingsListState extends State<SettingsList> {
         ),
       ),
     );
+  }
+
+  /// Three choices rather than a switch: one of them is "follow the system", and
+  /// a switch cannot say that.
+  Widget reducedMotionListTile(BuildContext context, AppLocalizations l10n) {
+    return ValueListenableBuilder<ReducedMotionMode>(
+      valueListenable: reducedMotionModeNotifier,
+      builder: (context, mode, _) {
+        return ListTile(
+          leading: ImageIcon(motionImage, size: iconSize),
+          title: Text(l10n.reducedMotion),
+          subtitle: Text(_reducedMotionLabel(l10n, mode)),
+          onTap: () => _pickReducedMotion(context, l10n, mode),
+        );
+      },
+    );
+  }
+
+  String _reducedMotionLabel(AppLocalizations l10n, ReducedMotionMode mode) {
+    switch (mode) {
+      case ReducedMotionMode.system:
+        return l10n.reducedMotionSystem;
+      case ReducedMotionMode.always:
+        return l10n.reducedMotionAlways;
+      case ReducedMotionMode.never:
+        return l10n.reducedMotionNever;
+    }
+  }
+
+  Future<void> _pickReducedMotion(
+    BuildContext context,
+    AppLocalizations l10n,
+    ReducedMotionMode current,
+  ) async {
+    final chosen = await showAnimationDialog<ReducedMotionMode>(
+      context: context,
+      child: SizedBox(
+        width: 320,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final mode in ReducedMotionMode.values)
+              ListTile(
+                leading: Icon(
+                  mode == current
+                      ? Icons.check_circle_rounded
+                      : Icons.circle_outlined,
+                ),
+                title: Text(_reducedMotionLabel(l10n, mode)),
+                onTap: () => Navigator.of(context).pop(mode),
+              ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+
+    if (chosen != null) {
+      reducedMotionModeNotifier.value = chosen;
+      setting.save();
+    }
   }
 
   Widget vibrationListTile(AppLocalizations l10n) {

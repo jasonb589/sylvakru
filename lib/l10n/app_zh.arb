@@ -456,5 +456,9 @@
   },
   "shortcutReplace": "替换",
   "shortcutRestoreDefaults": "恢复默认",
-  "shortcutRestored": "已恢复默认快捷键"
+  "shortcutRestored": "已恢复默认快捷键",
+  "reducedMotion": "减少动效",
+  "reducedMotionSystem": "跟随系统",
+  "reducedMotionAlways": "总是减少",
+  "reducedMotionNever": "从不减少"
 }

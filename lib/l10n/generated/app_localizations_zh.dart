@@ -1192,4 +1192,16 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get shortcutRestored => '已恢复默认快捷键';
+
+  @override
+  String get reducedMotion => '减少动效';
+
+  @override
+  String get reducedMotionSystem => '跟随系统';
+
+  @override
+  String get reducedMotionAlways => '总是减少';
+
+  @override
+  String get reducedMotionNever => '从不减少';
 }

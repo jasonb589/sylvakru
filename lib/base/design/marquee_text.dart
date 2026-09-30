@@ -42,7 +42,22 @@ class _MarqueeTextState extends State<MarqueeText>
   bool _scrolling = false;
 
   @override
+  void initState() {
+    super.initState();
+    // The setting can be changed while this is on screen: a title in the bar
+    // should stop travelling the moment it is switched on, not at the next song.
+    reducedMotionModeNotifier.addListener(_onMotionSettingChanged);
+  }
+
+  void _onMotionSettingChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
   void dispose() {
+    reducedMotionModeNotifier.removeListener(_onMotionSettingChanged);
     _controller.dispose();
     super.dispose();
   }

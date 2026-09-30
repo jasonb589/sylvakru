@@ -233,12 +233,41 @@ abstract final class AppLyrics {
   static const double farBlurSigma = 0.45;
 }
 
-/// Whether the platform asked for less movement.
+/// How much the client is allowed to move, as far as the listener is concerned.
 ///
-/// Windows' "animation effects", Android's "remove animations" and iOS'
-/// "reduce motion" all land here. When one of them is on, the client keeps what
-/// carries information - a progress fill, a line becoming the current one, a
-/// page arriving - and drops what is only decoration: a title travelling on its
-/// own, a pulsing placeholder, a line that grows and blurs as it moves away.
-bool prefersReducedMotion(BuildContext context) =>
-    MediaQuery.of(context).disableAnimations;
+/// The platform has its own "less motion" and that is the default: Windows'
+/// "animation effects", Android's "remove animations" and iOS' "reduce motion"
+/// all land in `MediaQuery.disableAnimations`. This is the other input - for a
+/// listener who wants the player to sit still while the rest of the system keeps
+/// its animations, or the other way round.
+enum ReducedMotionMode {
+  /// Follow the platform.
+  system,
+
+  /// Keep decoration still whatever the platform does.
+  always,
+
+  /// Keep the client's animations even where the platform asks for less.
+  never,
+}
+
+/// The listener's choice, saved in the settings file.
+final reducedMotionModeNotifier = ValueNotifier(ReducedMotionMode.system);
+
+/// Whether the client should keep decoration still.
+///
+/// The listener's own choice wins over the platform's, and the platform decides
+/// when no choice has been made. What is dropped is decoration: a title
+/// travelling on its own, a pulsing placeholder, a line that grows and blurs as
+/// it moves away. What carries information - a progress fill, a line becoming
+/// the current one, a page arriving - stays.
+bool prefersReducedMotion(BuildContext context) {
+  switch (reducedMotionModeNotifier.value) {
+    case ReducedMotionMode.always:
+      return true;
+    case ReducedMotionMode.never:
+      return false;
+    case ReducedMotionMode.system:
+      return MediaQuery.of(context).disableAnimations;
+  }
+}

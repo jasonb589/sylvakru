@@ -533,5 +533,9 @@
   },
   "shortcutReplace": "Replace",
   "shortcutRestoreDefaults": "Restore defaults",
-  "shortcutRestored": "Shortcuts restored to their defaults"
+  "shortcutRestored": "Shortcuts restored to their defaults",
+  "reducedMotion": "Reduce motion",
+  "reducedMotionSystem": "Follow the system",
+  "reducedMotionAlways": "Always keep still",
+  "reducedMotionNever": "Keep the app's animations"
 }
