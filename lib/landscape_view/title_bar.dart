@@ -340,6 +340,12 @@ class _TitleBarState extends State<TitleBar> {
                       miniModeSwitching = true;
                       viewModeNotifier.value = .mini;
 
+                      // The mini window floats on the desktop: this is the one
+                      // mode that wants the window itself to be transparent.
+                      await windowManager.setBackgroundColor(
+                        Colors.transparent,
+                      );
+
                       await Future.delayed(Duration(milliseconds: 200));
 
                       miniModeSwitching = false;

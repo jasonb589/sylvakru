@@ -319,6 +319,11 @@ class _MiniViewState extends State<MiniView> {
                   viewModeNotifier.value = .normal;
                   miniModeSwitching = false;
 
+                  // Back to the opaque backplate the full-size surfaces sit on.
+                  await windowManager.setBackgroundColor(
+                    colorManager.getWindowBackplateColor(),
+                  );
+
                   if (Platform.isWindows) {
                     await windowManager.setMinimumSize(
                       Size(1050 + 16, 700 + 9),

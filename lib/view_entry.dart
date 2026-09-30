@@ -8,6 +8,7 @@ import 'package:sylvakru/base/audio_handler.dart';
 import 'package:sylvakru/base/data/config.dart';
 import 'package:sylvakru/base/data/library.dart';
 import 'package:sylvakru/base/data/loader.dart';
+import 'package:sylvakru/base/design/window_backplate.dart';
 import 'package:sylvakru/base/services/color_manager.dart';
 import 'package:sylvakru/base/services/interaction.dart';
 import 'package:sylvakru/base/services/keyboard.dart';
@@ -124,7 +125,7 @@ class _ViewEntryState extends State<ViewEntry> with WidgetsBindingObserver {
 
   Widget view() {
     if (firstLaunch) {
-      return firstLaunchView();
+      return backplate(firstLaunchView());
     }
     return ValueListenableBuilder(
       valueListenable: viewModeNotifier,
@@ -140,18 +141,18 @@ class _ViewEntryState extends State<ViewEntry> with WidgetsBindingObserver {
           );
 
           if (immersiveWideLayoutNotifier.value) {
-            return BigPictureView();
+            return backplate(BigPictureView());
           }
           SystemChrome.setSystemUIOverlayStyle(
             const SystemUiOverlayStyle(
               statusBarIconBrightness: Brightness.light,
             ),
           );
-          return SafeArea(child: BigPictureView());
+          return backplate(SafeArea(child: BigPictureView()));
         }
         if (isTooNarrow(context)) {
           applySystemUiMode(mode: .manual);
-          return PortraitView();
+          return backplate(PortraitView());
         }
         // immersiveSticky：上滑临时显示的系统栏是透明浮层、不派发 insets
         // 变化也会自动隐藏，全面屏手势可正常完成；immersive 被唤出后会常驻
@@ -162,13 +163,34 @@ class _ViewEntryState extends State<ViewEntry> with WidgetsBindingObserver {
         );
 
         if (immersiveWideLayoutNotifier.value) {
-          return LandscapeView();
+          return backplate(LandscapeView());
         }
         SystemChrome.setSystemUIOverlayStyle(
           const SystemUiOverlayStyle(statusBarIconBrightness: Brightness.light),
         );
-        return SafeArea(child: LandscapeView());
+        return backplate(SafeArea(child: LandscapeView()));
       },
+    );
+  }
+
+  /// Wraps a full-size surface in the app's own opaque base.
+  ///
+  /// The window may be composited with alpha (on Windows a transparent window
+  /// background colour becomes an accent-transparentgradient), so a surface
+  /// that leaves anything translucent would show the desktop behind the
+  /// player. The mini view is deliberately left out: it is meant to be
+  /// see-through, and it is the reason the window is allowed to be transparent
+  /// at all.
+  Widget backplate(Widget surface) {
+    return ListenableBuilder(
+      listenable: Listenable.merge([
+        layersManager.backgroundChangeNotifier,
+        mainPageThemeNotifier,
+      ]),
+      builder: (context, _) => WindowBackplate(
+        color: colorManager.getWindowBackplateColor(),
+        child: surface,
+      ),
     );
   }
 

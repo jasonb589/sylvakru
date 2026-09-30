@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sylvakru/base/app.dart';
+import 'package:sylvakru/base/design/app_tokens.dart';
 import 'package:sylvakru/base/services/picture_service.dart';
 import 'package:sylvakru/base/utils/contrast_color_generator.dart';
 import 'package:sylvakru/layer/lyrics_page_layer.dart';
@@ -370,6 +371,27 @@ class ColorManager {
     // out `Colors.grey` until a cover colour is known, and that grey base is
     // what showed through wherever the artwork had not arrived yet.
     return colour == Colors.grey ? Colors.grey.shade100 : colour;
+  }
+
+  /// The opaque colour behind everything the app paints.
+  ///
+  /// The window itself is not guaranteed to be opaque: on Windows a transparent
+  /// window background colour becomes an accent-transparentgradient, so every
+  /// translucent pixel in the scene composites against the desktop. The client
+  /// paints this base under each full-size surface instead of relying on the
+  /// window's own backdrop - one cover cross-fade mid-flight was enough for the
+  /// window behind the player to show through.
+  Color getWindowBackplateColor() {
+    if (mainPageThemeNotifier.value == .dark) {
+      return const Color(0xFF323232);
+    }
+    // The vivid backdrop is the cover colour over a neutral base, so matching
+    // that composite keeps a surface without artwork looking the same as one
+    // whose artwork is still fading in.
+    return Color.alphaBlend(
+      backgroundCoverArtColor.withValues(alpha: AppBlur.backdropAlpha / 255),
+      Colors.grey.shade100,
+    );
   }
 
   Color getSpecificBgColor() {

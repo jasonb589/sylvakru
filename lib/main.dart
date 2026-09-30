@@ -304,7 +304,13 @@ Future<void> _setupWindow(WindowController windowController) async {
   WindowOptions windowOptions = WindowOptions(
     size: viewModeNotifier.value == .mini ? miniSize : mainSize,
     center: true,
-    backgroundColor: Colors.transparent,
+    // The window itself has to keep an opaque backplate except for the mini
+    // window, whose whole point is floating on the desktop: a transparent value
+    // here makes Windows composite the window with alpha, and every translucent
+    // pixel in the client then shows whatever is behind the player.
+    backgroundColor: viewModeNotifier.value == .mini
+        ? Colors.transparent
+        : colorManager.getWindowBackplateColor(),
     titleBarStyle: TitleBarStyle.hidden,
     windowButtonVisibility: false,
   );
