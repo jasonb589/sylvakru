@@ -416,5 +416,31 @@
   "playlistUpdateFailed": "更新歌单失败",
   "playlistBusy": "歌单正在更新，请稍后再试",
   "getAlbumFailed": "获取专辑失败",
-  "lyricsFarBlur": "歌词远景模糊"
+  "lyricsFarBlur": "歌词远景模糊",
+  "shortcuts": "快捷键",
+  "shortcutPlayPause": "播放 / 暂停",
+  "shortcutNext": "下一首",
+  "shortcutPrevious": "上一首",
+  "shortcutSeekForward": "快进 5 秒",
+  "shortcutSeekBackward": "快退 5 秒",
+  "shortcutVolumeUp": "音量 +5%",
+  "shortcutVolumeDown": "音量 -5%",
+  "shortcutMute": "静音 / 取消静音",
+  "shortcutFavorite": "收藏 / 取消收藏",
+  "shortcutLyricsPage": "打开 / 关闭播放界面",
+  "shortcutHelp": "这份快捷键列表",
+  "shortcutMediaKeys": "键盘上的媒体键（播放、上一首、下一首）同样有效。",
+  "findDuplicateSongs": "查找重复歌曲",
+  "duplicateSongs": "重复歌曲",
+  "noDuplicateSongs": "没有发现重复歌曲",
+  "duplicateLengthUnknown": "时长未知",
+  "duplicateNoPath": "没有本地文件",
+  "duplicateSongsCount": "发现 {count} 组",
+  "@duplicateSongsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

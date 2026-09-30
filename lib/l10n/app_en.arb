@@ -493,5 +493,31 @@
   "playlistUpdateFailed": "Could not update the playlist",
   "playlistBusy": "The playlist is updating; try again in a moment",
   "getAlbumFailed": "Could not get the album",
-  "lyricsFarBlur": "Blur distant lyrics"
+  "lyricsFarBlur": "Blur distant lyrics",
+  "shortcuts": "Keyboard shortcuts",
+  "shortcutPlayPause": "Play / pause",
+  "shortcutNext": "Next track",
+  "shortcutPrevious": "Previous track",
+  "shortcutSeekForward": "Forward 5 seconds",
+  "shortcutSeekBackward": "Back 5 seconds",
+  "shortcutVolumeUp": "Volume up 5%",
+  "shortcutVolumeDown": "Volume down 5%",
+  "shortcutMute": "Mute / unmute",
+  "shortcutFavorite": "Like / unlike",
+  "shortcutLyricsPage": "Open / close the playback screen",
+  "shortcutHelp": "This list of shortcuts",
+  "shortcutMediaKeys": "The media keys on your keyboard (play, next, previous) work too.",
+  "findDuplicateSongs": "Find duplicate songs",
+  "duplicateSongs": "Duplicate songs",
+  "noDuplicateSongs": "No duplicate songs found",
+  "duplicateLengthUnknown": "Length unknown",
+  "duplicateNoPath": "No local file",
+  "duplicateSongsCount": "{count} groups found",
+  "@duplicateSongsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

@@ -17,6 +17,7 @@ const AssetImage desktopLyricsImage = AssetImage(
   'assets/images/desktop_lyrics.png',
 );
 const AssetImage downloadImage = AssetImage('assets/images/download.png');
+const AssetImage duplicateImage = AssetImage('assets/images/duplicate.png');
 const AssetImage offlineMusicImage = AssetImage(
   'assets/images/offline_music.png',
 );
@@ -40,6 +41,7 @@ const AssetImage gridImage = AssetImage('assets/images/grid.png');
 const AssetImage homeImage = AssetImage('assets/images/home.png');
 const AssetImage iconImage = AssetImage('assets/images/icon.png');
 const AssetImage infoImage = AssetImage('assets/images/info.png');
+const AssetImage keyboardImage = AssetImage('assets/images/keyboard.png');
 const AssetImage languageImage = AssetImage('assets/images/language.png');
 const AssetImage listImage = AssetImage('assets/images/list.png');
 const AssetImage localImage = AssetImage('assets/images/local.png');

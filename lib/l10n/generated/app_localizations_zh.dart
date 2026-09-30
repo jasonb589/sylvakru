@@ -1110,4 +1110,63 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get lyricsFarBlur => '歌词远景模糊';
+
+  @override
+  String get shortcuts => '快捷键';
+
+  @override
+  String get shortcutPlayPause => '播放 / 暂停';
+
+  @override
+  String get shortcutNext => '下一首';
+
+  @override
+  String get shortcutPrevious => '上一首';
+
+  @override
+  String get shortcutSeekForward => '快进 5 秒';
+
+  @override
+  String get shortcutSeekBackward => '快退 5 秒';
+
+  @override
+  String get shortcutVolumeUp => '音量 +5%';
+
+  @override
+  String get shortcutVolumeDown => '音量 -5%';
+
+  @override
+  String get shortcutMute => '静音 / 取消静音';
+
+  @override
+  String get shortcutFavorite => '收藏 / 取消收藏';
+
+  @override
+  String get shortcutLyricsPage => '打开 / 关闭播放界面';
+
+  @override
+  String get shortcutHelp => '这份快捷键列表';
+
+  @override
+  String get shortcutMediaKeys => '键盘上的媒体键（播放、上一首、下一首）同样有效。';
+
+  @override
+  String get findDuplicateSongs => '查找重复歌曲';
+
+  @override
+  String get duplicateSongs => '重复歌曲';
+
+  @override
+  String get noDuplicateSongs => '没有发现重复歌曲';
+
+  @override
+  String get duplicateLengthUnknown => '时长未知';
+
+  @override
+  String get duplicateNoPath => '没有本地文件';
+
+  @override
+  String duplicateSongsCount(int count) {
+    return '发现 $count 组';
+  }
 }

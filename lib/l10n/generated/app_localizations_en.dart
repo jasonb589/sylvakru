@@ -1135,4 +1135,64 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get lyricsFarBlur => 'Blur distant lyrics';
+
+  @override
+  String get shortcuts => 'Keyboard shortcuts';
+
+  @override
+  String get shortcutPlayPause => 'Play / pause';
+
+  @override
+  String get shortcutNext => 'Next track';
+
+  @override
+  String get shortcutPrevious => 'Previous track';
+
+  @override
+  String get shortcutSeekForward => 'Forward 5 seconds';
+
+  @override
+  String get shortcutSeekBackward => 'Back 5 seconds';
+
+  @override
+  String get shortcutVolumeUp => 'Volume up 5%';
+
+  @override
+  String get shortcutVolumeDown => 'Volume down 5%';
+
+  @override
+  String get shortcutMute => 'Mute / unmute';
+
+  @override
+  String get shortcutFavorite => 'Like / unlike';
+
+  @override
+  String get shortcutLyricsPage => 'Open / close the playback screen';
+
+  @override
+  String get shortcutHelp => 'This list of shortcuts';
+
+  @override
+  String get shortcutMediaKeys =>
+      'The media keys on your keyboard (play, next, previous) work too.';
+
+  @override
+  String get findDuplicateSongs => 'Find duplicate songs';
+
+  @override
+  String get duplicateSongs => 'Duplicate songs';
+
+  @override
+  String get noDuplicateSongs => 'No duplicate songs found';
+
+  @override
+  String get duplicateLengthUnknown => 'Length unknown';
+
+  @override
+  String get duplicateNoPath => 'No local file';
+
+  @override
+  String duplicateSongsCount(int count) {
+    return '$count groups found';
+  }
 }

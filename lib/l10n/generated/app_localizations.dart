@@ -2227,6 +2227,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Blur distant lyrics'**
   String get lyricsFarBlur;
+
+  /// No description provided for @shortcuts.
+  ///
+  /// In en, this message translates to:
+  /// **'Keyboard shortcuts'**
+  String get shortcuts;
+
+  /// No description provided for @shortcutPlayPause.
+  ///
+  /// In en, this message translates to:
+  /// **'Play / pause'**
+  String get shortcutPlayPause;
+
+  /// No description provided for @shortcutNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next track'**
+  String get shortcutNext;
+
+  /// No description provided for @shortcutPrevious.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous track'**
+  String get shortcutPrevious;
+
+  /// No description provided for @shortcutSeekForward.
+  ///
+  /// In en, this message translates to:
+  /// **'Forward 5 seconds'**
+  String get shortcutSeekForward;
+
+  /// No description provided for @shortcutSeekBackward.
+  ///
+  /// In en, this message translates to:
+  /// **'Back 5 seconds'**
+  String get shortcutSeekBackward;
+
+  /// No description provided for @shortcutVolumeUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Volume up 5%'**
+  String get shortcutVolumeUp;
+
+  /// No description provided for @shortcutVolumeDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Volume down 5%'**
+  String get shortcutVolumeDown;
+
+  /// No description provided for @shortcutMute.
+  ///
+  /// In en, this message translates to:
+  /// **'Mute / unmute'**
+  String get shortcutMute;
+
+  /// No description provided for @shortcutFavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Like / unlike'**
+  String get shortcutFavorite;
+
+  /// No description provided for @shortcutLyricsPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Open / close the playback screen'**
+  String get shortcutLyricsPage;
+
+  /// No description provided for @shortcutHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'This list of shortcuts'**
+  String get shortcutHelp;
+
+  /// No description provided for @shortcutMediaKeys.
+  ///
+  /// In en, this message translates to:
+  /// **'The media keys on your keyboard (play, next, previous) work too.'**
+  String get shortcutMediaKeys;
+
+  /// No description provided for @findDuplicateSongs.
+  ///
+  /// In en, this message translates to:
+  /// **'Find duplicate songs'**
+  String get findDuplicateSongs;
+
+  /// No description provided for @duplicateSongs.
+  ///
+  /// In en, this message translates to:
+  /// **'Duplicate songs'**
+  String get duplicateSongs;
+
+  /// No description provided for @noDuplicateSongs.
+  ///
+  /// In en, this message translates to:
+  /// **'No duplicate songs found'**
+  String get noDuplicateSongs;
+
+  /// No description provided for @duplicateLengthUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Length unknown'**
+  String get duplicateLengthUnknown;
+
+  /// No description provided for @duplicateNoPath.
+  ///
+  /// In en, this message translates to:
+  /// **'No local file'**
+  String get duplicateNoPath;
+
+  /// No description provided for @duplicateSongsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} groups found'**
+  String duplicateSongsCount(int count);
 }
 
 class _AppLocalizationsDelegate

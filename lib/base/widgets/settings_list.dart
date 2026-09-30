@@ -38,6 +38,8 @@ import 'package:sylvakru/portrait_view/portrait_view.dart';
 import 'package:sylvakru/portrait_view/sleep_timer.dart';
 import 'package:sylvakru/l10n/generated/app_localizations.dart';
 import 'package:sylvakru/base/widgets/my_select_field.dart';
+import 'package:sylvakru/base/widgets/shortcuts_help.dart';
+import 'package:sylvakru/base/widgets/duplicate_songs.dart';
 import 'package:sylvakru/base/widgets/my_switch.dart';
 import 'package:smooth_corner/smooth_corner.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -145,6 +147,12 @@ class _SettingsListState extends State<SettingsList> {
         // library rows because that is what it belongs to, and because the
         // temporary cache right above it must not be confused with it.
         sliverBox(paddingIfNeed(isLandscape, downloadListTile(context, l10n))),
+
+        // Twice the same song is a library matter as well: the report lists the
+        // copies and opens their folders, it never deletes anything.
+        sliverBox(
+          paddingIfNeed(isLandscape, duplicateSongsListTile(context, l10n)),
+        ),
         sliverBox(
           paddingIfNeed(isLandscape, translationListTile(context, l10n)),
         ),
@@ -199,6 +207,8 @@ class _SettingsListState extends State<SettingsList> {
           sliverBox(paddingIfNeed(isLandscape, checkUpdate(context, l10n))),
 
         sliverBox(paddingIfNeed(isLandscape, viewLogListTile(context, l10n))),
+
+        sliverBox(paddingIfNeed(isLandscape, shortcutsListTile(context, l10n))),
 
         if (viewModeNotifier.value != .bigPicture)
           sliverBox(
@@ -1762,5 +1772,36 @@ Future<void> showTranslationSettingsDialog(BuildContext context) async {
         );
       },
     ),
+  );
+}
+
+/// The keys the app answers to, in one list.
+Widget shortcutsListTile(
+  BuildContext context,
+  AppLocalizations l10n, {
+  double iconSize = 30,
+}) {
+  return ListTile(
+    leading: ImageIcon(keyboardImage, size: iconSize),
+    title: Text(l10n.shortcuts),
+    onTap: () => showShortcutsHelp(context),
+  );
+}
+
+/// Finds the songs that look like the same recording.
+///
+/// A report, not a cleaner: nothing is removed from here, because the same song
+/// twice can be deliberate (a live take beside the studio one). Every copy gets
+/// a button that opens the folder it lives in, which is what makes the list
+/// actionable at all.
+Widget duplicateSongsListTile(
+  BuildContext context,
+  AppLocalizations l10n, {
+  double iconSize = 30,
+}) {
+  return ListTile(
+    leading: ImageIcon(duplicateImage, size: iconSize),
+    title: Text(l10n.findDuplicateSongs),
+    onTap: () => showDuplicateSongs(context, l10n, library.songList),
   );
 }
