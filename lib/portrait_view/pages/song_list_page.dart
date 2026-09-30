@@ -67,13 +67,10 @@ extension _SongListPage on _SongListState {
                   Text("${l10n.folders}: ", style: TextStyle(fontSize: 15)),
 
                 Expanded(
-                  child: TextScroll(
-                    getTitleText(l10n),
-                    style: TextStyle(fontSize: 15),
-                    velocity: const .new(pixelsPerSecond: .new(40, 0)),
-                    intervalSpaces: 10,
-                    pauseBetween: Duration(seconds: 2),
-                  ),
+                    child: MarqueeText(
+                      text: getTitleText(l10n),
+                      style: TextStyle(fontSize: 15),
+                    ),
                 ),
               ],
             ),

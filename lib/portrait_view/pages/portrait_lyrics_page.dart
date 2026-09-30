@@ -1,4 +1,4 @@
-﻿import 'package:sylvakru/base/design/app_tokens.dart';
+import 'package:sylvakru/base/design/app_tokens.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:sylvakru/base/design/cover_backdrop.dart';
@@ -27,7 +27,7 @@ import 'package:sylvakru/base/my_audio_metadata.dart';
 import 'package:sylvakru/base/widgets/seekbar.dart';
 import 'package:sylvakru/base/utils/metadata_utils.dart';
 import 'package:smooth_corner/smooth_corner.dart';
-import 'package:text_scroll/text_scroll.dart';
+import 'package:sylvakru/base/design/marquee_text.dart';
 
 class PortraitLyricsPage extends StatefulWidget {
   const PortraitLyricsPage({super.key});
@@ -209,19 +209,13 @@ class _PortraitLyricsPageState extends State<PortraitLyricsPage> {
                               child: Column(
                                 crossAxisAlignment: .start,
                                 children: [
-                                  TextScroll(
-                                    getTitle(currentSong),
-                                    velocity: const Velocity(
-                                      pixelsPerSecond: Offset(40, 0),
-                                    ),
+                                  MarqueeText(
+                                    text: getTitle(currentSong),
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 20,
                                       color: lyricsPageHighlightTextColor.value,
-                                      overflow: .ellipsis,
                                     ),
-                                    intervalSpaces: 10,
-                                    pauseBetween: Duration(seconds: 2),
                                   ),
                                   SizedBox(height: 10),
                                   ArtistAlbumLine(
@@ -255,15 +249,10 @@ class _PortraitLyricsPageState extends State<PortraitLyricsPage> {
                                 if (!value) {
                                   return Text(data, style: textStyle);
                                 }
-                                return TextScroll(
-                                  textAlign: .center,
-                                  data,
-                                  velocity: const Velocity(
-                                    pixelsPerSecond: Offset(40, 0),
-                                  ),
+                                return MarqueeText(
+                                  text: data,
+                                  textAlign: TextAlign.center,
                                   style: textStyle,
-                                  intervalSpaces: 10,
-                                  pauseBetween: Duration(seconds: 2),
                                 );
                               },
                             ),

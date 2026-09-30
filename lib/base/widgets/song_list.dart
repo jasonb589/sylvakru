@@ -50,7 +50,7 @@ import 'package:sylvakru/layer/layers_manager.dart';
 import 'package:sylvakru/layer/playlists_layer.dart';
 import 'package:sylvakru/layer/recently_added_layer.dart';
 import 'package:sylvakru/portrait_view/my_search_field.dart';
-import 'package:text_scroll/text_scroll.dart';
+import 'package:sylvakru/base/design/marquee_text.dart';
 
 part '../../landscape_view/panels/song_list_panel.dart';
 part '../../portrait_view/pages/song_list_page.dart';

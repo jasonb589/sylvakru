@@ -83,6 +83,25 @@ class _SkeletonPulseState extends State<SkeletonPulse>
     end: 1.0,
   ).animate(CurvedAnimation(parent: _controller, curve: AppCurve.standard));
 
+  /// Set from the platform: a placeholder that pulses forever is decoration,
+  /// and the platform's "less motion" turns that off.
+  bool _reduced = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final reduced = prefersReducedMotion(context);
+    if (reduced == _reduced) {
+      return;
+    }
+    _reduced = reduced;
+    if (reduced) {
+      _controller.stop();
+    } else {
+      _controller.repeat(reverse: true);
+    }
+  }
+
   @override
   void dispose() {
     _controller.dispose();
@@ -91,6 +110,9 @@ class _SkeletonPulseState extends State<SkeletonPulse>
 
   @override
   Widget build(BuildContext context) {
+    if (_reduced) {
+      return widget.child;
+    }
     return FadeTransition(opacity: _opacity, child: widget.child);
   }
 }

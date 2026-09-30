@@ -30,6 +30,11 @@ abstract final class AppRadius {
   /// Cover art at thumbnail size inside a dense list.
   static const double coverTiny = 4;
 
+  /// What the platform's "less motion" asks for: the change still happens, it
+  /// just does not travel. A scroll lands where it was going instead of
+  /// sliding there - see [prefersReducedMotion].
+  static const Duration none = Duration.zero;
+
   /// Cover art in a normal list row.
   static const double coverRow = 5;
 
@@ -227,3 +232,13 @@ abstract final class AppLyrics {
   /// as damage.
   static const double farBlurSigma = 0.45;
 }
+
+/// Whether the platform asked for less movement.
+///
+/// Windows' "animation effects", Android's "remove animations" and iOS'
+/// "reduce motion" all land here. When one of them is on, the client keeps what
+/// carries information - a progress fill, a line becoming the current one, a
+/// page arriving - and drops what is only decoration: a title travelling on its
+/// own, a pulsing placeholder, a line that grows and blurs as it moves away.
+bool prefersReducedMotion(BuildContext context) =>
+    MediaQuery.of(context).disableAnimations;

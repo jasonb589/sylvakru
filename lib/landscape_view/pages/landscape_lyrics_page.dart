@@ -21,7 +21,7 @@ import 'package:sylvakru/base/widgets/lyric_list_view.dart';
 import 'package:sylvakru/base/widgets/seekbar.dart';
 import 'package:sylvakru/base/my_audio_metadata.dart';
 import 'package:sylvakru/base/utils/metadata_utils.dart';
-import 'package:text_scroll/text_scroll.dart';
+import 'package:sylvakru/base/design/marquee_text.dart';
 
 class LandscapeLyricsPage extends StatefulWidget {
   const LandscapeLyricsPage({super.key});
@@ -286,18 +286,15 @@ class _LandscapeLyricsPageState extends State<LandscapeLyricsPage> {
             child: ValueListenableBuilder(
               valueListenable: lyricsPageHighlightTextColor.valueNotifier,
               builder: (context, value, child) {
-                return TextScroll(
-                  key: UniqueKey(),
-                  getTitle(currentSong),
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
-                    color: value,
-                  ),
-                  velocity: const .new(pixelsPerSecond: .new(40, 0)),
-                  intervalSpaces: 10,
-                  pauseBetween: Duration(seconds: 2),
-                );
+                  return MarqueeText(
+                    key: UniqueKey(),
+                    text: getTitle(currentSong),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                      color: value,
+                    ),
+                  );
               },
             ),
           ),

@@ -11,7 +11,7 @@ import 'package:sylvakru/base/utils/dynamic_lyrics_page_route.dart';
 import 'package:sylvakru/layer/layers_manager.dart';
 import 'package:sylvakru/layer/lyrics_page_layer.dart';
 import 'package:sylvakru/base/utils/metadata_utils.dart';
-import 'package:text_scroll/text_scroll.dart';
+import 'package:sylvakru/base/design/marquee_text.dart';
 
 class PlayBar extends StatelessWidget {
   const PlayBar({super.key});
@@ -71,15 +71,13 @@ class PlayBar extends StatelessWidget {
 
                 const SizedBox(width: 10),
                 Expanded(
-                  child: TextScroll(
-                    "${getTitle(currentSong)} - ${getArtist(currentSong)}",
+                  child: MarqueeText(
+                    text:
+                        "${getTitle(currentSong)} - ${getArtist(currentSong)}",
                     key: ValueKey(
                       currentSong.hashCode + MediaQuery.widthOf(context),
                     ),
-                    velocity: const Velocity(pixelsPerSecond: Offset(40, 0)),
                     style: TextStyle(fontSize: 16),
-                    intervalSpaces: 10,
-                    pauseBetween: Duration(seconds: 2),
                   ),
                 ),
 
