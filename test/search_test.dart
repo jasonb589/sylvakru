@@ -199,6 +199,23 @@ void main() {
             'the sidebar is flat rows: the field must not paint a colour '
             'block above them',
       );
+      expect(
+        has(sidebar, r'ImageIcon\(searchImage, size: 30\)'),
+        isTrue,
+        reason: 'the field wears the sidebar family icon at the sidebar size',
+      );
+      expect(
+        has(sidebar, r'Icons\.search'),
+        isFalse,
+        reason:
+            'a Material magnifier next to the drawn family icons is the '
+            'mismatch this replaced',
+      );
+      expect(
+        has(sidebar, r'l10n\.searchEverything'),
+        isFalse,
+        reason: 'the row carries no hint text any more',
+      );
     });
 
     test('the search layer is registered', () {

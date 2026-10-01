@@ -88,6 +88,7 @@ const AssetImage reorderImage = AssetImage('assets/images/reorder.png');
 const AssetImage repeatImage = AssetImage('assets/images/repeat.png');
 const AssetImage reverseImage = AssetImage('assets/images/reverse.png');
 const AssetImage rewindImage = AssetImage('assets/images/rewind.png');
+const AssetImage searchImage = AssetImage('assets/images/search.png');
 const AssetImage selectImage = AssetImage('assets/images/select.png');
 const AssetImage sequenceImage = AssetImage('assets/images/sequence.png');
 const AssetImage serverImage = AssetImage('assets/images/server.png');

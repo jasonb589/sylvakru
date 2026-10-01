@@ -695,15 +695,10 @@ class _SidebarSearchFieldState extends State<_SidebarSearchField> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-
     return SizedBox(
       height: 40,
       child: ListenableBuilder(
-        listenable: Listenable.merge([
-          textColor.valueNotifier,
-          iconColor.valueNotifier,
-        ]),
+        listenable: textColor.valueNotifier,
         builder: (context, child) {
           return Material(
             color: Colors.transparent,
@@ -712,28 +707,31 @@ class _SidebarSearchFieldState extends State<_SidebarSearchField> {
               borderRadius: BorderRadius.circular(AppRadius.row),
             ),
             clipBehavior: .antiAlias,
-            // The sidebar is a list of flat rows, so the field has no fill of
-            // its own: a filled block above them read as one more colour block
-            // instead of a search box.
-            child: TextField(
-              focusNode: focusNode,
-              controller: textController,
-              style: TextStyle(fontSize: 13, color: textColor.value),
-              onTapOutside: (event) => focusNode.unfocus(),
-              onChanged: onChanged,
-              decoration: InputDecoration(
-                hint: Text(
-                  l10n.searchEverything,
-                  style: TextStyle(fontSize: 13, color: textColor.value),
-                ),
-                contentPadding: EdgeInsets.zero,
-                prefixIcon: Icon(
-                  Icons.search,
-                  size: 20,
-                  color: iconColor.value,
-                ),
-                hoverColor: Colors.transparent,
-                border: OutlineInputBorder(borderSide: BorderSide.none),
+            // The sidebar is a list of flat rows, so this is one too: same
+            // height, same inner padding and the same 30px family icon as the
+            // rows around it, so the magnifier lines up with their icons. No
+            // fill and no hint - the icon already says what the row is for.
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 10, 0),
+              child: Row(
+                children: [
+                  const ImageIcon(searchImage, size: 30),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TextField(
+                      focusNode: focusNode,
+                      controller: textController,
+                      style: TextStyle(fontSize: 15, color: textColor.value),
+                      onTapOutside: (event) => focusNode.unfocus(),
+                      onChanged: onChanged,
+                      decoration: const InputDecoration(
+                        contentPadding: EdgeInsets.zero,
+                        hoverColor: Colors.transparent,
+                        border: OutlineInputBorder(borderSide: BorderSide.none),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           );
