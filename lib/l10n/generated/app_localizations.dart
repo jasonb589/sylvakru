@@ -440,6 +440,24 @@ abstract class AppLocalizations {
   /// **'Search Licenses'**
   String get searchLicenses;
 
+  /// No description provided for @searchEverything.
+  ///
+  /// In en, this message translates to:
+  /// **'Search songs, albums and artists'**
+  String get searchEverything;
+
+  /// No description provided for @searchStartTyping.
+  ///
+  /// In en, this message translates to:
+  /// **'Type to search songs, albums and artists'**
+  String get searchStartTyping;
+
+  /// No description provided for @searchNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching results'**
+  String get searchNoResults;
+
   /// No description provided for @ascending.
   ///
   /// In en, this message translates to:
@@ -1537,12 +1555,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Refresh'**
   String get refreshRecommendations;
-
-  /// No description provided for @advancedSearch.
-  ///
-  /// In en, this message translates to:
-  /// **'Advanced Search'**
-  String get advancedSearch;
 
   /// No description provided for @searchIn.
   ///

@@ -33,6 +33,11 @@ class _ArtistsLayerState extends CollectionListState {
   @override
   String get label => 'artists';
 
+  // The list has no field of its own any more; the sidebar search covers
+  // artists.
+  @override
+  bool get showSearchField => false;
+
   @override
   void updateCurrentList() {
     preparing = !artistAlbumManager.done;

@@ -195,6 +195,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get searchLicenses => 'Search Licenses';
 
   @override
+  String get searchEverything => 'Search songs, albums and artists';
+
+  @override
+  String get searchStartTyping => 'Type to search songs, albums and artists';
+
+  @override
+  String get searchNoResults => 'No matching results';
+
+  @override
   String get ascending => 'Ascending';
 
   @override
@@ -761,9 +770,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get refreshRecommendations => 'Refresh';
-
-  @override
-  String get advancedSearch => 'Advanced Search';
 
   @override
   String get searchIn => 'Search in';

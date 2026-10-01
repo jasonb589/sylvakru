@@ -8,7 +8,7 @@ import 'package:sylvakru/base/services/interaction.dart';
 import 'package:sylvakru/base/services/picture_service.dart';
 import 'package:sylvakru/base/services/stream_client.dart';
 import 'package:sylvakru/base/utils/path.dart';
-import 'package:sylvakru/base/utils/advanced_song_search.dart';
+import 'package:sylvakru/base/data/smart_playlist.dart';
 import 'package:sylvakru/base/utils/metadata_utils.dart';
 import 'package:sylvakru/base/utils/localizations.dart';
 import 'package:sylvakru/layer/layers_manager.dart';

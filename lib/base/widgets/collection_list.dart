@@ -55,6 +55,12 @@ abstract class CollectionListState extends State<CollectionList> {
   // for hero tag
   String label = '';
 
+  /// Whether this list carries a search field of its own.
+  ///
+  /// The artists page sets this to false: searching artists is what the
+  /// sidebar search is for now.
+  bool get showSearchField => true;
+
   late final AssetImage image;
 
   late final String Function(int) countFunction;

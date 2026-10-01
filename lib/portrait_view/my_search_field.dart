@@ -1,7 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:sylvakru/base/audio_handler.dart';
 import 'package:sylvakru/base/services/color_manager.dart';
-import 'package:sylvakru/l10n/generated/app_localizations.dart';
 import 'package:sylvakru/base/services/keyboard.dart';
 
 class MySearchField extends StatefulWidget {
@@ -11,18 +10,12 @@ class MySearchField extends StatefulWidget {
 
   final void Function()? onSearchTextChanged;
 
-  final void Function()? onAdvancedSearch;
-
   final bool useCurrentSong;
-
-  final bool hasAdvancedSearch;
   const MySearchField({
     super.key,
     required this.hintText,
     required this.textController,
     this.onSearchTextChanged,
-    this.onAdvancedSearch,
-    this.hasAdvancedSearch = false,
     this.useCurrentSong = true,
   });
 
@@ -66,17 +59,6 @@ class _MySearchFieldState extends State<MySearchField> {
                 },
                 icon: const Icon(Icons.search),
               ),
-              if (widget.onAdvancedSearch != null)
-                IconButton(
-                  tooltip: AppLocalizations.of(context).advancedSearch,
-                  onPressed: widget.onAdvancedSearch,
-                  icon: Icon(
-                    Icons.tune_rounded,
-                    color: widget.hasAdvancedSearch
-                        ? Theme.of(context).colorScheme.primary
-                        : null,
-                  ),
-                ),
             ],
           );
         }
@@ -134,17 +116,6 @@ class _MySearchFieldState extends State<MySearchField> {
                     ),
                   ),
                 ),
-                if (widget.onAdvancedSearch != null)
-                  IconButton(
-                    tooltip: AppLocalizations.of(context).advancedSearch,
-                    onPressed: widget.onAdvancedSearch,
-                    icon: Icon(
-                      Icons.tune_rounded,
-                      color: widget.hasAdvancedSearch
-                          ? Theme.of(context).colorScheme.primary
-                          : null,
-                    ),
-                  ),
               ],
             ),
           ),

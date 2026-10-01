@@ -8,11 +8,11 @@ extension _SongListPanel on _SongListState {
         Opacity(
           opacity: hideOthers ? 0 : 1,
           child: TitleBar(
-            hintText: l10n.searchSongs,
+            // No field of its own on the songs page or an artist's page: the
+            // sidebar search covers both.
+            hintText: showSearchField ? l10n.searchSongs : null,
             textController: textController,
             backToRoot: backToRoot,
-            hasAdvancedSearch: hasAdvancedSearch,
-            onAdvancedSearch: showAdvancedSearch,
             scrollToTop: () {
               scrollController.animateTo(
                 0,
@@ -69,7 +69,7 @@ extension _SongListPanel on _SongListState {
           child: ValueListenableBuilder(
             valueListenable: currentSongListNotifier,
             builder: (context, _, _) {
-              if (!isLibrary || searchValue.isNotEmpty || hasAdvancedSearch) {
+              if (!isLibrary || searchValue.isNotEmpty) {
                 return const SizedBox.shrink();
               }
               return RecentlyAdded(padding: padding);

@@ -18,7 +18,10 @@ extension _CollectionListPage on CollectionListState {
         },
       ),
       title: title,
-      actions: [searchField(searchHint), moreButton(context)],
+      actions: [
+        if (showSearchField) searchField(searchHint),
+        moreButton(context),
+      ],
     );
   }
 

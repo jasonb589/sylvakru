@@ -8,6 +8,7 @@ import 'package:sylvakru/base/app.dart';
 import 'package:sylvakru/base/asset_images.dart';
 import 'package:sylvakru/base/design/app_tokens.dart';
 import 'package:sylvakru/base/services/interaction.dart';
+import 'package:sylvakru/base/services/keyboard.dart';
 import 'package:sylvakru/base/utils/media_query.dart';
 import 'package:sylvakru/base/widgets/cover_art_widget.dart';
 import 'package:sylvakru/base/widgets/my_divider.dart';
@@ -15,6 +16,7 @@ import 'package:sylvakru/base/widgets/playlist_widgets.dart';
 import 'package:sylvakru/base/data/playlist.dart';
 import 'package:sylvakru/l10n/generated/app_localizations.dart';
 import 'package:sylvakru/layer/layers_manager.dart';
+import 'package:sylvakru/layer/search_layer.dart';
 import 'package:smooth_corner/smooth_corner.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -173,6 +175,12 @@ class Sidebar extends StatelessWidget {
                 ),
               ),
             ),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: _SidebarSearchField(),
+            ),
+            SizedBox(height: 6),
 
             Expanded(
               child: Scrollbar(
@@ -637,6 +645,101 @@ class Sidebar extends StatelessWidget {
           },
         );
       },
+    );
+  }
+}
+
+/// The search field under the logo.
+///
+/// It is the app's only search: what is typed here drives the search layer,
+/// so songs, albums and artists are searched from one place instead of from a
+/// field on each of their pages.
+class _SidebarSearchField extends StatefulWidget {
+  const _SidebarSearchField();
+
+  @override
+  State<_SidebarSearchField> createState() => _SidebarSearchFieldState();
+}
+
+class _SidebarSearchFieldState extends State<_SidebarSearchField> {
+  final textController = TextEditingController();
+  final focusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    // The keyword outlives this field: the drawer the sidebar sits in is
+    // rebuilt whenever it is opened, while the search page keeps its
+    // results.
+    textController.text = searchQueryNotifier.value;
+    focusNode.addListener(() {
+      isTyping = focusNode.hasFocus;
+    });
+  }
+
+  @override
+  void dispose() {
+    textController.dispose();
+    focusNode.dispose();
+    super.dispose();
+  }
+
+  /// Hands the keyword to the search page and opens it.
+  ///
+  /// An emptied field keeps the listener on that page rather than navigating
+  /// away: the page is still where they were looking.
+  void onChanged(String value) {
+    searchQueryNotifier.value = value;
+    layersManager.switchRootLayer('search');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
+    return SizedBox(
+      height: 40,
+      child: ListenableBuilder(
+        listenable: Listenable.merge([
+          searchFieldColor.valueNotifier,
+          textColor.valueNotifier,
+          iconColor.valueNotifier,
+        ]),
+        builder: (context, child) {
+          return Material(
+            color: Colors.transparent,
+            shape: SmoothRectangleBorder(
+              smoothness: 1,
+              borderRadius: BorderRadius.circular(AppRadius.row),
+            ),
+            clipBehavior: .antiAlias,
+            child: Container(
+              color: searchFieldColor.value,
+              child: TextField(
+                focusNode: focusNode,
+                controller: textController,
+                style: TextStyle(fontSize: 13, color: textColor.value),
+                onTapOutside: (event) => focusNode.unfocus(),
+                onChanged: onChanged,
+                decoration: InputDecoration(
+                  hint: Text(
+                    l10n.searchEverything,
+                    style: TextStyle(fontSize: 13, color: textColor.value),
+                  ),
+                  contentPadding: EdgeInsets.zero,
+                  prefixIcon: Icon(
+                    Icons.search,
+                    size: 20,
+                    color: iconColor.value,
+                  ),
+                  hoverColor: Colors.transparent,
+                  border: OutlineInputBorder(borderSide: BorderSide.none),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }

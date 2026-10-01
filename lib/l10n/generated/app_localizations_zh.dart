@@ -194,6 +194,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get searchLicenses => '搜索许可证';
 
   @override
+  String get searchEverything => '搜索歌曲、专辑和艺术家';
+
+  @override
+  String get searchStartTyping => '输入关键词，搜索歌曲、专辑和艺术家';
+
+  @override
+  String get searchNoResults => '没有找到匹配的内容';
+
+  @override
   String get ascending => '升序';
 
   @override
@@ -749,9 +758,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get refreshRecommendations => '换一批';
-
-  @override
-  String get advancedSearch => '高级搜索';
 
   @override
   String get searchIn => '搜索范围';

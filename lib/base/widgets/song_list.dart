@@ -28,8 +28,6 @@ import 'package:sylvakru/base/my_audio_metadata.dart';
 import 'package:sylvakru/base/data/playlist.dart';
 import 'package:sylvakru/base/utils/metadata_utils.dart';
 import 'package:sylvakru/base/utils/download_info.dart';
-import 'package:sylvakru/base/utils/advanced_song_search.dart';
-import 'package:sylvakru/base/widgets/advanced_song_search_dialog.dart';
 import 'package:sylvakru/base/widgets/edit_metadata.dart';
 import 'package:sylvakru/base/widgets/my_divider.dart';
 import 'package:sylvakru/base/widgets/my_location.dart';
@@ -118,9 +116,12 @@ class _SongListState extends State<SongList> {
   String get searchValue => textController.text;
 
   bool isSearching = false;
-  SongSearchCriteria searchCriteria = SongSearchCriteria();
 
-  bool get hasAdvancedSearch => !searchCriteria.isDefault;
+  /// Whether this page offers a search field of its own.
+  ///
+  /// The songs page and an artist's page do not: what those used to search for
+  /// is what the sidebar search now covers.
+  bool get showSearchField => !isLibrary && artist == null;
 
   ValueNotifier<int> sortTypeNotifier = ValueNotifier(0);
   ValueNotifier<int> changeNotifier = ValueNotifier(0);
@@ -145,7 +146,6 @@ class _SongListState extends State<SongList> {
   bool get reorderable {
     return canModify &&
         searchValue.isEmpty &&
-        searchCriteria.isDefault &&
         sortTypeNotifier.value == 0 &&
         (playlist != null ||
             folder != null ||
@@ -196,11 +196,7 @@ class _SongListState extends State<SongList> {
     prepareing = false;
 
     final currentSongList = List<MyAudioMetadata>.from(
-      filterSongListAdvanced(
-        songList,
-        query: searchValue,
-        criteria: searchCriteria,
-      ),
+      filterSongList(songList, searchValue),
     );
 
     for (var e in currentSongList) {
@@ -217,20 +213,6 @@ class _SongListState extends State<SongList> {
     }
     sortSongList(sortTypeNotifier.value, currentSongList);
     currentSongListNotifier.value = currentSongList;
-  }
-
-  Future<void> showAdvancedSearch() async {
-    final result = await showAnimationDialog<SongSearchCriteria>(
-      context: context,
-      child: AdvancedSongSearchDialog(criteria: searchCriteria),
-    );
-    if (result == null || !mounted) {
-      return;
-    }
-    setState(() {
-      searchCriteria = result;
-    });
-    resetSelectedAndUpdateSongList();
   }
 
   void startNewSearchIfNeed() {

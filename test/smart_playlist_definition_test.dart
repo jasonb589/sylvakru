@@ -6,11 +6,32 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sylvakru/base/app.dart';
 import 'package:sylvakru/base/data/library.dart';
 import 'package:sylvakru/base/data/playlist.dart';
+import 'package:sylvakru/base/data/smart_playlist.dart';
 import 'package:sylvakru/base/my_audio_metadata.dart';
-import 'package:sylvakru/base/utils/advanced_song_search.dart';
 
-MyAudioMetadata _song(String id, String title, int year) => MyAudioMetadata(
-  AudioMetadata(title: title, year: year),
+MyAudioMetadata _song(
+  String id, {
+  String? title,
+  String? artist,
+  String? album,
+  String? albumArtist,
+  String? genre,
+  int? year,
+  int? durationSeconds,
+  int? bitrate,
+}) => MyAudioMetadata(
+  AudioMetadata(
+    title: title,
+    artist: artist,
+    album: album,
+    albumArtist: albumArtist,
+    genre: genre,
+    year: year,
+    duration: durationSeconds == null
+        ? null
+        : Duration(seconds: durationSeconds),
+    bitrate: bitrate,
+  ),
   id: id,
 );
 
@@ -31,9 +52,9 @@ void main() {
   test('smart playlist definition round-trips and applies rules', () {
     final definition = SmartPlaylistDefinition(
       name: 'Nineties',
-      criteria: SongSearchCriteria(
+      criteria: SmartPlaylistCriteria(
         query: 'blue',
-        fields: {SongSearchField.title},
+        fields: {SmartPlaylistField.title},
         minYear: 1990,
         maxYear: 1999,
       ),
@@ -42,9 +63,9 @@ void main() {
 
     final restored = SmartPlaylistDefinition.fromJson(definition.toJson());
     final songs = [
-      _song('b', 'Blue Moon', 1995),
-      _song('a', 'Blue Train', 1992),
-      _song('old', 'Blue Note', 1985),
+      _song('b', title: 'Blue Moon', year: 1995),
+      _song('a', title: 'Blue Train', year: 1992),
+      _song('old', title: 'Blue Note', year: 1985),
     ];
 
     expect(restored.name, 'Nineties');
@@ -53,10 +74,13 @@ void main() {
   });
 
   test('empty rules match the whole library', () {
-    final songs = [_song('a', 'First', 1990), _song('b', 'Second', 2000)];
+    final songs = [
+      _song('a', title: 'First', year: 1990),
+      _song('b', title: 'Second', year: 2000),
+    ];
     final definition = SmartPlaylistDefinition(
       name: 'Everything',
-      criteria: SongSearchCriteria(),
+      criteria: SmartPlaylistCriteria(),
     );
 
     expect(definition.apply(songs).map((song) => song.id), ['a', 'b']);
@@ -64,16 +88,16 @@ void main() {
 
   test('sync reloads local playlists and smart rules after reset', () async {
     final songs = [
-      _song('train', 'Blue Train', 1995),
-      _song('moon', 'Blue Moon', 1996),
-      _song('red', 'Red River', 1997),
+      _song('train', title: 'Blue Train', year: 1995),
+      _song('moon', title: 'Blue Moon', year: 1996),
+      _song('red', title: 'Red River', year: 1997),
     ];
     library.songList = songs;
     library.id2Song.addEntries(songs.map((song) => MapEntry(song.id, song)));
 
-    final criteria = SongSearchCriteria(
+    final criteria = SmartPlaylistCriteria(
       query: 'blue',
-      fields: {SongSearchField.title},
+      fields: {SmartPlaylistField.title},
       minYear: 1990,
       maxYear: 1999,
     );
@@ -106,14 +130,105 @@ void main() {
   test('creating smart playlists trims names and rejects duplicates', () async {
     final definition = SmartPlaylistDefinition(
       name: '  Favorites  ',
-      criteria: SongSearchCriteria(
+      criteria: SmartPlaylistCriteria(
         query: 'blue',
-        fields: {SongSearchField.title},
+        fields: {SmartPlaylistField.title},
       ),
     );
 
     expect(await playlistManager.createSmartPlaylist(definition), isTrue);
     expect(playlistManager.getPlaylistByName('Favorites')?.isSmart, isTrue);
     expect(await playlistManager.createSmartPlaylist(definition), isFalse);
+  });
+
+  group('criteria', () {
+    List<MyAudioMetadata> songs() => [
+      _song(
+        'one',
+        title: 'Blue Train',
+        artist: 'John Coltrane',
+        album: 'Classic Jazz',
+        albumArtist: 'John Coltrane Quartet',
+        genre: 'Jazz',
+        year: 1957,
+        durationSeconds: 600,
+        bitrate: 320,
+      ),
+      _song(
+        'two',
+        title: 'Blue in Green',
+        artist: 'Miles Davis',
+        album: 'Kind of Blue',
+        genre: 'Jazz',
+        year: 1959,
+        durationSeconds: 337,
+        bitrate: 256,
+      ),
+      _song(
+        'three',
+        title: 'Blue Sky',
+        artist: 'The Allman Brothers Band',
+        album: 'Eat a Peach',
+        genre: 'Rock',
+      ),
+    ];
+
+    test('searches enabled metadata fields case-insensitively', () {
+      final criteria = SmartPlaylistCriteria(
+        query: 'COLTRANE QUARTET',
+        fields: {SmartPlaylistField.albumArtist},
+      );
+
+      expect(criteria.applyToList(songs()).map((song) => song.id), ['one']);
+    });
+
+    test('exact matching uses the selected field only', () {
+      final criteria = SmartPlaylistCriteria(
+        query: 'Blue Train',
+        fields: {SmartPlaylistField.title},
+        exactMatch: true,
+      );
+
+      expect(criteria.applyToList(songs()).map((song) => song.id), ['one']);
+      expect(
+        SmartPlaylistCriteria(
+          query: 'Blue',
+          fields: {SmartPlaylistField.title},
+          exactMatch: true,
+        ).applyToList(songs()),
+        isEmpty,
+      );
+    });
+
+    test('combines year, duration and bitrate ranges inclusively', () {
+      final criteria = SmartPlaylistCriteria(
+        minYear: 1957,
+        maxYear: 1959,
+        minDurationSeconds: 337,
+        maxDurationSeconds: 600,
+        minBitrateKbps: 256,
+        maxBitrateKbps: 320,
+      );
+
+      expect(criteria.applyToList(songs()).map((song) => song.id), [
+        'one',
+        'two',
+      ]);
+    });
+
+    test('a range excludes songs whose metadata is missing', () {
+      final criteria = SmartPlaylistCriteria(minYear: 1950);
+
+      expect(criteria.applyToList(songs()).map((song) => song.id), [
+        'one',
+        'two',
+      ]);
+    });
+
+    test('does not match a keyword when no search fields are selected', () {
+      final criteria = SmartPlaylistCriteria(query: 'blue', fields: const {});
+
+      expect(criteria.applyToList(songs()), isEmpty);
+    });
   });
 }

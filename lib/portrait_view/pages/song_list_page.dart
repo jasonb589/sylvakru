@@ -7,20 +7,19 @@ extension _SongListPage on _SongListState {
       body: contentWithStack(),
       label: rootLabel,
       actions: [
-        ValueListenableBuilder(
-          valueListenable: currentSongListNotifier,
-          builder: (context, value, child) {
-            return MySearchField(
-              key: ValueKey(getFirstSong(songList)),
-              hintText: AppLocalizations.of(context).searchSongs,
-              textController: textController,
-              onSearchTextChanged: startNewSearchIfNeed,
-              onAdvancedSearch: showAdvancedSearch,
-              hasAdvancedSearch: hasAdvancedSearch,
-              useCurrentSong: false,
-            );
-          },
-        ),
+        if (showSearchField)
+          ValueListenableBuilder(
+            valueListenable: currentSongListNotifier,
+            builder: (context, value, child) {
+              return MySearchField(
+                key: ValueKey(getFirstSong(songList)),
+                hintText: AppLocalizations.of(context).searchSongs,
+                textController: textController,
+                onSearchTextChanged: startNewSearchIfNeed,
+                useCurrentSong: false,
+              );
+            },
+          ),
         moreButton(context),
       ],
     );
@@ -342,7 +341,7 @@ extension _SongListPage on _SongListState {
           child: ValueListenableBuilder(
             valueListenable: currentSongListNotifier,
             builder: (context, _, _) {
-              if (!isLibrary || searchValue.isNotEmpty || hasAdvancedSearch) {
+              if (!isLibrary || searchValue.isNotEmpty) {
                 return const SizedBox.shrink();
               }
               return RecentlyAdded(

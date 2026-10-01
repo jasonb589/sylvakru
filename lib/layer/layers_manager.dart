@@ -28,6 +28,7 @@ import 'package:sylvakru/layer/frequently_layer.dart';
 import 'package:sylvakru/layer/for_you_layer.dart';
 import 'package:sylvakru/layer/recently_added_layer.dart';
 import 'package:sylvakru/layer/recently_layer.dart';
+import 'package:sylvakru/layer/search_layer.dart';
 import 'package:sylvakru/layer/settings_layer.dart';
 import 'package:sylvakru/layer/single_album_layer.dart';
 import 'package:sylvakru/layer/single_artist_layer.dart';
@@ -155,6 +156,8 @@ class LayersManager {
         return RecentlyAddedLayer(key: GlobalKey());
       } else if (label == 'playlists') {
         return PlaylistsLayer(key: GlobalKey());
+      } else if (label == 'search') {
+        return SearchLayer(key: GlobalKey());
       } else if (label == 'settings') {
         return SettingsLayer(key: GlobalKey());
       } else {

@@ -1,11 +1,18 @@
 import 'package:sylvakru/base/my_audio_metadata.dart';
 import 'package:sylvakru/base/utils/metadata_utils.dart';
 
-enum SongSearchField { title, artist, album, albumArtist, genre }
+/// The metadata field a smart playlist's keyword is looked for in.
+enum SmartPlaylistField { title, artist, album, albumArtist, genre }
 
-/// Reusable keyword and metadata-range filters for song lists.
-class SongSearchCriteria {
-  final Set<SongSearchField> fields;
+/// The rules of a smart playlist: a keyword, the fields it is looked for in,
+/// and optional metadata ranges.
+///
+/// These rules belong to the smart-playlist feature - they are what the
+/// editor writes, what [SmartPlaylistDefinition] applies and what is saved as
+/// JSON beside the playlists. The field [name]s are therefore part of the
+/// on-disk format and must not be renamed.
+class SmartPlaylistCriteria {
+  final Set<SmartPlaylistField> fields;
   final String query;
   final bool exactMatch;
   final int? minYear;
@@ -15,13 +22,13 @@ class SongSearchCriteria {
   final int? minBitrateKbps;
   final int? maxBitrateKbps;
 
-  SongSearchCriteria({
-    Set<SongSearchField> fields = const {
-      SongSearchField.title,
-      SongSearchField.artist,
-      SongSearchField.album,
-      SongSearchField.albumArtist,
-      SongSearchField.genre,
+  SmartPlaylistCriteria({
+    Set<SmartPlaylistField> fields = const {
+      SmartPlaylistField.title,
+      SmartPlaylistField.artist,
+      SmartPlaylistField.album,
+      SmartPlaylistField.albumArtist,
+      SmartPlaylistField.genre,
     },
     this.query = '',
     this.exactMatch = false,
@@ -33,12 +40,12 @@ class SongSearchCriteria {
     this.maxBitrateKbps,
   }) : fields = Set.unmodifiable(fields);
 
-  factory SongSearchCriteria.fromJson(Map<String, dynamic> json) {
+  factory SmartPlaylistCriteria.fromJson(Map<String, dynamic> json) {
     final rawFields = json['fields'];
-    final fields = <SongSearchField>{};
+    final fields = <SmartPlaylistField>{};
     if (rawFields is List) {
       for (final name in rawFields.whereType<String>()) {
-        for (final field in SongSearchField.values) {
+        for (final field in SmartPlaylistField.values) {
           if (field.name == name) {
             fields.add(field);
             break;
@@ -46,7 +53,7 @@ class SongSearchCriteria {
         }
       }
     } else {
-      fields.addAll(SongSearchCriteria().fields);
+      fields.addAll(SmartPlaylistCriteria().fields);
     }
 
     int? readInt(String key) {
@@ -57,7 +64,7 @@ class SongSearchCriteria {
     final rawQuery = json['query'];
     final rawExactMatch = json['exactMatch'];
 
-    return SongSearchCriteria(
+    return SmartPlaylistCriteria(
       fields: fields,
       query: rawQuery is String ? rawQuery : '',
       exactMatch: rawExactMatch is bool ? rawExactMatch : false,
@@ -82,22 +89,12 @@ class SongSearchCriteria {
     'maxBitrateKbps': maxBitrateKbps,
   };
 
-  bool get hasFilters =>
-      minYear != null ||
-      maxYear != null ||
-      minDurationSeconds != null ||
-      maxDurationSeconds != null ||
-      minBitrateKbps != null ||
-      maxBitrateKbps != null;
-
-  bool get isDefault =>
-      query.trim().isEmpty &&
-      !exactMatch &&
-      !hasFilters &&
-      fields.length == SongSearchField.values.length &&
-      fields.containsAll(SongSearchField.values);
-
-  bool matches(MyAudioMetadata song, [String? queryOverride]) {
+  /// Whether [song] sits inside every range these rules ask for and carries
+  /// the keyword in one of the selected fields.
+  ///
+  /// An empty keyword matches everything: that is what makes a smart playlist
+  /// with only a range in it the whole library narrowed by that range.
+  bool matches(MyAudioMetadata song) {
     if (!_matchesRange(song.year, minYear, maxYear)) {
       return false;
     }
@@ -112,7 +109,7 @@ class SongSearchCriteria {
       return false;
     }
 
-    final normalizedQuery = (queryOverride ?? query).trim().toLowerCase();
+    final normalizedQuery = query.trim().toLowerCase();
     if (normalizedQuery.isEmpty) {
       return true;
     }
@@ -122,16 +119,21 @@ class SongSearchCriteria {
 
     return fields.any((field) {
       final value = switch (field) {
-        SongSearchField.title => getTitle(song),
-        SongSearchField.artist => getArtist(song),
-        SongSearchField.album => getAlbum(song),
-        SongSearchField.albumArtist => getAlbumArtist(song),
-        SongSearchField.genre => getGenre(song),
+        SmartPlaylistField.title => getTitle(song),
+        SmartPlaylistField.artist => getArtist(song),
+        SmartPlaylistField.album => getAlbum(song),
+        SmartPlaylistField.albumArtist => getAlbumArtist(song),
+        SmartPlaylistField.genre => getGenre(song),
       }.trim().toLowerCase();
       return exactMatch
           ? value == normalizedQuery
           : value.contains(normalizedQuery);
     });
+  }
+
+  /// The songs of [songs] these rules select, in their original order.
+  List<MyAudioMetadata> applyToList(List<MyAudioMetadata> songs) {
+    return songs.where(matches).toList();
   }
 
   bool _matchesRange(int? value, int? minimum, int? maximum) {
@@ -146,17 +148,10 @@ class SongSearchCriteria {
   }
 }
 
-List<MyAudioMetadata> filterSongListAdvanced(
-  List<MyAudioMetadata> songs, {
-  required String query,
-  required SongSearchCriteria criteria,
-}) {
-  return songs.where((song) => criteria.matches(song, query)).toList();
-}
-
+/// A saved smart playlist: the rules, plus how its results are ordered.
 class SmartPlaylistDefinition {
   final String name;
-  final SongSearchCriteria criteria;
+  final SmartPlaylistCriteria criteria;
   final int sortType;
 
   const SmartPlaylistDefinition({
@@ -172,8 +167,10 @@ class SmartPlaylistDefinition {
     return SmartPlaylistDefinition(
       name: rawName is String ? rawName : '',
       criteria: rawCriteria is Map
-          ? SongSearchCriteria.fromJson(Map<String, dynamic>.from(rawCriteria))
-          : SongSearchCriteria(),
+          ? SmartPlaylistCriteria.fromJson(
+              Map<String, dynamic>.from(rawCriteria),
+            )
+          : SmartPlaylistCriteria(),
       sortType: rawSortType is num ? rawSortType.toInt() : 1,
     );
   }
@@ -185,11 +182,7 @@ class SmartPlaylistDefinition {
   };
 
   List<MyAudioMetadata> apply(List<MyAudioMetadata> songs) {
-    final result = filterSongListAdvanced(
-      songs,
-      query: criteria.query,
-      criteria: criteria,
-    );
+    final result = criteria.applyToList(songs);
     result.sort((a, b) {
       return switch (sortType) {
         1 => a.compareTitle.compareTo(b.compareTitle),

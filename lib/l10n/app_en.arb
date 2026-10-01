@@ -105,6 +105,9 @@
   "searchAlbums": "Search Albums",
   "searchPlaylists": "Search Playlists",
   "searchLicenses": "Search Licenses",
+  "searchEverything": "Search songs, albums and artists",
+  "searchStartTyping": "Type to search songs, albums and artists",
+  "searchNoResults": "No matching results",
   "ascending": "Ascending",
   "descending": "Descending",
   "pictureSize": "Picture Size",
@@ -316,7 +319,6 @@
     }
   },
   "refreshRecommendations": "Refresh",
-  "advancedSearch": "Advanced Search",
   "searchIn": "Search in",
   "exactMatch": "Exact match",
   "yearRange": "Year",

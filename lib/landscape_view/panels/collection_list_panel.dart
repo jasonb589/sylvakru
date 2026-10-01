@@ -5,7 +5,7 @@ extension _CollectionListPanel on CollectionListState {
     return Column(
       children: [
         TitleBar(
-          hintText: searchHint,
+          hintText: showSearchField ? searchHint : null,
           textController: textController,
           scrollToTop: () {
             scrollController.animateTo(
@@ -14,10 +14,9 @@ extension _CollectionListPanel on CollectionListState {
               curve: AppCurve.standard,
             );
           },
-          onAdvancedSearch: label == 'playlists' && isNotStreamSource
+          onCreateSmartPlaylist: label == 'playlists' && isNotStreamSource
               ? () => showCreateSmartPlaylistDialog(context)
               : null,
-          createSmartPlaylistMode: label == 'playlists' && isNotStreamSource,
         ),
         Expanded(child: contentWidget(context)),
       ],

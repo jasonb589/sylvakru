@@ -24,9 +24,10 @@ class TitleBar extends StatefulWidget {
   final Function()? backToRoot;
   final Function()? scrollToTop;
   final Function()? findLocation;
-  final Function()? onAdvancedSearch;
-  final bool hasAdvancedSearch;
-  final bool createSmartPlaylistMode;
+
+  /// When set, the title bar offers "create smart playlist" - only the
+  /// playlists page passes it.
+  final Function()? onCreateSmartPlaylist;
 
   const TitleBar({
     super.key,
@@ -36,9 +37,7 @@ class TitleBar extends StatefulWidget {
     this.backToRoot,
     this.scrollToTop,
     this.findLocation,
-    this.onAdvancedSearch,
-    this.hasAdvancedSearch = false,
-    this.createSmartPlaylistMode = false,
+    this.onCreateSmartPlaylist,
   });
 
   @override
@@ -235,18 +234,11 @@ class _TitleBarState extends State<TitleBar> {
 
         if (!isMobile) windowControls(),
 
-        if (widget.onAdvancedSearch != null)
+        if (widget.onCreateSmartPlaylist != null)
           IconButton(
-            tooltip: widget.createSmartPlaylistMode
-                ? AppLocalizations.of(context).createSmartPlaylist
-                : AppLocalizations.of(context).advancedSearch,
-            onPressed: widget.onAdvancedSearch,
-            icon: Icon(
-              widget.createSmartPlaylistMode
-                  ? Icons.playlist_add_rounded
-                  : Icons.tune_rounded,
-              color: widget.hasAdvancedSearch ? iconColor.value : null,
-            ),
+            tooltip: AppLocalizations.of(context).createSmartPlaylist,
+            onPressed: widget.onCreateSmartPlaylist,
+            icon: const Icon(Icons.playlist_add_rounded),
           ),
 
         SizedBox(width: isMobile ? 10 : 30),

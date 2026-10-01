@@ -1,24 +1,24 @@
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:sylvakru/base/utils/advanced_song_search.dart';
+import 'package:sylvakru/base/data/smart_playlist.dart';
 import 'package:sylvakru/l10n/generated/app_localizations.dart';
 
-class AdvancedSongSearchDialog extends StatefulWidget {
-  final SongSearchCriteria criteria;
-  final bool editQuery;
+/// The editor behind a smart playlist: its keyword, the fields the keyword is
+/// looked for in, and the metadata ranges it may also ask for.
+class SmartPlaylistCriteriaDialog extends StatefulWidget {
+  final SmartPlaylistCriteria criteria;
 
-  const AdvancedSongSearchDialog({
-    super.key,
-    required this.criteria,
-    this.editQuery = false,
-  });
+  const SmartPlaylistCriteriaDialog({super.key, required this.criteria});
+
   @override
-  State<AdvancedSongSearchDialog> createState() =>
-      _AdvancedSongSearchDialogState();
+  State<SmartPlaylistCriteriaDialog> createState() =>
+      _SmartPlaylistCriteriaDialogState();
 }
-class _AdvancedSongSearchDialogState extends State<AdvancedSongSearchDialog> {
+
+class _SmartPlaylistCriteriaDialogState
+    extends State<SmartPlaylistCriteriaDialog> {
   final _formKey = GlobalKey<FormState>();
-  final Set<SongSearchField> _fields = {};
+  final Set<SmartPlaylistField> _fields = {};
   late final TextEditingController _queryController;
   late bool _exactMatch;
   late final TextEditingController _minYearController;
@@ -36,10 +36,8 @@ class _AdvancedSongSearchDialogState extends State<AdvancedSongSearchDialog> {
     _queryController = TextEditingController(text: widget.criteria.query);
     _minYearController = _controller(widget.criteria.minYear);
     _maxYearController = _controller(widget.criteria.maxYear);
-    _minDurationController =
-        _controller(widget.criteria.minDurationSeconds);
-    _maxDurationController =
-        _controller(widget.criteria.maxDurationSeconds);
+    _minDurationController = _controller(widget.criteria.minDurationSeconds);
+    _maxDurationController = _controller(widget.criteria.maxDurationSeconds);
     _minBitrateController = _controller(widget.criteria.minBitrateKbps);
     _maxBitrateController = _controller(widget.criteria.maxBitrateKbps);
   }
@@ -83,10 +81,8 @@ class _AdvancedSongSearchDialogState extends State<AdvancedSongSearchDialog> {
     }
     Navigator.pop(
       context,
-      SongSearchCriteria(
-        query: widget.editQuery
-            ? _queryController.text.trim()
-            : widget.criteria.query,
+      SmartPlaylistCriteria(
+        query: _queryController.text.trim(),
         fields: _fields,
         exactMatch: _exactMatch,
         minYear: _value(_minYearController),
@@ -96,16 +92,6 @@ class _AdvancedSongSearchDialogState extends State<AdvancedSongSearchDialog> {
         minBitrateKbps: _value(_minBitrateController),
         maxBitrateKbps: _value(_maxBitrateController),
       ),
-    );
-  }
-
-  Widget _queryField(AppLocalizations l10n) {
-    if (!widget.editQuery) {
-      return const SizedBox.shrink();
-    }
-    return TextFormField(
-      controller: _queryController,
-      decoration: InputDecoration(labelText: l10n.smartPlaylistQuery),
     );
   }
 
@@ -120,7 +106,10 @@ class _AdvancedSongSearchDialogState extends State<AdvancedSongSearchDialog> {
       children: [
         Padding(
           padding: const EdgeInsets.only(left: 12, top: 8),
-          child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+          child: Text(
+            label,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
         ),
         Row(
           children: [
@@ -153,12 +142,12 @@ class _AdvancedSongSearchDialogState extends State<AdvancedSongSearchDialog> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final textColor = Theme.of(context).colorScheme.onSurface;
-    final fieldLabels = <SongSearchField, String>{
-      SongSearchField.title: l10n.title,
-      SongSearchField.artist: l10n.artist,
-      SongSearchField.album: l10n.album,
-      SongSearchField.albumArtist: l10n.albumArtist,
-      SongSearchField.genre: l10n.genre,
+    final fieldLabels = <SmartPlaylistField, String>{
+      SmartPlaylistField.title: l10n.title,
+      SmartPlaylistField.artist: l10n.artist,
+      SmartPlaylistField.album: l10n.album,
+      SmartPlaylistField.albumArtist: l10n.albumArtist,
+      SmartPlaylistField.genre: l10n.genre,
     };
 
     return ConstrainedBox(
@@ -175,7 +164,7 @@ class _AdvancedSongSearchDialogState extends State<AdvancedSongSearchDialog> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                l10n.advancedSearch,
+                l10n.createSmartPlaylist,
                 style: TextStyle(
                   color: textColor,
                   fontSize: 20,
@@ -188,7 +177,12 @@ class _AdvancedSongSearchDialogState extends State<AdvancedSongSearchDialog> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _queryField(l10n),
+                      TextFormField(
+                        controller: _queryController,
+                        decoration: InputDecoration(
+                          labelText: l10n.smartPlaylistQuery,
+                        ),
+                      ),
                       Align(
                         alignment: Alignment.centerLeft,
                         child: Text(l10n.searchIn),
@@ -248,10 +242,8 @@ class _AdvancedSongSearchDialogState extends State<AdvancedSongSearchDialog> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
-                    onPressed: () => Navigator.pop(
-                      context,
-                      SongSearchCriteria(),
-                    ),
+                    onPressed: () =>
+                        Navigator.pop(context, SmartPlaylistCriteria()),
                     child: Text(l10n.reset),
                   ),
                   const SizedBox(width: 8),
