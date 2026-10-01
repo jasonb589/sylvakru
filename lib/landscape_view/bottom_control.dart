@@ -1,24 +1,21 @@
-import 'package:sylvakru/base/design/marquee_text.dart';
-import 'package:sylvakru/base/design/app_tokens.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:sylvakru/base/design/interaction_overlay.dart';
 import 'package:sylvakru/base/audio_handler.dart';
 import 'package:sylvakru/base/services/color_manager.dart';
 import 'package:sylvakru/base/app.dart';
 import 'package:sylvakru/base/asset_images.dart';
 import 'package:sylvakru/base/widgets/buttons.dart';
-import 'package:sylvakru/base/widgets/cover_art_widget.dart';
+import 'package:sylvakru/base/widgets/bottom_bar_song_tile.dart';
 import 'package:sylvakru/base/utils/dynamic_lyrics_page_route.dart';
 import 'package:sylvakru/landscape_view/speaker.dart';
 import 'package:sylvakru/landscape_view/volume_bar.dart';
 import 'package:sylvakru/base/widgets/seekbar.dart';
-import 'package:sylvakru/base/widgets/lyrics_line_bar.dart';
 import 'package:sylvakru/landscape_view/desktop_lyrics.dart';
 import 'package:sylvakru/layer/lyrics_page_layer.dart';
-import 'package:sylvakru/base/utils/metadata_utils.dart';
-import 'package:smooth_corner/smooth_corner.dart';
 
 class BottomControl extends StatelessWidget {
+  /// Height of the bar. The song tile inside it is measured against this.
+  static const double barHeight = 75;
+
   const BottomControl({super.key});
 
   @override
@@ -29,7 +26,7 @@ class BottomControl extends StatelessWidget {
         return Material(
           color: value,
           child: SizedBox(
-            height: 75,
+            height: barHeight,
             child: Row(
               children: [
                 Expanded(flex: 2, child: currentSongTile(context)),
@@ -73,74 +70,18 @@ class BottomControl extends StatelessWidget {
     return ValueListenableBuilder(
       valueListenable: currentSongNotifier,
       builder: (_, currentSong, _) {
-        return Theme(
-          data: AppOverlay.none(context, keepFocus: true),
-          child: Material(
-            color: Colors.transparent,
-            shape: SmoothRectangleBorder(
-              smoothness: 1,
-              borderRadius: .all(.circular(10)),
-            ),
-            clipBehavior: .antiAlias,
-            child: ListenableBuilder(
-              listenable: Listenable.merge([currentSong?.updateNotifier]),
-              builder: (context, _) {
-                return ListTile(
-                  leading: Hero(
-                    tag: 'cover',
-                    child: CoverArtWidget(
-                      size: 50,
-                      borderRadius: 5,
-                      elevation: AppElevation.control,
-                      picture: currentSong?.picture,
-                      useResize: false,
-                    ),
-                  ),
-                  title: MarqueeText(text: getTitle(currentSong)),
-                  subtitle: currentSong != null
-                      ? LyricsLineBar(
-                          fontSize: 13,
-                          maxLines: 1,
-                          // no timed lyrics: keep showing artist - album
-                          fallback: Row(
-                            children: [
-                              // Plain text on purpose: the tile opens the
-                              // playback screen, and the artist link lives
-                              // there (ArtistAlbumLine). This name used to
-                              // open the artist page, which meant the bar
-                              // jumped past the screen it is there to open.
-                              Flexible(
-                                child: Text(
-                                  getArtist(currentSong),
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(fontSize: 13),
-                                ),
-                              ),
-                              Flexible(
-                                child: Text(
-                                  " - ${getAlbum(currentSong)}",
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(fontSize: 13),
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      : null,
-                  onTap: () {
-                    if (playQueue.isEmpty) {
-                      return;
-                    }
-                    Navigator.of(context, rootNavigator: true).push(
-                      DynamicLyricsPageRoute(
-                        pageBuilder: (_, _, _) => LyricsPageLayer(),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-          ),
+        return BottomBarSongTile(
+          song: currentSong,
+          onTap: () {
+            if (playQueue.isEmpty) {
+              return;
+            }
+            Navigator.of(context, rootNavigator: true).push(
+              DynamicLyricsPageRoute(
+                pageBuilder: (_, _, _) => LyricsPageLayer(),
+              ),
+            );
+          },
         );
       },
     );

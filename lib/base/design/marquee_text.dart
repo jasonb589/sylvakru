@@ -120,31 +120,40 @@ class _MarqueeTextState extends State<MarqueeText>
           child: Text(widget.text, style: style, maxLines: 1),
         );
 
-        return ClipRect(
-          // The travelling row is wider than the slot it travels through, so it
-          // is laid out unbounded and then clipped: without this the row reports
-          // an overflow on every rebuild in a debug build.
-          child: OverflowBox(
-            maxWidth: double.infinity,
-            alignment: AlignmentDirectional.centerStart,
-            child: AnimatedBuilder(
-              animation: _controller,
-              builder: (context, child) {
-                return Transform.translate(
-                  offset: Offset(-_controller.value * distance, 0),
-                  child: child,
-                );
-              },
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(widget.text, style: style, maxLines: 1),
-                  SizedBox(width: widget.gap),
-                  // The second copy is what makes the loop read as continuous;
-                  // it is hidden from screen readers so the title is announced
-                  // once.
-                  second,
-                ],
+        return SizedBox(
+          // One line tall, not as tall as the slot happens to be: the overflow
+          // box below takes the whole height it is offered, so this reported
+          // the full height of whatever bar it sat in as the title's own. A
+          // list tile measuring that height then placed the line under the
+          // title below its own bottom edge and centred the cover for a tile
+          // that was never drawn.
+          height: MediaQuery.textScalerOf(context).scale(painter.height),
+          child: ClipRect(
+            // The travelling row is wider than the slot it travels through, so
+            // it is laid out unbounded and then clipped: without this the row
+            // reports an overflow on every rebuild in a debug build.
+            child: OverflowBox(
+              maxWidth: double.infinity,
+              alignment: AlignmentDirectional.centerStart,
+              child: AnimatedBuilder(
+                animation: _controller,
+                builder: (context, child) {
+                  return Transform.translate(
+                    offset: Offset(-_controller.value * distance, 0),
+                    child: child,
+                  );
+                },
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(widget.text, style: style, maxLines: 1),
+                    SizedBox(width: widget.gap),
+                    // The second copy is what makes the loop read as
+                    // continuous; it is hidden from screen readers so the title
+                    // is announced once.
+                    second,
+                  ],
+                ),
               ),
             ),
           ),
