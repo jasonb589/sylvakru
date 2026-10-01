@@ -693,6 +693,16 @@ class _SidebarSearchFieldState extends State<_SidebarSearchField> {
     layersManager.switchRootLayer('search');
   }
 
+  /// Opens the search page with the field focused.
+  ///
+  /// The row is the app's search entry, so a click anywhere on it - the icon,
+  /// the label, the padding - has to answer, not only a click that happens to
+  /// land on the text itself.
+  void open() {
+    focusNode.requestFocus();
+    layersManager.switchRootLayer('search');
+  }
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -707,31 +717,45 @@ class _SidebarSearchFieldState extends State<_SidebarSearchField> {
               borderRadius: BorderRadius.circular(AppRadius.row),
             ),
             clipBehavior: .antiAlias,
-            // The sidebar is a list of flat rows, so this is one too: same
-            // height, same inner padding and the same 30px family icon as the
-            // rows around it, so the magnifier lines up with their icons. No
-            // fill and no hint - the icon already says what the row is for.
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 10, 0),
-              child: Row(
-                children: [
-                  const ImageIcon(searchImage, size: 30),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: TextField(
-                      focusNode: focusNode,
-                      controller: textController,
-                      style: TextStyle(fontSize: 15, color: textColor.value),
-                      onTapOutside: (event) => focusNode.unfocus(),
-                      onChanged: onChanged,
-                      decoration: const InputDecoration(
-                        contentPadding: EdgeInsets.zero,
-                        hoverColor: Colors.transparent,
-                        border: OutlineInputBorder(borderSide: BorderSide.none),
+            // One row like the nav items around it: same height, same inner
+            // padding, the same 30px family icon and a 15px label, which is the
+            // field's hint. The whole row is the click target - the icon and
+            // the padding are not part of the text field, and a click that
+            // landed there used to do nothing at all.
+            child: InkWell(
+              mouseCursor: SystemMouseCursors.click,
+              onTap: open,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 10, 0),
+                child: Row(
+                  children: [
+                    const ImageIcon(searchImage, size: 30),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextField(
+                        focusNode: focusNode,
+                        controller: textController,
+                        style: TextStyle(fontSize: 15, color: textColor.value),
+                        onTapOutside: (event) => focusNode.unfocus(),
+                        onChanged: onChanged,
+                        decoration: InputDecoration(
+                          hint: Text(
+                            AppLocalizations.of(context).search,
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: textColor.value,
+                            ),
+                          ),
+                          contentPadding: EdgeInsets.zero,
+                          hoverColor: Colors.transparent,
+                          border: const OutlineInputBorder(
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           );

@@ -205,6 +205,17 @@ void main() {
         reason: 'the field wears the sidebar family icon at the sidebar size',
       );
       expect(
+        has(sidebar, r'hint: Text\('),
+        isTrue,
+        reason: 'the row says 搜索, it is not an anonymous magnifier',
+      );
+      expect(
+        has(sidebar, r'onTap: open'),
+        isTrue,
+        reason: 'the whole row has to answer a click, not only the text area',
+      );
+      expect(has(sidebar, r'requestFocus\(\)'), isTrue);
+      expect(
         has(sidebar, r'Icons\.search'),
         isFalse,
         reason:

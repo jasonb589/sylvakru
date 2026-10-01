@@ -179,6 +179,9 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get search => '搜索';
+
+  @override
   String get searchSongs => '搜索歌曲';
 
   @override

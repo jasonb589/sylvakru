@@ -410,6 +410,12 @@ abstract class AppLocalizations {
   /// **'{count} in total'**
   String fontCount(int count);
 
+  /// No description provided for @search.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get search;
+
   /// No description provided for @searchSongs.
   ///
   /// In en, this message translates to:
