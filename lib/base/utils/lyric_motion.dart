@@ -32,6 +32,20 @@ int lyricIndexAt(List<LyricLine> lines, Duration position) {
   return current;
 }
 
+/// Where a tap on [line] has to seek to leave that line the one being sung.
+///
+/// The lyrics are drawn at the reported position *plus* the listener's
+/// calibration offset ([offsetMs]): the current line is the last one that starts
+/// at or before that. Seeking to the line's own start therefore misses the line
+/// that was tapped whenever the offset is negative — the seek lands on the line
+/// before it — and the 1 ms in front of it is what keeps the landing off the
+/// boundary. Taking the offset back out puts the tap on the line it was aimed
+/// at, with the offset applied again on the way back.
+Duration lyricSeekTarget(LyricLine line, int offsetMs) =>
+    line.start -
+    Duration(milliseconds: offsetMs) +
+    const Duration(milliseconds: 1);
+
 /// Where each of [line]'s tokens starts inside [LyricLine.text].
 ///
 /// Hidden timestamps carry no text and are dropped by the parser, so the tokens

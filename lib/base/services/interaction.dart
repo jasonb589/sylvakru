@@ -41,14 +41,40 @@ import 'package:sylvakru/layer/layers_manager.dart';
 import 'package:smooth_corner/smooth_corner.dart';
 
 DateTime? _lastShowTime;
+String? _lastShowMessage;
+
+/// Whether a new centre message may take the place of the last one.
+///
+/// The centre message is one slot, and a burst of them used to be silenced
+/// wholesale: *any* message within two seconds of the previous one was dropped,
+/// whatever it said, so a different answer — "no duplicate songs" right after a
+/// sync — was swallowed and the listener saw nothing at all. Repeating the same
+/// words that soon is still not worth showing: that is noise.
+bool shouldShowCenterMessage({
+  required String message,
+  required DateTime now,
+  required DateTime? lastAt,
+  required String? lastMessage,
+  Duration minGap = const Duration(seconds: 2),
+}) {
+  if (lastAt == null || lastMessage != message) {
+    return true;
+  }
+  return now.difference(lastAt) >= minGap;
+}
 
 void showCenterMessage(String message, {int duration = 2000}) {
   final now = DateTime.now();
-  if (_lastShowTime != null &&
-      now.difference(_lastShowTime!) < const Duration(seconds: 2)) {
+  if (!shouldShowCenterMessage(
+    message: message,
+    now: now,
+    lastAt: _lastShowTime,
+    lastMessage: _lastShowMessage,
+  )) {
     return;
   }
   _lastShowTime = now;
+  _lastShowMessage = message;
 
   final overlay = globalNavigatorKey.currentState?.overlay;
   if (overlay == null) return;
@@ -163,6 +189,34 @@ Future<void> showCenterLoading() async {
 void removeCenterLoading() {
   _centerOverlayEntry?.remove();
   _centerOverlayEntry = null;
+}
+
+/// Runs [action] with the centre spinner up, and takes the spinner down however
+/// [action] ends.
+///
+/// The spinner owns an overlay entry, and every call site around it is written
+/// as "put it up, await the step, take it down" — so a step that threw, or a
+/// check that returned in between, left a spinner over everything with no way
+/// back, because nothing else ever removes it. The removal belongs in a
+/// `finally`; the failure belongs nowhere near the caller, which is not written
+/// to handle it: what it was doing simply did not happen.
+///
+/// [show] and [hide] are the overlay pair, injectable so the guarantee can be
+/// checked without a running app.
+Future<T?> withCenterLoading<T>(
+  Future<T> Function() action, {
+  void Function() show = showCenterLoading,
+  void Function() hide = removeCenterLoading,
+}) async {
+  show();
+  try {
+    return await action();
+  } catch (error, stack) {
+    debugPrint('center loading step failed: $error\n$stack');
+    return null;
+  } finally {
+    hide();
+  }
 }
 
 Future<bool> showConfirmDialog(BuildContext context, String action) async {
@@ -1483,11 +1537,9 @@ void goToArtist(
     // Step out of the caller's route first (see [stepOutOfRoute]): the layers
     // switch underneath it, so the artist page must not stay hidden behind it.
     stepOutNavigator?.pop();
-    showCenterLoading();
     // openArtistDetail switches layers and pushes the detail in one go, so the
     // artist list is never shown in between
-    await layersManager.openArtistDetail(artist);
-    removeCenterLoading();
+    await withCenterLoading(() => layersManager.openArtistDetail(artist!));
   }
 }
 
@@ -1502,12 +1554,13 @@ void goToAlbum(MyAudioMetadata song, {BuildContext? context}) async {
   }
 
   if (viewModeNotifier.value == .bigPicture) {
-    showCenterLoading();
-    final baseColor = await computeColor(album.picture);
-    if (!context!.mounted) {
+    final baseColor = await withCenterLoading(
+      () => computeColor(album!.picture),
+    );
+    // A colour that could not be read leaves nothing to open the album with.
+    if (baseColor == null || !context!.mounted) {
       return;
     }
-    removeCenterLoading();
 
     Navigator.of(context).push(
       ZoomPageRoute(
@@ -1519,18 +1572,16 @@ void goToAlbum(MyAudioMetadata song, {BuildContext? context}) async {
     return;
   }
 
-  showCenterLoading();
-  if (isNotStreamSource) {
-    final target = artistAlbumManager.albumMap[getAlbum(song)];
-    if (target == null) {
-      removeCenterLoading();
-      showCenterMessage(appLocalizations.getAlbumFailed);
+  await withCenterLoading(() async {
+    if (isNotStreamSource) {
+      final target = artistAlbumManager.albumMap[getAlbum(song)];
+      if (target == null) {
+        showCenterMessage(appLocalizations.getAlbumFailed);
+        return;
+      }
+      await layersManager.openAlbumDetail(target);
       return;
     }
-    await layersManager.openAlbumDetail(target);
-  } else {
-    await layersManager.openAlbumDetail(album);
-  }
-  removeCenterLoading();
-  removeCenterLoading();
+    await layersManager.openAlbumDetail(album!);
+  });
 }

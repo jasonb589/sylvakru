@@ -34,6 +34,106 @@ import 'package:sylvakru/l10n/generated/app_localizations.dart';
 import 'package:sylvakru/layer/layers_manager.dart';
 import 'package:window_manager/window_manager.dart';
 
+/// The tabs of the big picture view, in the order they are shown.
+///
+/// The panels, the tab labels and the bottom bar's "…" action are all read off
+/// this list, because they used to be three lists kept in step by hand and one
+/// of them was left behind: when For You was inserted second, the "…" action
+/// still answered the numbering from before it, so For You offered the whole
+/// library's song menu and Albums had no button at all.
+enum BigPictureTab {
+  home,
+  forYou,
+  songs,
+  artists,
+  albums,
+  folders,
+  frequently,
+  recently,
+  recentlyAdded,
+  playlists,
+  settings;
+
+  /// The label on this tab.
+  String label(AppLocalizations l10n) {
+    switch (this) {
+      case BigPictureTab.home:
+        return l10n.home;
+      case BigPictureTab.forYou:
+        return l10n.forYou;
+      case BigPictureTab.songs:
+        return l10n.songs;
+      case BigPictureTab.artists:
+        return l10n.artists;
+      case BigPictureTab.albums:
+        return l10n.albums;
+      case BigPictureTab.folders:
+        return l10n.folders;
+      case BigPictureTab.frequently:
+        return l10n.frequently;
+      case BigPictureTab.recently:
+        return l10n.recently;
+      case BigPictureTab.recentlyAdded:
+        return l10n.recentlyAdded;
+      case BigPictureTab.playlists:
+        return l10n.playlists;
+      case BigPictureTab.settings:
+        return l10n.settings;
+    }
+  }
+}
+
+/// The panel each tab shows, in the same order as [BigPictureTab].
+const bigPicturePanels = <Widget>[
+  BigHomePanel(),
+  BigForYouPanel(),
+  BigSongsPanel(),
+  BigArtistsPanel(),
+  BigAlbumsPanel(),
+  BigFoldersPanel(),
+  BigFrequentlyPanel(),
+  BigRecentlyPanel(),
+  BigRecentlyAddedPanel(),
+  BigPlaylistsPanel(),
+  BigSettingsPanel(),
+];
+
+/// What the bottom bar's "…" button offers on a tab, if anything.
+enum BigPictureMenu { none, songs, artists, albums, frequently, recently }
+
+/// The menu [tab] has for a library that comes from [source].
+///
+/// Only a panel that *is* one list has that list's own menu. The panels that
+/// gather their own — For You (which has a refresh of its own), folders, the new
+/// arrivals, the playlists — and the settings have no such list, and the home
+/// panel is not a list at all. A stream source keeps no play history, so the
+/// frequently and recently panels have nothing to act on there either.
+BigPictureMenu bigPictureMenuFor(BigPictureTab tab, SourceType source) {
+  switch (tab) {
+    case BigPictureTab.home:
+    case BigPictureTab.forYou:
+    case BigPictureTab.folders:
+    case BigPictureTab.recentlyAdded:
+    case BigPictureTab.playlists:
+    case BigPictureTab.settings:
+      return BigPictureMenu.none;
+    case BigPictureTab.songs:
+      return BigPictureMenu.songs;
+    case BigPictureTab.artists:
+      return BigPictureMenu.artists;
+    case BigPictureTab.albums:
+      return BigPictureMenu.albums;
+    case BigPictureTab.frequently:
+      return source == .navidrome
+          ? BigPictureMenu.none
+          : BigPictureMenu.frequently;
+    case BigPictureTab.recently:
+      return source == .navidrome
+          ? BigPictureMenu.none
+          : BigPictureMenu.recently;
+  }
+}
+
 class BigPictureView extends StatefulWidget {
   const BigPictureView({super.key});
 
@@ -44,21 +144,6 @@ class BigPictureView extends StatefulWidget {
 class _BigPictureViewState extends State<BigPictureView> {
   final _pageController = PageController();
   final _currentIndexNotifier = ValueNotifier(0);
-
-  final pages = const [
-    BigHomePanel(),
-    BigForYouPanel(),
-    BigSongsPanel(),
-    BigArtistsPanel(),
-    BigAlbumsPanel(),
-    BigFoldersPanel(),
-    BigFrequentlyPanel(),
-    BigRecentlyPanel(),
-    BigRecentlyAddedPanel(),
-    BigPlaylistsPanel(),
-    BigSettingsPanel(),
-  ];
-
   final topNode = FocusScopeNode();
   final pageViewNode = FocusScopeNode();
   final bottomNode = FocusScopeNode();
@@ -128,7 +213,7 @@ class _BigPictureViewState extends State<BigPictureView> {
                     onPageChanged: (value) {
                       _currentIndexNotifier.value = value;
                     },
-                    children: pages,
+                    children: bigPicturePanels,
                   ),
                 ),
               ),
@@ -144,19 +229,7 @@ class _BigPictureViewState extends State<BigPictureView> {
 
   Widget topBar(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final tabs = [
-      l10n.home,
-      l10n.forYou,
-      l10n.songs,
-      l10n.artists,
-      l10n.albums,
-      l10n.folders,
-      l10n.frequently,
-      l10n.recently,
-      l10n.recentlyAdded,
-      l10n.playlists,
-      l10n.settings,
-    ];
+    final tabs = [for (final tab in BigPictureTab.values) tab.label(l10n)];
 
     final windowsControl = isTV
         ? null
@@ -348,9 +421,7 @@ class _BigPictureViewState extends State<BigPictureView> {
                                           onTap: () {
                                             _pageController.animateToPage(
                                               index,
-                                              duration: const Duration(
-                                                milliseconds: 300,
-                                              ),
+                                              duration: AppDuration.calm,
                                               curve: AppCurve.enter,
                                             );
                                           },
@@ -469,11 +540,13 @@ class _BigPictureViewState extends State<BigPictureView> {
                 child: ValueListenableBuilder(
                   valueListenable: _currentIndexNotifier,
                   builder: (context, value, child) {
-                    if (value == 0 ||
-                        value == 4 ||
-                        value >= 7 ||
-                        (sourceType == .navidrome &&
-                            (value == 5 || value == 6))) {
+                    // The tab is named rather than counted: the panel, the tab
+                    // and this button all come off [BigPictureTab].
+                    final menu = bigPictureMenuFor(
+                      BigPictureTab.values[value],
+                      sourceType,
+                    );
+                    if (menu == BigPictureMenu.none) {
                       return SizedBox.shrink();
                     }
                     return Row(
@@ -488,27 +561,28 @@ class _BigPictureViewState extends State<BigPictureView> {
                           ),
                           child: IconButton(
                             onPressed: () {
-                              switch (value) {
-                                case 1:
+                              switch (menu) {
+                                case BigPictureMenu.none:
+                                  break;
+                                case BigPictureMenu.songs:
                                   showSongListOptions(
                                     context,
                                     library.songList,
                                   );
-                                case 2:
+                                case BigPictureMenu.artists:
                                   showArtistsAlbumsOptions(context, true);
-                                case 3:
+                                case BigPictureMenu.albums:
                                   showArtistsAlbumsOptions(context, false);
-                                case 5:
+                                case BigPictureMenu.frequently:
                                   showSongListOptions(
                                     context,
                                     history.frequentlySongList,
                                   );
-                                case 6:
+                                case BigPictureMenu.recently:
                                   showSongListOptions(
                                     context,
                                     history.recentlySongList,
                                   );
-                                default:
                               }
                             },
                             icon: ImageIcon(optionImage),

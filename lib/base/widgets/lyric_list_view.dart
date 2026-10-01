@@ -464,9 +464,12 @@ class _LyricLineWidgetState extends State<LyricLineWidget>
       duration: AppLyrics.tapPulse,
     );
     pulse.forward(from: 0);
-    /* The 1 ms keeps a seek from landing on the line before this one. */
-    final target = widget.line.start + const Duration(milliseconds: 1);
-    audioHandler.seek(target);
+    // The seek target has to be the one the offset is applied back onto, or a
+    // tap lands on the line before the one that was tapped. See
+    // [lyricSeekTarget].
+    audioHandler.seek(
+      lyricSeekTarget(widget.line, lyricsTimeOffsetNotifier.value),
+    );
   }
 
   /// [build] with the tap pulse, or with no pulse at all while this line has

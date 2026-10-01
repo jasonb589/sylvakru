@@ -112,6 +112,9 @@ class _DownloadLayerState extends State<DownloadLayer> {
     return ListenableBuilder(
       listenable: Listenable.merge([
         library.changeNotifier,
+        // The rows mark the song that is playing: that mark follows the
+        // player, not the library.
+        currentSongNotifier,
         downloadSizeNotifier,
         otherDownloadSizeNotifier,
         offlineMusicLimitMbNotifier,
@@ -161,12 +164,17 @@ class _DownloadLayerState extends State<DownloadLayer> {
                             ),
                           ),
                         ),
-                        Tooltip(
-                          message: l10n.offlineMusicStorage,
-                          child: TextButton.icon(
-                            onPressed: () => _showListMenu(context, l10n),
-                            icon: const Icon(Icons.tune, size: 16),
-                            label: Text(storageLabel(l10n)),
+                        // A context of the button's own, so the menu hangs off
+                        // it: the page's context put every one of these menus
+                        // at the bottom-left corner of the page instead.
+                        Builder(
+                          builder: (context) => Tooltip(
+                            message: l10n.offlineMusicStorage,
+                            child: TextButton.icon(
+                              onPressed: () => _showListMenu(context, l10n),
+                              icon: const Icon(Icons.tune, size: 16),
+                              label: Text(storageLabel(l10n)),
+                            ),
                           ),
                         ),
                       ],
@@ -559,7 +567,10 @@ class _DownloadLayerState extends State<DownloadLayer> {
   /// The files in the downloads folder that belong to no song.
   ///
   /// Listed rather than deleted: they may be anything, so the listener looks
-  /// and decides, one file at a time.
+  /// and decides, one file at a time. The list belongs to the dialog, so a file
+  /// that is removed takes its own row away and leaves the rest to be read: the
+  /// delete used to close the dialog and open a new one from the context it had
+  /// just popped, which usually showed nothing at all.
   Future<void> _showOtherFiles(
     BuildContext context,
     AppLocalizations l10n,
@@ -571,73 +582,7 @@ class _DownloadLayerState extends State<DownloadLayer> {
 
     await showAnimationDialog(
       context: context,
-      child: SizedBox(
-        width: 420,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (files.isEmpty)
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Text(l10n.otherFilesEmpty),
-              )
-            else ...[
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 14, 20, 6),
-                child: Text(
-                  l10n.otherFilesHint,
-                  style: const TextStyle(fontSize: 12),
-                ),
-              ),
-              Flexible(
-                child: ListView(
-                  shrinkWrap: true,
-                  children: [
-                    for (final file in files)
-                      ListTile(
-                        title: Text(
-                          p.basename(file.path),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        subtitle: Text(formatBytes(file.bytes)),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              tooltip: l10n.revealInFolder,
-                              icon: const Icon(Icons.folder_open_rounded),
-                              onPressed: () => revealInFileManager(file.path),
-                            ),
-                            IconButton(
-                              tooltip: l10n.deleteFile,
-                              icon: const Icon(Icons.delete_outline),
-                              onPressed: () async {
-                                final confirmed = await showConfirmDialog(
-                                  context,
-                                  l10n.deleteFile,
-                                );
-                                if (!confirmed) {
-                                  return;
-                                }
-                                await library.deleteOtherDownload(file.path);
-                                if (context.mounted) {
-                                  Navigator.pop(context);
-                                  _showOtherFiles(context, l10n);
-                                }
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
+      child: _OtherFilesDialog(files: files, l10n: l10n),
     );
   }
 
@@ -651,6 +596,10 @@ class _DownloadLayerState extends State<DownloadLayer> {
 
     return GestureDetector(
       onSecondaryTapDown: (details) =>
+          _showOfflineRowMenu(context, song, l10n, details.globalPosition),
+      // The long press is taken here rather than by the tile, so the menu can
+      // hang off the row that was pressed instead of the corner of the window.
+      onLongPressStart: (details) =>
           _showOfflineRowMenu(context, song, l10n, details.globalPosition),
       child: ListTile(
         contentPadding: EdgeInsets.symmetric(horizontal: horizontalPadding),
@@ -679,7 +628,7 @@ class _DownloadLayerState extends State<DownloadLayer> {
           tooltip: l10n.removeDownload,
           onPressed: () => _removeDownload(context, song, l10n),
         ),
-        onLongPress: () => _showOfflineRowMenu(context, song, l10n, null),
+
         onTap: () {
           audioHandler.setPlayQueue(songs, 0, targetIndex: songs.indexOf(song));
         },
@@ -740,6 +689,94 @@ class _DownloadLayerState extends State<DownloadLayer> {
             tooltip: l10n.downloadCancel,
             onPressed: () => downloadQueue.cancel(song.id),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The "other files" list, as a dialog that keeps itself while files go.
+class _OtherFilesDialog extends StatefulWidget {
+  const _OtherFilesDialog({required this.files, required this.l10n});
+
+  final List<({String path, int bytes})> files;
+  final AppLocalizations l10n;
+
+  @override
+  State<_OtherFilesDialog> createState() => _OtherFilesDialogState();
+}
+
+class _OtherFilesDialogState extends State<_OtherFilesDialog> {
+  late final List<({String path, int bytes})> _files = List.of(widget.files);
+
+  Future<void> _delete(({String path, int bytes}) file) async {
+    final confirmed = await showConfirmDialog(context, widget.l10n.deleteFile);
+    if (!confirmed || !mounted) {
+      return;
+    }
+    // The accounting behind the dialog is refreshed by the delete itself, so
+    // the row is all that has to go.
+    await library.deleteOtherDownload(file.path);
+    if (!mounted) {
+      return;
+    }
+    setState(() => _files.remove(file));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = widget.l10n;
+    return SizedBox(
+      width: 420,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (_files.isEmpty)
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Text(l10n.otherFilesEmpty),
+            )
+          else ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 6),
+              child: Text(
+                l10n.otherFilesHint,
+                style: const TextStyle(fontSize: 12),
+              ),
+            ),
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
+                children: [
+                  for (final file in _files)
+                    ListTile(
+                      title: Text(
+                        p.basename(file.path),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: Text(formatBytes(file.bytes)),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            tooltip: l10n.revealInFolder,
+                            icon: const Icon(Icons.folder_open_rounded),
+                            onPressed: () => revealInFileManager(file.path),
+                          ),
+                          IconButton(
+                            tooltip: l10n.deleteFile,
+                            icon: const Icon(Icons.delete_outline),
+                            onPressed: () => _delete(file),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 8),
         ],
       ),
     );

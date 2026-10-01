@@ -48,7 +48,16 @@ void main() {
     // run time - the lyrics scroll from the distance to travel, the portrait
     // view from the height it was given - is not a decision taken away from the
     // tokens, so the scanner only looks for a number.
-    final literal = RegExp(r'Duration\(milliseconds:\s*\d');
+    //
+    // Each file is read as one piece of text rather than line by line: a
+    // literal that was wrapped across two lines was invisible to the scanner
+    // that read one line at a time, which is exactly where the one byte that
+    // got past it lived.
+    final literal = RegExp(
+      r'(duration|transitionDuration|reverseTransitionDuration)'
+      r'\s*:\s*(const\s+)?Duration\(\s*milliseconds\s*:\s*\d',
+      multiLine: true,
+    );
     final offenders = <String>[];
 
     for (final file in sources) {
@@ -56,16 +65,10 @@ void main() {
       if (path == tokenFile) {
         continue;
       }
-      final lines = file.readAsLinesSync();
-      for (var index = 0; index < lines.length; index++) {
-        final line = lines[index];
-        final isAnimation =
-            line.contains('duration:') ||
-            line.contains('transitionDuration:') ||
-            line.contains('reverseTransitionDuration:');
-        if (isAnimation && literal.hasMatch(line)) {
-          offenders.add('$path:${index + 1}: ${line.trim()}');
-        }
+      final text = file.readAsStringSync();
+      for (final match in literal.allMatches(text)) {
+        final line = text.substring(0, match.start).split('\n').length;
+        offenders.add('$path:$line: ${match.group(0)}');
       }
     }
 

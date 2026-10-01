@@ -489,4 +489,35 @@ void main() {
       );
     });
   });
+
+  group('lyricSeekTarget', () {
+    // Far enough apart that the 1 ms in front of one cannot reach the next.
+    final lines = [
+      line(1000, 'one', [token(1000, 'one', 2000)]),
+      line(3000, 'two', [token(3000, 'two', 4000)]),
+      line(9000, 'three', [token(9000, 'three', 10000)]),
+    ];
+
+    for (final offset in [0, 500, -500]) {
+      test(
+        'a tap leaves the line it was aimed at current at offset $offset',
+        () {
+          for (var k = 0; k < lines.length; k++) {
+            // The page adds the calibration offset back on before it decides
+            // which line is being sung, so the seek has to survive that round
+            // trip - at a negative offset, a seek to the line's own start landed
+            // on the line before it.
+            final drawn = lyricSeekTarget(lines[k], offset) + ms(offset);
+            expect(lyricIndexAt(lines, drawn), k, reason: 'line $k');
+          }
+        },
+      );
+    }
+
+    test('the seek lands just after the line, never before it', () {
+      final target = lyricSeekTarget(lines[1], 0);
+      expect(target, greaterThan(lines[1].start));
+      expect(target - lines[1].start, lessThan(ms(100)));
+    });
+  });
 }

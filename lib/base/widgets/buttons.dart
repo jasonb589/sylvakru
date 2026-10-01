@@ -12,6 +12,7 @@ import 'package:sylvakru/base/services/interaction.dart';
 import 'package:sylvakru/base/widgets/play_queue_sheet.dart';
 import 'package:sylvakru/base/data/playlist.dart';
 import 'package:sylvakru/l10n/generated/app_localizations.dart';
+import 'package:sylvakru/base/utils/localizations.dart';
 import 'package:sylvakru/landscape_view/pages/play_queue_page.dart';
 import 'package:smooth_corner/smooth_corner.dart';
 
@@ -22,6 +23,13 @@ Widget playModeButton(double? size, {Color? iconColor}) {
       final l10n = AppLocalizations.of(context);
 
       return IconButton(
+        // One button for three modes, so it says which one it is on: the
+        // dialog behind it is not opened just to find that out.
+        tooltip: switch (playMode) {
+          0 => l10n.loop,
+          1 => l10n.shuffle,
+          _ => l10n.repeat,
+        },
         color: iconColor,
         icon: ImageIcon(
           playMode == 0
@@ -127,6 +135,7 @@ Widget rewindButton(double size, {Color? iconColor}) {
 
 Widget skip2PreviousButton(double size, {Color? iconColor}) {
   return IconButton(
+    tooltip: appLocalizations.skip2Previous,
     color: iconColor,
     icon: ImageIcon(previousButtonImage, size: size),
     onPressed: () {
@@ -137,6 +146,7 @@ Widget skip2PreviousButton(double size, {Color? iconColor}) {
 
 Widget playOrPauseButton(double size, {Color? iconColor}) {
   return IconButton(
+    tooltip: appLocalizations.playOrPause,
     autofocus: viewModeNotifier.value == .bigPicture,
     color: iconColor,
     icon: ValueListenableBuilder(
@@ -191,6 +201,7 @@ Widget forwardButton(double size, {Color? iconColor}) {
 
 Widget skip2NextButton(double size, {Color? iconColor}) {
   return IconButton(
+    tooltip: appLocalizations.skip2Next,
     color: iconColor,
     icon: ImageIcon(nextButtonImage, size: size),
     onPressed: () {
