@@ -284,4 +284,3 @@ void getDesktopLyricFromMap(dynamic data) {
 void getDesktopLyricPosition(dynamic data) {
   desktopLyricsPositionSink?.call(Duration(microseconds: data as int));
 }
-

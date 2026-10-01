@@ -103,6 +103,30 @@ void main() {
       expect(result.lines.first.text, 'Hello');
     });
 
+    test('accepts a one-digit hundredths field in the timestamp', () {
+      final result = parse(['[00:01.5]Half a second in']);
+
+      expect(result.lines, hasLength(1));
+      expect(result.lines.first.start, Duration(milliseconds: 1500));
+      expect(result.lines.first.text, 'Half a second in');
+    });
+
+    test('sorts lines whose timestamps are out of order', () {
+      final result = parse([
+        '[00:05.000]Third line',
+        '[00:01.000]First line',
+        '[00:03.000]Second line',
+      ]);
+
+      expect(result.lines.map((line) => line.text), [
+        'First line',
+        'Second line',
+        'Third line',
+      ]);
+      expect(result.lines.first.start, Duration(seconds: 1));
+      expect(result.lines.last.start, Duration(seconds: 5));
+    });
+
     test(
       'sets the final token\'s end time to the song duration when nothing follows',
       () {

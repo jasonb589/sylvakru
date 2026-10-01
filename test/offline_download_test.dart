@@ -2,12 +2,15 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:audio_tags_lofty/audio_tags_lofty.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sylvakru/base/app.dart';
 import 'package:sylvakru/base/data/library.dart';
 import 'package:sylvakru/base/data/setting.dart';
 import 'package:sylvakru/base/my_audio_metadata.dart';
+import 'package:sylvakru/base/services/download_cancellation.dart';
 import 'package:sylvakru/base/services/logger.dart';
+import 'package:sylvakru/base/services/webdav_client.dart';
 import 'package:sylvakru/base/utils/path.dart';
 
 MyAudioMetadata _song(String id) => MyAudioMetadata(
@@ -288,4 +291,66 @@ void main() {
     expect(await library.downloadForOffline(song), isFalse);
     expect(song.downloadPath, isNull);
   });
+  test('a webdav transfer is staged under .part until it finishes', () async {
+    sourceType = SourceType.webdav;
+    isStreamSource = false;
+    isNotStreamSource = true;
+    final song = _song('staged');
+    library.id2Song[song.id] = song;
+    final written = <String>[];
+    webdavClient = _StagedWebDav((localPath) async {
+      written.add(localPath);
+      await File(localPath).writeAsString('audio');
+      return true;
+    });
+
+    expect(await library.downloadForOffline(song), isTrue);
+
+    expect(written.single, '${song.downloadPath!}.part');
+    expect(File(song.downloadPath!).readAsStringSync(), 'audio');
+    expect(File('${song.downloadPath!}.part').existsSync(), isFalse);
+    webdavClient = null;
+  });
+
+  test(
+    'a half-written transfer stays a .part file, never a download',
+    () async {
+      sourceType = SourceType.webdav;
+      isStreamSource = false;
+      isNotStreamSource = true;
+      final song = _song('interrupted');
+      library.id2Song[song.id] = song;
+      webdavClient = _StagedWebDav((localPath) async {
+        await File(localPath).writeAsString('half');
+        return false;
+      });
+
+      expect(await library.downloadForOffline(song), isFalse);
+
+      expect(File(song.downloadPath!).existsSync(), isFalse);
+      expect(File('${song.downloadPath!}.part').existsSync(), isFalse);
+      webdavClient = null;
+    },
+  );
+}
+
+/// A WebDAV client whose transfer is the test's own: [WebDavClient.download] is
+/// the only thing the library calls, so overriding it keeps the network out.
+class _StagedWebDav extends WebDavClient {
+  _StagedWebDav(this._transfer)
+    : super(
+        baseUrl: 'http://example.com/dav',
+        username: 'user',
+        password: 'password',
+      );
+
+  final Future<bool> Function(String localPath) _transfer;
+
+  @override
+  Future<bool> download({
+    required String remotePath,
+    required String localPath,
+    ProgressCallback? onReceiveProgress,
+    DownloadCancellation? cancellation,
+  }) => _transfer(localPath);
 }
