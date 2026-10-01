@@ -180,7 +180,6 @@ class Sidebar extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 10),
               child: _SidebarSearchField(),
             ),
-            SizedBox(height: 6),
 
             Expanded(
               child: Scrollbar(
