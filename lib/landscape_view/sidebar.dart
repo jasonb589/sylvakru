@@ -701,7 +701,6 @@ class _SidebarSearchFieldState extends State<_SidebarSearchField> {
       height: 40,
       child: ListenableBuilder(
         listenable: Listenable.merge([
-          searchFieldColor.valueNotifier,
           textColor.valueNotifier,
           iconColor.valueNotifier,
         ]),
@@ -713,28 +712,28 @@ class _SidebarSearchFieldState extends State<_SidebarSearchField> {
               borderRadius: BorderRadius.circular(AppRadius.row),
             ),
             clipBehavior: .antiAlias,
-            child: Container(
-              color: searchFieldColor.value,
-              child: TextField(
-                focusNode: focusNode,
-                controller: textController,
-                style: TextStyle(fontSize: 13, color: textColor.value),
-                onTapOutside: (event) => focusNode.unfocus(),
-                onChanged: onChanged,
-                decoration: InputDecoration(
-                  hint: Text(
-                    l10n.searchEverything,
-                    style: TextStyle(fontSize: 13, color: textColor.value),
-                  ),
-                  contentPadding: EdgeInsets.zero,
-                  prefixIcon: Icon(
-                    Icons.search,
-                    size: 20,
-                    color: iconColor.value,
-                  ),
-                  hoverColor: Colors.transparent,
-                  border: OutlineInputBorder(borderSide: BorderSide.none),
+            // The sidebar is a list of flat rows, so the field has no fill of
+            // its own: a filled block above them read as one more colour block
+            // instead of a search box.
+            child: TextField(
+              focusNode: focusNode,
+              controller: textController,
+              style: TextStyle(fontSize: 13, color: textColor.value),
+              onTapOutside: (event) => focusNode.unfocus(),
+              onChanged: onChanged,
+              decoration: InputDecoration(
+                hint: Text(
+                  l10n.searchEverything,
+                  style: TextStyle(fontSize: 13, color: textColor.value),
                 ),
+                contentPadding: EdgeInsets.zero,
+                prefixIcon: Icon(
+                  Icons.search,
+                  size: 20,
+                  color: iconColor.value,
+                ),
+                hoverColor: Colors.transparent,
+                border: OutlineInputBorder(borderSide: BorderSide.none),
               ),
             ),
           );

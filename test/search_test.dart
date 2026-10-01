@@ -192,6 +192,13 @@ void main() {
       expect(has(sidebar, r'_SidebarSearchField'), isTrue);
       expect(has(sidebar, r'searchQueryNotifier'), isTrue);
       expect(has(sidebar, r"switchRootLayer\('search'\)"), isTrue);
+      expect(
+        has(sidebar, r'searchFieldColor'),
+        isFalse,
+        reason:
+            'the sidebar is flat rows: the field must not paint a colour '
+            'block above them',
+      );
     });
 
     test('the search layer is registered', () {
